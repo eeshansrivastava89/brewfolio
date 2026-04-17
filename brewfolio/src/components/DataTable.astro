@@ -1,0 +1,374 @@
+---
+type SortDirection = 'asc' | 'desc'
+
+interface Column {
+	key: string
+	label: string
+	sortable?: boolean
+	width?: string
+	align?: 'left' | 'center' | 'right'
+}
+
+interface Props {
+	columns: Column[]
+	data: Record<string, unknown>[]
+	pageSize?: number
+	caption?: string
+	class?: string
+}
+
+const {
+	columns,
+	data,
+	pageSize = 10,
+	caption,
+	class: className = '',
+} = Astro.props
+
+const pageSizeNum = Math.max(1, parseInt(String(pageSize)) || 10)
+---
+
+<div class={`brewfolio-datatable ${className}`} data-page-size={pageSizeNum}>
+	<div class="table-scroll">
+		<table class="data-table" aria-label={caption || 'Data table'}>
+			{caption && <caption class="table-caption">{caption}</caption>}
+			<thead>
+				<tr>
+					{columns.map((col) => (
+						<th
+							class={`col-${col.key} ${col.sortable ? 'sortable' : ''}`}
+							style={`${col.width ? `width: ${col.width};` : ''} text-align: ${col.align || 'left'}`}
+							data-sort-key={col.key}
+							aria-sort="none"
+						>
+							<span class="th-content">
+								{col.label}
+								{col.sortable && (
+									<span class="sort-icons" aria-hidden="true">
+										<svg class="sort-asc" width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><path d="M5 2L8 6H2L5 2Z"/></svg>
+										<svg class="sort-desc" width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><path d="M5 8L2 4H8L5 8Z"/></svg>
+									</span>
+								)}
+							</span>
+						</th>
+					))}
+				</tr>
+			</thead>
+			<tbody></tbody>
+		</table>
+	</div>
+
+	<div class="table-footer">
+		<span class="row-count" aria-live="polite"></span>
+		<div class="pagination" role="navigation" aria-label="Table pagination">
+			<button class="page-btn prev-btn" aria-label="Previous page" disabled>
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+			</button>
+			<span class="page-info" aria-live="polite"></span>
+			<button class="page-btn next-btn" aria-label="Next page" disabled>
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+			</button>
+		</div>
+	</div>
+</div>
+
+<script is:inline>
+(function () {
+	function initDataTable(el) {
+		const table = el.querySelector('.data-table')
+		const tbody = el.querySelector('tbody')
+		const prevBtn = el.querySelector('.prev-btn')
+		const nextBtn = el.querySelector('.next-btn')
+		const rowCountEl = el.querySelector('.row-count')
+		const pageInfoEl = el.querySelector('.page-info')
+		const pageSize = parseInt(el.getAttribute('data-page-size')) || 10
+
+		if (!table || !tbody) return
+
+		let allData = []
+		let sortKey = ''
+		let sortDir = 'asc'
+		let currentPage = 1
+
+		const headers = el.querySelectorAll('th[data-sort-key]')
+		headers.forEach((th) => {
+			th.addEventListener('click', () => {
+				const key = th.getAttribute('data-sort-key')
+				if (!key) return
+				if (sortKey === key) {
+					sortDir = sortDir === 'asc' ? 'desc' : 'asc'
+				} else {
+					sortKey = key
+					sortDir = 'asc'
+				}
+				headers.forEach((h) => h.setAttribute('aria-sort', 'none'))
+				th.setAttribute('aria-sort', sortDir === 'asc' ? 'ascending' : 'descending')
+				currentPage = 1
+				render()
+			})
+		})
+
+		function getSorted() {
+			if (!sortKey) return [...allData]
+			return [...allData].sort((a, b) => {
+				const av = a[sortKey]
+				const bv = b[sortKey]
+				let cmp = 0
+				if (typeof av === 'number' && typeof bv === 'number') {
+					cmp = av - bv
+				} else {
+					cmp = String(av || '').localeCompare(String(bv || ''))
+				}
+				return sortDir === 'asc' ? cmp : -cmp
+			})
+		}
+
+		function getPageData() {
+			const sorted = getSorted()
+			const start = (currentPage - 1) * pageSize
+			return sorted.slice(start, start + pageSize)
+		}
+
+		function totalPages() {
+			return Math.max(1, Math.ceil(allData.length / pageSize))
+		}
+
+		function render() {
+			const pageData = getPageData()
+			const total = totalPages()
+
+			tbody.innerHTML = pageData.length === 0
+				? '<tr><td colspan="100" class="empty-row">No data available</td></tr>'
+				: pageData.map((row) => {
+					const cells = Array.from(table.querySelectorAll('th[data-sort-key]')).map((th) => {
+						const key = th.getAttribute('data-sort-key')
+						const align = th.style.textAlign || 'left'
+						const val = row[key]
+						const formatted = val === null || val === undefined
+							? '—'
+							: typeof val === 'boolean'
+							? val ? 'Yes' : 'No'
+							: String(val)
+						return `<td style="text-align: ${align}" class="data-cell">${formatted}</td>`
+					}).join('')
+					return `<tr class="data-row">${cells}</tr>`
+				}).join('')
+
+			if (rowCountEl) {
+				rowCountEl.textContent = allData.length === 0
+					? 'No results'
+					: `Showing ${((currentPage - 1) * pageSize) + 1}–${Math.min(currentPage * pageSize, allData.length)} of ${allData.length}`
+			}
+
+			if (pageInfoEl) {
+				pageInfoEl.textContent = allData.length === 0 ? '' : `Page ${currentPage} of ${total}`
+			}
+
+			if (prevBtn) prevBtn.disabled = currentPage <= 1
+			if (nextBtn) nextBtn.disabled = currentPage >= total
+		}
+
+		function loadData() {
+			try {
+				const rows = table.querySelectorAll('tbody tr')
+				allData = Array.from(rows).map((row) => {
+					const cells = row.querySelectorAll('td')
+					const obj = {}
+					const keys = Array.from(table.querySelectorAll('th[data-sort-key]')).map((th) => th.getAttribute('data-sort-key'))
+					cells.forEach((cell, i) => {
+						if (keys[i]) obj[keys[i]] = cell.textContent?.trim() || ''
+					})
+					return obj
+				})
+				render()
+			} catch {}
+		}
+
+		prevBtn?.addEventListener('click', () => {
+			if (currentPage > 1) { currentPage--; render() }
+		})
+
+		nextBtn?.addEventListener('click', () => {
+			if (currentPage < totalPages()) { currentPage++; render() }
+		})
+
+		loadData()
+	}
+
+	document.querySelectorAll('.brewfolio-datatable').forEach(initDataTable)
+})()
+</script>
+
+<style>
+	.brewfolio-datatable {
+		background: var(--card);
+		border: 1px solid var(--border);
+		border-radius: var(--radius-lg);
+		box-shadow: var(--shadow);
+		overflow: hidden;
+		font-family: var(--font-sans, system-ui, sans-serif);
+	}
+
+	.table-scroll {
+		overflow-x: auto;
+		scrollbar-width: thin;
+		scrollbar-color: var(--border) transparent;
+	}
+
+	.table-scroll::-webkit-scrollbar {
+		height: 5px;
+	}
+
+	.table-scroll::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	.table-scroll::-webkit-scrollbar-thumb {
+		background: var(--border);
+		border-radius: 999px;
+	}
+
+	.data-table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 13px;
+	}
+
+	.table-caption {
+		text-align: left;
+		padding: 10px 14px 6px;
+		font-size: 11px;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: var(--muted-foreground);
+		caption-side: top;
+	}
+
+	thead {
+		background: var(--secondary);
+		border-bottom: 1px solid var(--border);
+	}
+
+	thead th {
+		padding: 9px 14px;
+		font-size: 11px;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: var(--muted-foreground);
+		white-space: nowrap;
+		user-select: none;
+	}
+
+	th.sortable {
+		cursor: pointer;
+	}
+
+	th.sortable:hover {
+		color: var(--foreground);
+	}
+
+	.th-content {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+	}
+
+	.sort-icons {
+		display: flex;
+		flex-direction: column;
+		gap: 1px;
+		opacity: 0.3;
+	}
+
+	th.sortable:hover .sort-icons,
+	th[aria-sort='ascending'] .sort-asc,
+	th[aria-sort='descending'] .sort-desc {
+		opacity: 1;
+		color: var(--primary);
+	}
+
+	th[aria-sort='descending'] .sort-asc,
+	th[aria-sort='ascending'] .sort-desc {
+		opacity: 0.2;
+	}
+
+	tbody tr {
+		border-bottom: 1px solid var(--input);
+		transition: background 0.1s ease;
+	}
+
+	tbody tr:hover {
+		background: var(--secondary);
+	}
+
+	tbody tr:last-child {
+		border-bottom: none;
+	}
+
+	tbody td {
+		padding: 10px 14px;
+		color: var(--foreground);
+		vertical-align: middle;
+	}
+
+	.empty-row {
+		text-align: center;
+		color: var(--muted-foreground);
+		font-style: italic;
+		padding: 28px 14px !important;
+	}
+
+	.table-footer {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 8px 14px;
+		border-top: 1px solid var(--input);
+		background: var(--secondary);
+		gap: 12px;
+	}
+
+	.row-count {
+		font-size: 12px;
+		color: var(--muted-foreground);
+	}
+
+	.pagination {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.page-btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 28px;
+		height: 28px;
+		border: 1px solid var(--border);
+		border-radius: var(--radius-sm);
+		background: var(--card);
+		color: var(--muted-foreground);
+		cursor: pointer;
+		transition: border-color 0.15s, color 0.15s, background 0.15s;
+	}
+
+	.page-btn:hover:not(:disabled) {
+		border-color: var(--primary);
+		color: var(--primary);
+	}
+
+	.page-btn:disabled {
+		opacity: 0.35;
+		cursor: not-allowed;
+	}
+
+	.page-info {
+		font-size: 12px;
+		color: var(--muted-foreground);
+		min-width: 80px;
+		text-align: center;
+	}
+</style>

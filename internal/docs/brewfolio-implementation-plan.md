@@ -66,17 +66,17 @@ Components from `datascienceapps` that map to a Keystatic collection or singleto
 
 Identified during app mapping. Cross-app components that are not tied to a specific collection.
 
-- [ ] `StatsGrid` — metric cards grid (count, label, delta/trend). Includes ComparisonGrid variant for A/B comparison.
-- [ ] `StatusCard` — single status indicator (green/red/yellow/gray)
-- [ ] `ExecutionPanel` — real-time SSE/polling progress panel with event stream + cancel
-- [ ] `ActivityLog` — scrollable timestamped event log (shares infra with ExecutionPanel)
-- [ ] `DataTable` — sortable, filterable, paginated table
-- [ ] `FilterBar` — horizontal toggleable filter chips bar
-- [ ] `SettingsModal` — key-value settings dialog (text, URL, select, toggle). Gear icon trigger in Header.
-- [ ] `SetupWizard` — multi-step onboarding with step indicator and slot-based steps
-- [ ] `Leaderboard` — ranked list with rank badge + score + optional delta
-- [ ] `Timer` — countdown/count-up with urgency states (normal/warning/critical)
-- [ ] `ScoreDisplay` — animated points display (count-up on change)
+- [x] `StatsGrid` — metric cards grid (count, label, delta/trend). Includes ComparisonGrid variant for A/B comparison.
+- [x] `StatusCard` — single status indicator (green/red/yellow/gray)
+- [x] `ExecutionPanel` — real-time SSE/polling progress panel with event stream + cancel
+- [x] `ActivityLog` — scrollable timestamped event log (shares infra with ExecutionPanel)
+- [x] `DataTable` — sortable, filterable, paginated table
+- [x] `FilterBar` — horizontal toggleable filter chips bar
+- [x] `SettingsModal` — key-value settings dialog (text, URL, select, toggle). Gear icon trigger in Header.
+- [x] `SetupWizard` — multi-step onboarding with step indicator and slot-based steps
+- [x] `Leaderboard` — ranked list with rank badge + score + optional delta
+- [x] `Timer` — countdown/count-up with urgency states (normal/warning/critical)
+- [x] `ScoreDisplay` — animated points display (count-up on change)
 
 ---
 

@@ -1,0 +1,228 @@
+---
+type TimerVariant = 'countdown' | 'countup'
+
+interface Props {
+	variant?: TimerVariant
+	totalMs?: number
+	startedAt?: number
+	showBar?: boolean
+	showDigits?: boolean
+	size?: 'sm' | 'md' | 'lg'
+	class?: string
+}
+
+const {
+	variant = 'countdown',
+	totalMs = 60000,
+	startedAt,
+	showBar = true,
+	showDigits = true,
+	size = 'md',
+	class: className = '',
+} = Astro.props
+
+const sizeMap = {
+	sm: { digit: '24px', bar: '4px', label: '10px' },
+	md: { digit: '40px', bar: '8px', label: '12px' },
+	lg: { digit: '64px', bar: '12px', label: '14px' },
+}
+
+const sizing = sizeMap[size]
+const timerId = `timer-${Math.random().toString(36).slice(2, 8)}`
+---
+
+<div
+	class={`brewfolio-timer ${className}`}
+	id={timerId}
+	data-variant={variant}
+	data-total={totalMs}
+	data-started={startedAt || ''}
+	data-show-bar={showBar ? 'true' : 'false'}
+	data-size={size}
+>
+	<div class="timer-layout">
+		{showDigits && (
+			<div class="timer-digits" aria-live="off" aria-label="Timer">
+				<span class="digit-display" aria-hidden="true">00:00</span>
+				<span class="sr-only">0 minutes, 0 seconds remaining</span>
+			</div>
+		)}
+
+		{showBar && (
+			<div class="timer-bar-track" aria-hidden="true">
+				<div class="timer-bar-fill"></div>
+			</div>
+		)}
+	</div>
+</div>
+
+<script is:inline>
+(function () {
+	function initTimer(el) {
+		const variant = el.getAttribute('data-variant') || 'countdown'
+		const totalMs = parseInt(el.getAttribute('data-total')) || 60000
+		const startedAt = parseInt(el.getAttribute('data-started')) || null
+		const showBar = el.getAttribute('data-show-bar') === 'true'
+		const barFill = el.querySelector('.timer-bar-fill')
+		const digitDisplay = el.querySelector('.digit-display')
+		const srOnly = el.querySelector('.sr-only')
+
+		let remaining = variant === 'countdown' ? totalMs : 0
+		let startTime = Date.now()
+		if (startedAt && variant === 'countup') {
+			startTime = startedAt
+			remaining = Date.now() - startedAt
+		}
+		if (startedAt && variant === 'countdown') {
+			remaining = Math.max(0, totalMs - (Date.now() - startedAt))
+		}
+
+		function formatMs(ms) {
+			const totalSec = Math.floor(Math.abs(ms) / 1000)
+			const min = Math.floor(totalSec / 60)
+			const sec = totalSec % 60
+			const sign = variant === 'countdown' && ms <= 0 ? '-' : ''
+			return `${sign}${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
+		}
+
+		function getUrgency(pct) {
+			if (variant !== 'countdown') return 'normal'
+			if (pct <= 0.2) return 'danger'
+			if (pct <= 0.5) return 'warning'
+			return 'normal'
+		}
+
+		function render() {
+			let elapsed = Date.now() - startTime
+			if (variant === 'countdown') {
+				remaining = Math.max(0, totalMs - elapsed)
+			} else {
+				remaining = elapsed
+			}
+
+			const pct = totalMs > 0 ? remaining / totalMs : 1
+			const urgency = getUrgency(pct)
+
+			el.classList.toggle('warning', urgency === 'warning')
+			el.classList.toggle('danger', urgency === 'danger')
+
+			if (digitDisplay) {
+				digitDisplay.textContent = formatMs(remaining)
+			}
+
+			if (srOnly && variant === 'countdown') {
+				const totalSec = Math.floor(remaining / 1000)
+				const min = Math.floor(totalSec / 60)
+				const sec = totalSec % 60
+				srOnly.textContent = `${min} minute${min !== 1 ? 's' : ''}, ${sec} second${sec !== 1 ? 's' : ''} remaining`
+			}
+
+			if (barFill) {
+				barFill.style.width = `${Math.max(0, Math.min(100, pct * 100))}%`
+				barFill.classList.toggle('warning', urgency === 'warning')
+				barFill.classList.toggle('danger', urgency === 'danger')
+			}
+
+			if (variant === 'countdown' && remaining <= 0) {
+				el.dispatchEvent(new CustomEvent('timer-complete', { bubbles: true }))
+			}
+		}
+
+		let interval = setInterval(render, 250)
+		render()
+
+		el.addEventListener('timer-pause', () => clearInterval(interval))
+		el.addEventListener('timer-resume', () => { interval = setInterval(render, 250) })
+		el.addEventListener('timer-reset', () => {
+			clearInterval(interval)
+			startTime = Date.now()
+			remaining = variant === 'countdown' ? totalMs : 0
+			render()
+			interval = setInterval(render, 250)
+		})
+	}
+
+	document.querySelectorAll('.brewfolio-timer').forEach(initTimer)
+})()
+</script>
+
+<style>
+	.brewfolio-timer {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+
+	.timer-layout {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		align-items: flex-start;
+	}
+
+	.timer-digits {
+		display: flex;
+		align-items: baseline;
+	}
+
+	.digit-display {
+		font-family: var(--font-mono, 'JetBrains Mono', monospace);
+		font-size: 40px;
+		font-weight: 700;
+		letter-spacing: -0.02em;
+		color: var(--foreground);
+		font-variant-numeric: tabular-nums;
+		line-height: 1;
+		transition: color 0.3s ease;
+	}
+
+	.brewfolio-timer.warning .digit-display { color: #eab308; }
+	.brewfolio-timer.danger .digit-display { color: var(--red); animation: urgentPulse 0.5s ease-in-out infinite alternate; }
+
+	.timer-bar-track {
+		width: 100%;
+		height: 8px;
+		background: var(--input);
+		border-radius: 999px;
+		overflow: hidden;
+	}
+
+	.timer-bar-fill {
+		height: 100%;
+		background: var(--primary);
+		border-radius: 999px;
+		transition: width 0.25s linear, background 0.3s ease;
+	}
+
+	.timer-bar-fill.warning { background: #eab308; }
+	.timer-bar-fill.danger { background: var(--red); }
+
+	.brewfolio-timer[data-size='sm'] .digit-display { font-size: 24px; }
+	.brewfolio-timer[data-size='lg'] .digit-display { font-size: 64px; }
+
+	.brewfolio-timer[data-size='sm'] .timer-bar-track { height: 4px; }
+	.brewfolio-timer[data-size='lg'] .timer-bar-track { height: 12px; }
+
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border-width: 0;
+	}
+
+	@keyframes urgentPulse {
+		from { opacity: 1; }
+		to { opacity: 0.6; }
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.brewfolio-timer.danger .digit-display {
+			animation: none;
+		}
+	}
+</style>

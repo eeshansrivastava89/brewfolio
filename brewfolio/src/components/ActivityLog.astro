@@ -1,0 +1,168 @@
+---
+type LogLevel = 'info' | 'success' | 'warning' | 'error' | 'debug'
+
+interface LogEntry {
+	id?: string
+	timestamp?: number
+	level?: LogLevel
+	message: string
+	details?: string
+}
+
+interface Props {
+	entries?: LogEntry[]
+	maxHeight?: string
+	showTimestamp?: boolean
+	class?: string
+}
+
+const {
+	entries = [],
+	maxHeight = '320px',
+	showTimestamp = true,
+	class: className = '',
+} = Astro.props
+---
+
+<div class={`brewfolio-activitylog ${className}`} style={`--log-max-height: ${maxHeight}`}>
+	<div class="log-container" role="log" aria-live="polite" aria-label="Activity log">
+		{entries.length === 0 ? (
+			<div class="log-empty">
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+					<path d="M12 8v4l3 3"/>
+					<circle cx="12" cy="12" r="9"/>
+				</svg>
+				<span>Activity will appear here…</span>
+			</div>
+		) : (
+			entries.map((entry) => {
+				const ts = entry.timestamp
+					? new Date(entry.timestamp).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })
+					: null
+				return (
+					<div class={`log-entry log-entry--${entry.level || 'info'}`} data-id={entry.id}>
+						{showTimestamp && ts && (
+							<span class="entry-ts" aria-hidden="true">{ts}</span>
+						)}
+						<span class="entry-icon" aria-hidden="true">
+							{entry.level === 'success' && (
+								<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+							)}
+							{entry.level === 'error' && (
+								<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+							)}
+							{entry.level === 'warning' && (
+								<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-2.83 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+							)}
+							{(entry.level === 'info' || entry.level === 'debug' || !entry.level) && (
+								<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+							)}
+						</span>
+						<div class="entry-body">
+							<span class="entry-message">{entry.message}</span>
+							{entry.details && <span class="entry-details">{entry.details}</span>}
+						</div>
+					</div>
+				)
+			})
+		)}
+	</div>
+</div>
+
+<style>
+	.brewfolio-activitylog {
+		background: var(--card);
+		border: 1px solid var(--border);
+		border-radius: var(--radius-lg);
+		box-shadow: var(--shadow);
+		overflow: hidden;
+	}
+
+	.log-container {
+		max-height: var(--log-max-height, 320px);
+		overflow-y: auto;
+		scrollbar-width: thin;
+		scrollbar-color: var(--border) transparent;
+		padding: 6px 0;
+	}
+
+	.log-container::-webkit-scrollbar {
+		width: 5px;
+	}
+
+	.log-container::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	.log-container::-webkit-scrollbar-thumb {
+		background: var(--border);
+		border-radius: 999px;
+	}
+
+	.log-empty {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		padding: 32px 16px;
+		color: var(--muted-foreground);
+		font-size: 13px;
+		font-style: italic;
+	}
+
+	.log-entry {
+		display: flex;
+		align-items: flex-start;
+		gap: 9px;
+		padding: 5px 14px;
+		transition: background 0.1s ease;
+	}
+
+	.log-entry:hover {
+		background: var(--secondary);
+	}
+
+	.entry-ts {
+		font-family: var(--font-mono, monospace);
+		font-size: 10px;
+		color: var(--muted-foreground);
+		opacity: 0.55;
+		flex-shrink: 0;
+		padding-top: 2px;
+		min-width: 68px;
+	}
+
+	.entry-icon {
+		flex-shrink: 0;
+		margin-top: 2px;
+		display: flex;
+		align-items: center;
+	}
+
+	.log-entry--info .entry-icon { color: var(--blue); }
+	.log-entry--success .entry-icon { color: var(--green); }
+	.log-entry--warning .entry-icon { color: #eab308; }
+	.log-entry--error .entry-icon { color: var(--red); }
+	.log-entry--debug .entry-icon { color: var(--muted-foreground); opacity: 0.5; }
+
+	.entry-body {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		min-width: 0;
+	}
+
+	.entry-message {
+		font-size: 13px;
+		color: var(--foreground);
+		line-height: 1.4;
+	}
+
+	.entry-details {
+		font-family: var(--font-mono, monospace);
+		font-size: 11px;
+		color: var(--muted-foreground);
+		opacity: 0.7;
+	}
+</style>

@@ -1,0 +1,497 @@
+---
+type FieldType = 'text' | 'url' | 'select' | 'toggle' | 'number'
+
+interface SelectOption {
+	label: string
+	value: string
+}
+
+interface SettingField {
+	key: string
+	label: string
+	type: FieldType
+	description?: string
+	placeholder?: string
+	options?: SelectOption[]
+	defaultValue?: unknown
+}
+
+interface SettingSection {
+	title: string
+	fields: SettingField[]
+}
+
+interface Props {
+	sections: SettingSection[]
+	defaultValues?: Record<string, unknown>
+	onsave?: string
+	class?: string
+}
+
+const {
+	sections,
+	defaultValues = {},
+	class: className = '',
+} = Astro.props
+
+const sectionId = `settings-${Math.random().toString(36).slice(2, 8)}`
+---
+
+<div
+	class={`brewfolio-settingsmodal ${className}`}
+	id={sectionId}
+	data-defaults={JSON.stringify(defaultValues)}
+	role="dialog"
+	aria-modal="true"
+	aria-labelledby={`${sectionId}-title`}
+>
+	<div class="settings-panel">
+		<div class="settings-header">
+			<h3 id={`${sectionId}-title`}>Settings</h3>
+			<button class="settings-close" aria-label="Close settings">
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+					<path d="M18 6L6 18M6 6l12 12"/>
+				</svg>
+			</button>
+		</div>
+
+		<div class="settings-body">
+			{sections.map((section) => (
+				<section class="settings-section">
+					<h4 class="section-title">{section.title}</h4>
+					<div class="section-fields">
+						{section.fields.map((field) => (
+							<div class="field-row" data-key={field.key} data-type={field.type}>
+								<div class="field-label-row">
+									<label class="field-label" for={`${sectionId}-${field.key}`}>{field.label}</label>
+									{field.description && <p class="field-desc">{field.description}</p>}
+								</div>
+								<div class="field-control">
+									{field.type === 'text' && (
+										<input
+											type="text"
+											id={`${sectionId}-${field.key}`}
+											class="field-input"
+											placeholder={field.placeholder}
+											value={defaultValues[field.key] ?? ''}
+										/>
+									)}
+									{field.type === 'url' && (
+										<input
+											type="url"
+											id={`${sectionId}-${field.key}`}
+											class="field-input"
+											placeholder={field.placeholder}
+											value={defaultValues[field.key] ?? ''}
+										/>
+									)}
+									{field.type === 'number' && (
+										<input
+											type="number"
+											id={`${sectionId}-${field.key}`}
+											class="field-input"
+											placeholder={field.placeholder}
+											value={defaultValues[field.key] ?? ''}
+										/>
+									)}
+									{field.type === 'select' && field.options && (
+										<select
+											id={`${sectionId}-${field.key}`}
+											class="field-select"
+										>
+											{field.options.map((opt) => (
+												<option value={opt.value} selected={defaultValues[field.key] === opt.value}>
+													{opt.label}
+												</option>
+											))}
+										</select>
+									)}
+									{field.type === 'toggle' && (
+										<label class="toggle-switch">
+											<input
+												type="checkbox"
+												id={`${sectionId}-${field.key}`}
+												checked={defaultValues[field.key] === true}
+											/>
+											<span class="toggle-track">
+												<span class="toggle-thumb"></span>
+											</span>
+										</label>
+									)}
+								</div>
+							</div>
+						))}
+					</div>
+				</section>
+			))}
+		</div>
+
+		<div class="settings-footer">
+			<button class="settings-btn settings-btn-danger" type="button">Reset</button>
+			<div class="footer-right">
+				<button class="settings-btn settings-btn-ghost cancel-btn" type="button">Cancel</button>
+				<button class="settings-btn settings-btn-primary" type="button">Save Changes</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script is:inline>
+(function () {
+	function initSettingsModal(el) {
+		const defaults = JSON.parse(el.getAttribute('data-defaults') || '{}')
+		const panel = el
+		const closeBtn = el.querySelector('.settings-close')
+		const cancelBtn = el.querySelector('.cancel-btn')
+		const resetBtn = el.querySelector('.settings-btn-danger')
+		const saveBtn = el.querySelector('.settings-btn-primary')
+
+		function getValues() {
+			const vals = {}
+			el.querySelectorAll('.field-row').forEach((row) => {
+				const key = row.getAttribute('data-key')
+				const type = row.getAttribute('data-type')
+				if (!key) return
+				const input = row.querySelector('input, select')
+				if (!input) return
+				if (type === 'toggle') {
+					vals[key] = input.checked
+				} else if (type === 'number') {
+					vals[key] = parseFloat(input.value) || 0
+				} else {
+					vals[key] = input.value
+				}
+			})
+			return vals
+		}
+
+		function open() {
+			panel.style.display = 'flex'
+			panel.setAttribute('aria-hidden', 'false')
+			document.body.style.overflow = 'hidden'
+			panel.querySelector('.field-input, select')?.focus()
+		}
+
+		function close() {
+			panel.style.display = 'none'
+			panel.setAttribute('aria-hidden', 'true')
+			document.body.style.overflow = ''
+		}
+
+		closeBtn?.addEventListener('click', close)
+		cancelBtn?.addEventListener('click', close)
+		resetBtn?.addEventListener('click', () => {
+			el.querySelectorAll('.field-row').forEach((row) => {
+				const key = row.getAttribute('data-key')
+				const type = row.getAttribute('data-type')
+				const input = row.querySelector('input, select')
+				if (!input || key === null) return
+				if (type === 'toggle') {
+					input.checked = defaults[key] === true
+				} else {
+					input.value = defaults[key] ?? ''
+				}
+			})
+		})
+		saveBtn?.addEventListener('click', () => {
+			const vals = getValues()
+			el.dispatchEvent(new CustomEvent('settings-save', { detail: vals, bubbles: true }))
+			close()
+		})
+
+		el.addEventListener('keydown', (e) => {
+			if (e.key === 'Escape') close()
+		})
+
+		if (panel.style.display !== 'none') {
+			open()
+		}
+	}
+
+	document.querySelectorAll('.brewfolio-settingsmodal').forEach(initSettingsModal)
+})()
+</script>
+
+<style>
+	.brewfolio-settingsmodal {
+		display: none;
+		position: fixed;
+		inset: 0;
+		z-index: 200;
+		background: var(--overlay);
+		align-items: center;
+		justify-content: center;
+		padding: 16px;
+	}
+
+	.brewfolio-settingsmodal[aria-hidden='false'],
+	.brewfolio-settingsmodal:not([aria-hidden]) {
+		display: flex;
+	}
+
+	.settings-panel {
+		background: var(--card);
+		border: 1px solid var(--border);
+		border-radius: var(--radius-lg);
+		box-shadow: var(--shadow-hover);
+		width: 100%;
+		max-width: 480px;
+		max-height: 90vh;
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+	}
+
+	.settings-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 16px 20px;
+		border-bottom: 1px solid var(--input);
+		flex-shrink: 0;
+	}
+
+	.settings-header h3 {
+		font-family: var(--font-serif, Georgia, serif);
+		font-size: 17px;
+		font-weight: 700;
+		color: var(--foreground);
+		margin: 0;
+	}
+
+	.settings-close {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 32px;
+		height: 32px;
+		border: 1px solid var(--border);
+		border-radius: var(--radius-sm);
+		background: transparent;
+		color: var(--muted-foreground);
+		cursor: pointer;
+		transition: border-color 0.15s, color 0.15s, background 0.15s;
+	}
+
+	.settings-close:hover {
+		border-color: var(--primary);
+		color: var(--primary);
+	}
+
+	.settings-body {
+		flex: 1;
+		overflow-y: auto;
+		padding: 16px 20px;
+		scrollbar-width: thin;
+		scrollbar-color: var(--border) transparent;
+	}
+
+	.settings-body::-webkit-scrollbar {
+		width: 5px;
+	}
+
+	.settings-body::-webkit-scrollbar-thumb {
+		background: var(--border);
+		border-radius: 999px;
+	}
+
+	.settings-section {
+		margin-bottom: 24px;
+	}
+
+	.settings-section:last-child {
+		margin-bottom: 0;
+	}
+
+	.section-title {
+		font-size: 11px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: var(--muted-foreground);
+		margin: 0 0 12px;
+	}
+
+	.section-fields {
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
+	}
+
+	.field-row {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 16px;
+	}
+
+	.field-label-row {
+		display: flex;
+		flex-direction: column;
+		gap: 3px;
+		flex: 1;
+		min-width: 0;
+	}
+
+	.field-label {
+		font-size: 13px;
+		font-weight: 500;
+		color: var(--foreground);
+	}
+
+	.field-desc {
+		font-size: 12px;
+		color: var(--muted-foreground);
+		margin: 0;
+		line-height: 1.4;
+	}
+
+	.field-control {
+		flex-shrink: 0;
+	}
+
+	.field-input,
+	.field-select {
+		width: 180px;
+		padding: 7px 11px;
+		border: 1px solid var(--border);
+		border-radius: var(--radius-sm);
+		background: var(--background);
+		color: var(--foreground);
+		font-family: var(--font-sans, system-ui, sans-serif);
+		font-size: 13px;
+		transition: border-color 0.15s;
+	}
+
+	.field-input:focus,
+	.field-select:focus {
+		outline: none;
+		border-color: var(--primary);
+		box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.12);
+	}
+
+	.field-input::placeholder {
+		color: var(--muted-foreground);
+		opacity: 0.6;
+	}
+
+	.field-select {
+		appearance: none;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a7d6f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+		background-repeat: no-repeat;
+		background-position: right 10px center;
+		padding-right: 30px;
+		cursor: pointer;
+	}
+
+	/* Toggle switch */
+	.toggle-switch {
+		display: inline-flex;
+		align-items: center;
+		cursor: pointer;
+	}
+
+	.toggle-switch input {
+		position: absolute;
+		opacity: 0;
+		width: 0;
+		height: 0;
+	}
+
+	.toggle-track {
+		width: 36px;
+		height: 20px;
+		background: var(--input);
+		border-radius: 999px;
+		position: relative;
+		transition: background 0.2s ease;
+	}
+
+	.toggle-thumb {
+		position: absolute;
+		top: 3px;
+		left: 3px;
+		width: 14px;
+		height: 14px;
+		background: white;
+		border-radius: 50%;
+		transition: transform 0.2s ease;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+	}
+
+	.toggle-switch input:checked + .toggle-track {
+		background: var(--primary);
+	}
+
+	.toggle-switch input:checked + .toggle-track .toggle-thumb {
+		transform: translateX(16px);
+	}
+
+	.toggle-switch input:focus-visible + .toggle-track {
+		box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2);
+	}
+
+	/* Footer */
+	.settings-footer {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 12px 20px;
+		border-top: 1px solid var(--input);
+		flex-shrink: 0;
+		background: var(--secondary);
+		gap: 8px;
+	}
+
+	.footer-right {
+		display: flex;
+		gap: 8px;
+	}
+
+	.settings-btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 6px;
+		padding: 7px 16px;
+		border-radius: var(--radius-sm);
+		font-family: var(--font-sans, system-ui, sans-serif);
+		font-size: 13px;
+		font-weight: 500;
+		cursor: pointer;
+		transition: border-color 0.15s, color 0.15s, background 0.15s;
+		border: 1px solid transparent;
+	}
+
+	.settings-btn-ghost {
+		background: transparent;
+		border-color: var(--border);
+		color: var(--muted-foreground);
+	}
+
+	.settings-btn-ghost:hover {
+		border-color: var(--muted-foreground);
+		color: var(--foreground);
+	}
+
+	.settings-btn-primary {
+		background: var(--primary);
+		border-color: var(--primary);
+		color: var(--primary-foreground);
+	}
+
+	.settings-btn-primary:hover {
+		opacity: 0.9;
+	}
+
+	.settings-btn-danger {
+		background: transparent;
+		border-color: var(--red);
+		color: var(--red);
+	}
+
+	.settings-btn-danger:hover {
+		background: var(--red);
+		color: var(--destructive-foreground);
+	}
+</style>

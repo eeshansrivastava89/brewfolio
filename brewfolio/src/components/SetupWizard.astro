@@ -1,0 +1,357 @@
+---
+interface Step {
+	id: string
+	label: string
+	description?: string
+}
+
+interface Props {
+	steps: Step[]
+	currentStep?: string
+	onsave?: string
+	class?: string
+}
+
+const {
+	steps,
+	currentStep = steps[0]?.id || '',
+	class: className = '',
+} = Astro.props
+
+const stepId = `wizard-${Math.random().toString(36).slice(2, 8)}`
+---
+
+<div class={`brewfolio-setupwizard ${className}`} data-current={currentStep} id={stepId}>
+	<div class="wizard-overlay"></div>
+	<div class="wizard-panel">
+		<div class="wizard-header">
+			<div class="wizard-steps" role="list">
+				{steps.map((step, index) => {
+					const isDone = steps.findIndex(s => s.id === currentStep) > index
+					const isActive = step.id === currentStep
+					return (
+						<div
+							class={`wizard-step ${isActive ? 'active' : ''} ${isDone ? 'done' : ''}`}
+							data-step-id={step.id}
+							role="listitem"
+							aria-current={isActive ? 'step' : undefined}
+						>
+							<div class="step-indicator">
+								{isDone ? (
+									<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+										<polyline points="20 6 9 17 4 12"/>
+									</svg>
+								) : (
+									<span>{index + 1}</span>
+								)}
+							</div>
+							<div class="step-text">
+								<span class="step-label">{step.label}</span>
+								{step.description && <span class="step-desc">{step.description}</span>}
+							</div>
+						</div>
+					)
+				})}
+			</div>
+			<div class="wizard-progress-track">
+				<div class="wizard-progress-fill" style={`width: ${((steps.findIndex(s => s.id === currentStep) + 1) / steps.length) * 100}%`}></div>
+			</div>
+		</div>
+
+		<div class="wizard-body">
+			<div class="wizard-slot-wrap">
+				<slot />
+			</div>
+		</div>
+
+		<div class="wizard-footer">
+			<div class="wizard-nav">
+				<button class="wizard-btn wizard-btn-ghost prev-btn" type="button" disabled>
+					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<polyline points="15 18 9 12 15 6"/>
+					</svg>
+					Back
+				</button>
+				<div class="wizard-step-count" aria-live="polite">
+					Step {steps.findIndex(s => s.id === currentStep) + 1} of {steps.length}
+				</div>
+				<button class="wizard-btn wizard-btn-primary next-btn" type="button">
+					Next
+					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<polyline points="9 18 15 12 9 6"/>
+					</svg>
+				</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script is:inline>
+(function () {
+	function initWizard(el) {
+		const steps = Array.from(el.querySelectorAll('.wizard-step')).map((s) => s.getAttribute('data-step-id'))
+		const progressFill = el.querySelector('.wizard-progress-fill')
+		const prevBtn = el.querySelector('.prev-btn')
+		const nextBtn = el.querySelector('.next-btn')
+		const stepCount = el.querySelector('.wizard-step-count')
+		const slotWrap = el.querySelector('.wizard-slot-wrap')
+
+		let currentIndex = steps.findIndex((s) => s === el.getAttribute('data-current'))
+		if (currentIndex < 0) currentIndex = 0
+
+		function render() {
+			const current = steps[currentIndex]
+			el.setAttribute('data-current', current)
+
+			el.querySelectorAll('.wizard-step').forEach((s) => {
+				const id = s.getAttribute('data-step-id')
+				const idx = steps.indexOf(id)
+				s.classList.toggle('active', id === current)
+				s.classList.toggle('done', idx < currentIndex)
+			})
+
+			if (progressFill) {
+				progressFill.style.width = `${((currentIndex + 1) / steps.length) * 100}%`
+			}
+
+			if (prevBtn) prevBtn.disabled = currentIndex === 0
+			if (nextBtn) {
+				nextBtn.disabled = currentIndex === steps.length - 1
+				nextBtn.textContent = currentIndex === steps.length - 1 ? 'Finish' : 'Next'
+			}
+
+			if (stepCount) {
+				stepCount.textContent = `Step ${currentIndex + 1} of ${steps.length}`
+			}
+
+			if (slotWrap) {
+				slotWrap.querySelectorAll('.step-panel').forEach((p) => {
+					p.hidden = p.getAttribute('data-step') !== current
+				})
+			}
+
+			el.dispatchEvent(new CustomEvent('step-change', {
+				detail: { step: current, index: currentIndex },
+				bubbles: true,
+			}))
+		}
+
+		prevBtn?.addEventListener('click', () => {
+			if (currentIndex > 0) { currentIndex--; render() }
+		})
+
+		nextBtn?.addEventListener('click', () => {
+			if (currentIndex < steps.length - 1) {
+				currentIndex++
+				render()
+			} else {
+				el.dispatchEvent(new CustomEvent('wizard-complete', { bubbles: true }))
+			}
+		})
+
+		render()
+	}
+
+	document.querySelectorAll('.brewfolio-setupwizard').forEach(initWizard)
+})()
+</script>
+
+<style>
+	.brewfolio-setupwizard {
+		position: relative;
+	}
+
+	.wizard-overlay {
+		position: fixed;
+		inset: 0;
+		z-index: 200;
+		background: var(--background);
+		opacity: 0.96;
+	}
+
+	.wizard-panel {
+		position: fixed;
+		inset: 0;
+		z-index: 201;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 24px;
+		pointer-events: none;
+	}
+
+	.wizard-panel > * {
+		pointer-events: auto;
+	}
+
+	.wizard-header {
+		width: 100%;
+		max-width: 520px;
+		background: var(--card);
+		border: 1px solid var(--border);
+		border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+		border-bottom: none;
+		padding: 24px 28px 20px;
+		box-shadow: var(--shadow);
+	}
+
+	.wizard-steps {
+		display: flex;
+		flex-direction: column;
+		gap: 0;
+	}
+
+	.wizard-step {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding: 6px 0;
+	}
+
+	.step-indicator {
+		width: 28px;
+		height: 28px;
+		border-radius: 50%;
+		border: 2px solid var(--border);
+		background: var(--secondary);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 12px;
+		font-weight: 700;
+		color: var(--muted-foreground);
+		flex-shrink: 0;
+		transition: border-color 0.2s, background 0.2s, color 0.2s;
+	}
+
+	.wizard-step.active .step-indicator {
+		border-color: var(--primary);
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+
+	.wizard-step.done .step-indicator {
+		border-color: var(--green);
+		background: var(--green);
+		color: white;
+	}
+
+	.step-text {
+		display: flex;
+		flex-direction: column;
+		gap: 1px;
+	}
+
+	.step-label {
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--muted-foreground);
+		transition: color 0.2s;
+	}
+
+	.wizard-step.active .step-label {
+		color: var(--foreground);
+	}
+
+	.step-desc {
+		font-size: 12px;
+		color: var(--muted-foreground);
+		opacity: 0.7;
+	}
+
+	.wizard-progress-track {
+		height: 3px;
+		background: var(--input);
+		border-radius: 999px;
+		margin-top: 16px;
+		overflow: hidden;
+	}
+
+	.wizard-progress-fill {
+		height: 100%;
+		background: var(--primary);
+		border-radius: 999px;
+		transition: width 0.4s ease;
+	}
+
+	.wizard-body {
+		width: 100%;
+		max-width: 520px;
+		background: var(--card);
+		border: 1px solid var(--border);
+		border-top: none;
+		padding: 24px 28px;
+		box-shadow: var(--shadow);
+		min-height: 200px;
+	}
+
+	.wizard-slot-wrap {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+
+	.wizard-footer {
+		width: 100%;
+		max-width: 520px;
+		background: var(--card);
+		border: 1px solid var(--border);
+		border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+		border-top: none;
+		padding: 16px 20px;
+		box-shadow: var(--shadow);
+	}
+
+	.wizard-nav {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+	}
+
+	.wizard-step-count {
+		font-size: 12px;
+		color: var(--muted-foreground);
+	}
+
+	.wizard-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		padding: 8px 18px;
+		border-radius: var(--radius-sm);
+		font-family: var(--font-sans, system-ui, sans-serif);
+		font-size: 13px;
+		font-weight: 500;
+		cursor: pointer;
+		transition: border-color 0.15s, color 0.15s, background 0.15s, opacity 0.15s;
+		border: 1px solid transparent;
+	}
+
+	.wizard-btn:disabled {
+		opacity: 0.35;
+		cursor: not-allowed;
+	}
+
+	.wizard-btn-ghost {
+		background: transparent;
+		border-color: var(--border);
+		color: var(--muted-foreground);
+	}
+
+	.wizard-btn-ghost:hover:not(:disabled) {
+		border-color: var(--muted-foreground);
+		color: var(--foreground);
+	}
+
+	.wizard-btn-primary {
+		background: var(--primary);
+		border-color: var(--primary);
+		color: var(--primary-foreground);
+	}
+
+	.wizard-btn-primary:hover:not(:disabled) {
+		opacity: 0.9;
+	}
+</style>

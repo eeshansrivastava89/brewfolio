@@ -1,0 +1,147 @@
+---
+interface FilterOption {
+	value: string
+	label: string
+	count?: number
+	icon?: string
+}
+
+interface Props {
+	options: FilterOption[]
+	active?: string
+	multi?: boolean
+	class?: string
+}
+
+const {
+	options,
+	active = '',
+	multi = false,
+	class: className = '',
+} = Astro.props
+
+const activeFilters = active ? active.split(',').filter(Boolean) : []
+---
+
+<div class={`brewfolio-filterbar ${className}`} data-multi={multi ? 'true' : 'false'} role="group" aria-label="Filter options">
+	{options.map((opt) => {
+		const isActive = multi
+			? activeFilters.includes(opt.value)
+			: active === opt.value
+
+		return (
+			<button
+				class={`filter-chip ${isActive ? 'active' : ''}`}
+				data-value={opt.value}
+				aria-pressed={isActive ? 'true' : 'false'}
+				type="button"
+			>
+				{opt.icon && (
+					<span class="chip-icon" aria-hidden="true">{opt.icon}</span>
+				)}
+				<span class="chip-label">{opt.label}</span>
+				{opt.count !== undefined && (
+					<span class="chip-count">{opt.count}</span>
+				)}
+			</button>
+		)
+	})}
+</div>
+
+<script is:inline>
+(function () {
+	function initFilterBar(el) {
+		const multi = el.getAttribute('data-multi') === 'true'
+		const chips = el.querySelectorAll('.filter-chip')
+
+		function getActive() {
+			const pressed = Array.from(chips).filter((c) => c.getAttribute('aria-pressed') === 'true')
+			return pressed.map((c) => c.getAttribute('data-value')).filter(Boolean)
+		}
+
+		function update() {
+			const active = getActive()
+			const val = multi ? active.join(',') : (active[0] || '')
+			el.dispatchEvent(new CustomEvent('filter-change', {
+				detail: { value: val, active },
+				bubbles: true,
+			}))
+		}
+
+		chips.forEach((chip) => {
+			chip.addEventListener('click', () => {
+				const val = chip.getAttribute('data-value') || ''
+				if (multi) {
+					const pressed = chip.getAttribute('aria-pressed') === 'true'
+					chip.setAttribute('aria-pressed', pressed ? 'false' : 'true')
+				} else {
+					chips.forEach((c) => c.setAttribute('aria-pressed', 'false'))
+					chip.setAttribute('aria-pressed', 'true')
+				}
+				update()
+			})
+		})
+	}
+
+	document.querySelectorAll('.brewfolio-filterbar').forEach(initFilterBar)
+})()
+</script>
+
+<style>
+	.brewfolio-filterbar {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 7px;
+	}
+
+	.filter-chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		padding: 6px 14px;
+		border: 1px solid var(--border);
+		border-radius: 999px;
+		background: var(--card);
+		color: var(--muted-foreground);
+		font-family: var(--font-sans, system-ui, sans-serif);
+		font-size: 13px;
+		font-weight: 500;
+		cursor: pointer;
+		transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+		white-space: nowrap;
+		line-height: 1.2;
+	}
+
+	.filter-chip:hover:not(.active) {
+		border-color: var(--muted-foreground);
+		color: var(--foreground);
+	}
+
+	.filter-chip.active {
+		border-color: var(--primary);
+		background: var(--primary);
+		color: var(--primary-foreground);
+		box-shadow: var(--shadow);
+	}
+
+	.chip-icon {
+		display: inline-flex;
+		align-items: center;
+		font-size: 13px;
+	}
+
+	.chip-label {
+		font-weight: inherit;
+	}
+
+	.chip-count {
+		font-family: var(--font-mono, monospace);
+		font-size: 11px;
+		opacity: 0.7;
+		font-weight: 400;
+	}
+
+	.filter-chip.active .chip-count {
+		opacity: 0.8;
+	}
+</style>
