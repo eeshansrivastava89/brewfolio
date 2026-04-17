@@ -90,10 +90,19 @@ export default config({
 							],
 							defaultValue: 'metrics-grid'
 						}),
-						value: fields.dynamic({
-							choose: fields.fields().discriminant,
-							options: {
-								'metrics-grid': fields.fields({
+						value: fields.conditional(
+							fields.select({
+								label: 'Type',
+								options: [
+									{ label: 'Metrics Grid', value: 'metrics-grid' },
+									{ label: 'Results List', value: 'results-list' },
+									{ label: 'Notebook', value: 'notebook' },
+									{ label: 'GitHub Timeline', value: 'github-timeline' }
+								],
+								defaultValue: 'metrics-grid'
+							}),
+							{
+								'metrics-grid': {
 									title: fields.text({ label: 'Title' }),
 									metrics: fields.array(
 										fields.object({
@@ -113,8 +122,8 @@ export default config({
 										}),
 										{ label: 'Metrics', itemLabel: (props) => props.fields.label.value || 'Metric' }
 									)
-								}),
-								'results-list': fields.fields({
+								},
+								'results-list': {
 									title: fields.text({ label: 'Title' }),
 									items: fields.array(
 										fields.object({
@@ -124,16 +133,16 @@ export default config({
 										}),
 										{ label: 'Items', itemLabel: (props) => props.fields.title.value || 'Item' }
 									)
-								}),
-								notebook: fields.fields({
+								},
+								notebook: {
 									title: fields.text({ label: 'Title' }),
 									notebookId: fields.text({ label: 'Notebook ID', validation: { isRequired: true } })
-								}),
-								'github-timeline': fields.fields({
+								},
+								'github-timeline': {
 									title: fields.text({ label: 'Title' })
-								})
+								}
 							}
-						})
+						)
 					}),
 					{ label: 'Sections', itemLabel: (props) => `${props.fields.discriminant.value} — ${props.fields.value.value?.title || props.fields.discriminant.value}` }
 				)

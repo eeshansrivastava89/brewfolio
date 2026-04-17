@@ -1,11 +1,13 @@
 import { spawn } from 'child_process'
-import { join } from 'path'
+import { join, dirname } from 'path'
 import { copyFile, mkdir, readdir } from 'fs/promises'
 import { readFile, writeFile } from 'fs/promises'
+import { fileURLToPath } from 'url'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const TEMPLATE_DIR = join(__dirname, '..', 'template')
 
 export async function copyTemplateOverlay(projectDir) {
-  const templateSrc = join(process.cwd(), '..', '..', 'packages', 'create-brewfolio', 'template')
-
   async function copyDir(src, dest) {
     try {
       await mkdir(dest, { recursive: true })
@@ -22,26 +24,13 @@ export async function copyTemplateOverlay(projectDir) {
     }
   }
 
-  await copyDir(templateSrc, projectDir)
+  await copyDir(TEMPLATE_DIR, projectDir)
 }
 
-export async function updatePackageJsonDeps(projectDir) {
-  const pkgPath = join(projectDir, 'package.json')
-  const pkg = JSON.parse(await readFile(pkgPath, 'utf-8'))
-
-  pkg.dependencies = {
-    ...pkg.dependencies,
-    brewfolio: 'latest',
-    '@keystatic/core': '^0.5',
-    '@keystatic/astro': '^0.5',
-  }
-
-  await writeFile(pkgPath, JSON.stringify(pkg, null, 2) + '\n')
-}
-
-export function runProcess(cmd, args, { cwd = process.cwd(), stdio = 'inherit' } = {}) {
+export function runProcess(cmd, args, { cwd = process.cwd() } = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn(cmd, args, { cwd, stdio })
+    console.log(`  Running: ${cmd} ${args.join(' ')}`)
+    const child = spawn(cmd, args, { cwd, stdio: 'inherit' })
     child.on('close', (code) => {
       if (code === 0) resolve()
       else reject(new Error(`"${cmd} ${args.join(' ')}" exited with code ${code}`))

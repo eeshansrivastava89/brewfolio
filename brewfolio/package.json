@@ -6,19 +6,21 @@
 	"exports": {
 		".": "./src/index.ts",
 		"./styles/tokens.css": "./src/styles/tokens.css",
-		"./keystatic.config": "./src/keystatic.config.ts"
+		"./keystatic.config": "./src/keystatic.config.ts",
+		"./layouts/*": "./src/layouts/*",
+		"./components/*": "./src/components/*",
+		"./lib/*": "./src/lib/*"
 	},
 	"files": [
-		"src/**/*",
-		"!src/**/*.astro"
+		"src/**/*"
 	],
 	"scripts": {
 		"typecheck": "tsc --noEmit"
 	},
 	"peerDependencies": {
-		"@keystatic/core": "^0.5",
-		"@keystatic/astro": "^0.5",
-		"astro": "^5.0.0"
+		"@keystatic/core": ">=1.0.0",
+		"@keystatic/astro": ">=5.0.0",
+		"astro": ">=5.0.0"
 	},
 	"devDependencies": {
 		"typescript": "^5.7.0"

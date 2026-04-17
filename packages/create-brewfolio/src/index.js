@@ -13,7 +13,7 @@ import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import fs from 'fs/promises'
 import ora from 'ora'
-import { copyTemplateOverlay, updatePackageJsonDeps, runProcess } from './utils.js'
+import { copyTemplateOverlay, runProcess } from './utils.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -26,6 +26,7 @@ program
   .option('-t, --template <template>', 'Astro project template', 'minimal')
   .option('-g, --no-git', 'Skip git initialization')
   .option('-d, --dry-run', 'Print what would be done without doing it')
+  .option('-l, --local-brewfolio <path>', 'Path to local brewfolio package (for testing)')
   .action(async (projectName, opts) => {
     const projectDir = join(process.cwd(), projectName)
 
@@ -49,36 +50,49 @@ program
         spinner.fail(`Directory "${projectName}" already exists. Choose a different name or remove it first.`)
         process.exit(1)
       } catch {}
+      spinner.succeed('Checking target directory…')
 
-      // 2. Run `npm create astro@latest` with --template minimal --no-git --yes
-      //    We let Astro handle the template itself, then overlay brewfolio on top.
+      // 2. Scaffold Astro project in one shot: npx create-astro --yes --no-git
+      //    We intercept the project directory so it doesn't prompt
       spinner.start(`Scaffolding Astro project (${opts.template} template)…`)
-      await runProcess('npm', [
-        'create', 'astro@latest',
+      await runProcess('npx', [
+        '--yes',
+        'create-astro@latest',
         projectName,
         '--template', opts.template,
         '--no-git',
         '--yes',
-      ], { stdio: 'pipe' })
+      ])
 
       // 3. Copy template overlay files into the new project
       spinner.start('Applying brewfolio template…')
       await copyTemplateOverlay(projectDir)
-      await updatePackageJsonDeps(projectDir)
+      spinner.succeed('Applying brewfolio template…')
 
       // 4. Install brewfolio + peer deps
+      //    Use --legacy-peer-deps: @keystatic/astro hasn't updated its peer dep for Astro 6 yet
+      //    Use --local-brewfolio for testing with a local brewfolio package before npm publish
       spinner.start('Installing dependencies…')
-      await runProcess('npm', [
+      const brewfolioPath = opts.localBrewfolio
+        ? opts.localBrewfolio
+        : 'brewfolio'
+
+      const installArgs = [
         'install',
-        'brewfolio',
-        '@keystatic/core@^0.5',
-        '@keystatic/astro@^0.5',
-      ], { cwd: projectDir, stdio: 'pipe' })
+        brewfolioPath,
+        '@keystatic/core@latest',
+        '@keystatic/astro@latest',
+        'react',
+        'react-dom',
+        '--legacy-peer-deps',
+      ]
+      await runProcess('npm', installArgs, { cwd: projectDir })
 
       // 5. Init git if requested
       if (opts.git) {
         spinner.start('Initializing git…')
-        await runProcess('git', ['init'], { cwd: projectDir, stdio: 'pipe' })
+        await runProcess('git', ['init'], { cwd: projectDir })
+        spinner.succeed('Initializing git…')
       }
 
       spinner.succeed(`\n  Done! Your project is ready at ./${projectName}\n`)
