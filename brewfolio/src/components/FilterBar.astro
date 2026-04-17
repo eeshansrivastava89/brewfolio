@@ -1,4 +1,29 @@
 ---
+/**
+ * FilterBar — Horizontal row of toggleable filter chip buttons.
+ * Supports single-select (radio-style) or multi-select (checkbox-style) modes.
+ * Fires a `filter-change` CustomEvent on the element with `{ value, active }`.
+ *
+ * USE CASES
+ *   • Dashboard concept filters — filter projects/writing/notebooks by topic
+ *   • Table column filters
+ *   • Any horizontal filter group (status, category, date range)
+ *
+ * SOURCE APP: sidequests (stats-bar.tsx signal filters)
+ * CONCEPTS: ConceptsPane, ProjectsPane — filter project tiles by concept slug
+ *
+ * PROPS
+ *   options[]  — { value, label, count?, icon? }
+ *   active     — comma-separated active values (for multi) or single value (for single)
+ *   multi      — enable multi-select mode (default false = single select)
+ *
+ * STYLING NOTES
+ *   aria-pressed state (JS-driven, not Tailwind-controlled) — CSS only
+ *   .active chip border + bg + text color — CSS only (attribute selector, not class toggle)
+ *   Hover on non-active — via Tailwind
+ *   Chip pill appearance (border-radius: 999px) — Tailwind
+ */
+
 interface FilterOption {
 	value: string
 	label: string
@@ -23,7 +48,10 @@ const {
 const activeFilters = active ? active.split(',').filter(Boolean) : []
 ---
 
-<div class={`brewfolio-filterbar ${className}`} data-multi={multi ? 'true' : 'false'} role="group" aria-label="Filter options">
+<div class={`brewfolio-filterbar flex flex-wrap gap-2 ${className}`}
+	data-multi={multi ? 'true' : 'false'}
+	role="group"
+	aria-label="Filter options">
 	{options.map((opt) => {
 		const isActive = multi
 			? activeFilters.includes(opt.value)
@@ -31,17 +59,18 @@ const activeFilters = active ? active.split(',').filter(Boolean) : []
 
 		return (
 			<button
-				class={`filter-chip ${isActive ? 'active' : ''}`}
+				class={`filter-chip inline-flex items-center gap-1.5 px-3.5 py-1.5
+					border border-border rounded-full bg-card text-[13px] font-medium
+					cursor-pointer transition-all duration-150 leading-tight
+					${isActive ? 'active' : ''}`}
 				data-value={opt.value}
 				aria-pressed={isActive ? 'true' : 'false'}
 				type="button"
 			>
-				{opt.icon && (
-					<span class="chip-icon" aria-hidden="true">{opt.icon}</span>
-				)}
-				<span class="chip-label">{opt.label}</span>
+				{opt.icon && <span class="text-[13px]" aria-hidden="true">{opt.icon}</span>}
+				<span class="font-normal">{opt.label}</span>
 				{opt.count !== undefined && (
-					<span class="chip-count">{opt.count}</span>
+					<span class="font-mono text-[11px] opacity-70">{opt.count}</span>
 				)}
 			</button>
 		)
@@ -55,17 +84,16 @@ const activeFilters = active ? active.split(',').filter(Boolean) : []
 		const chips = el.querySelectorAll('.filter-chip')
 
 		function getActive() {
-			const pressed = Array.from(chips).filter((c) => c.getAttribute('aria-pressed') === 'true')
-			return pressed.map((c) => c.getAttribute('data-value')).filter(Boolean)
+			return Array.from(chips)
+				.filter((c) => c.getAttribute('aria-pressed') === 'true')
+				.map((c) => c.getAttribute('data-value'))
+				.filter(Boolean)
 		}
 
 		function update() {
 			const active = getActive()
 			const val = multi ? active.join(',') : (active[0] || '')
-			el.dispatchEvent(new CustomEvent('filter-change', {
-				detail: { value: val, active },
-				bubbles: true,
-			}))
+			el.dispatchEvent(new CustomEvent('filter-change', { detail: { value: val, active }, bubbles: true }))
 		}
 
 		chips.forEach((chip) => {
@@ -88,60 +116,16 @@ const activeFilters = active ? active.split(',').filter(Boolean) : []
 </script>
 
 <style>
-	.brewfolio-filterbar {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 7px;
-	}
-
-	.filter-chip {
-		display: inline-flex;
-		align-items: center;
-		gap: 6px;
-		padding: 6px 14px;
-		border: 1px solid var(--border);
-		border-radius: 999px;
-		background: var(--card);
-		color: var(--muted-foreground);
-		font-family: var(--font-sans, system-ui, sans-serif);
-		font-size: 13px;
-		font-weight: 500;
-		cursor: pointer;
-		transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
-		white-space: nowrap;
-		line-height: 1.2;
-	}
-
 	.filter-chip:hover:not(.active) {
 		border-color: var(--muted-foreground);
 		color: var(--foreground);
 	}
 
-	.filter-chip.active {
+	/* Active state via aria-pressed (JS-driven, not class-based Tailwind) */
+	.filter-chip[aria-pressed='true'] {
 		border-color: var(--primary);
 		background: var(--primary);
 		color: var(--primary-foreground);
 		box-shadow: var(--shadow);
-	}
-
-	.chip-icon {
-		display: inline-flex;
-		align-items: center;
-		font-size: 13px;
-	}
-
-	.chip-label {
-		font-weight: inherit;
-	}
-
-	.chip-count {
-		font-family: var(--font-mono, monospace);
-		font-size: 11px;
-		opacity: 0.7;
-		font-weight: 400;
-	}
-
-	.filter-chip.active .chip-count {
-		opacity: 0.8;
 	}
 </style>

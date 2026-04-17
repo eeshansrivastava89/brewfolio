@@ -1,4 +1,27 @@
 ---
+/**
+ * ScoreDisplay — Large animated numeric score with optional label and delta indicator.
+ * Renders the score in a prominent monospace display with an up/down delta badge.
+ *
+ * USE CASES
+ *   • Game score display — quizzard (total score, final score)
+ *   • Leaderboard point totals
+ *   • Metric dashboards (revenue, users, conversions)
+ *
+ * SOURCE APP: quizzard (score display, trophy animation for top 3)
+ * THIS COMPONENT: Static server-rendered display; no JS needed for base rendering
+ *
+ * PROPS
+ *   value           — the score value
+ *   label           — optional label below the score (e.g. "Total Points")
+ *   previousValue   — if set, shows a delta badge (value - previousValue)
+ *   formatAs        — 'number' | 'currency' | 'percent' (default 'number')
+ *
+ * STYLING NOTES
+ *   Delta badge positive/negative colors — CSS only
+ *   All layout/spacing/typography — via Tailwind
+ */
+
 interface Props {
 	value: number
 	label?: string
@@ -15,8 +38,6 @@ const {
 	class: className = '',
 } = Astro.props
 
-const scoreId = `score-${Math.random().toString(36).slice(2, 8)}`
-
 function formatValue(val: number, format: string) {
 	switch (format) {
 		case 'currency':
@@ -31,81 +52,37 @@ function formatValue(val: number, format: string) {
 const displayValue = formatValue(value, formatAs)
 ---
 
-<div class={`brewfolio-scoredisplay ${className}`} id={scoreId} data-format={formatAs}>
-	<div class="score-inner">
-		<span class="score-value" aria-live="polite">{displayValue}</span>
-		{label && <span class="score-label">{label}</span>}
+<div class={`brewfolio-scoredisplay inline-flex flex-col gap-1 ${className}`}>
+	<div class="flex flex-col gap-0.5">
+		<span class="score-value font-mono text-[36px] font-bold tracking-[-0.03em]
+			text-foreground font-variant-numeric tabular-nums leading-none">
+			{displayValue}
+		</span>
+		{label && (
+			<span class="text-[12px] text-muted-foreground uppercase tracking-[0.07em] font-medium">
+				{label}
+			</span>
+		)}
 	</div>
 	{previousValue !== undefined && previousValue !== value && (
-		<div class="score-delta" aria-live="polite" aria-label={`Changed from ${formatValue(previousValue, formatAs)}`}>
-			<span class={`delta-badge ${value > previousValue ? 'positive' : 'negative'}`}>
+		<div aria-live="polite"
+			aria-label={`Changed from ${formatValue(previousValue, formatAs)}`}>
+			<span class={`delta-badge inline-flex items-center gap-1 font-mono text-[12px] font-semibold
+				px-2 py-1 rounded-full
+				${value > previousValue
+					? 'text-green bg-green/10'
+					: 'text-red bg-red/10'}`}>
 				{value > previousValue ? (
-					<svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M5 2L8 6H2L5 2Z"/></svg>
+					<svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">
+						<path d="M5 2L8 6H2L5 2Z"/>
+					</svg>
 				) : (
-					<svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M5 8L2 4H8L5 8Z"/></svg>
+					<svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">
+						<path d="M5 8L2 4H8L5 8Z"/>
+					</svg>
 				)}
-				{formatValue(Math.abs(value - previousValue), format)}
+				{formatValue(Math.abs(value - previousValue), formatAs)}
 			</span>
 		</div>
 	)}
 </div>
-
-<style>
-	.brewfolio-scoredisplay {
-		display: inline-flex;
-		flex-direction: column;
-		align-items: flex-start;
-		gap: 4px;
-	}
-
-	.score-inner {
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-	}
-
-	.score-value {
-		font-family: var(--font-mono, 'JetBrains Mono', monospace);
-		font-size: 36px;
-		font-weight: 700;
-		letter-spacing: -0.03em;
-		color: var(--foreground);
-		font-variant-numeric: tabular-nums;
-		line-height: 1;
-		transition: color 0.3s ease;
-	}
-
-	.score-label {
-		font-size: 12px;
-		color: var(--muted-foreground);
-		text-transform: uppercase;
-		letter-spacing: 0.07em;
-		font-weight: 500;
-	}
-
-	.score-delta {
-		display: flex;
-		align-items: center;
-	}
-
-	.delta-badge {
-		display: inline-flex;
-		align-items: center;
-		gap: 4px;
-		font-family: var(--font-mono, monospace);
-		font-size: 12px;
-		font-weight: 600;
-		padding: 3px 8px;
-		border-radius: 999px;
-	}
-
-	.delta-badge.positive {
-		color: var(--green);
-		background: rgba(22, 163, 74, 0.1);
-	}
-
-	.delta-badge.negative {
-		color: var(--red);
-		background: rgba(210, 15, 57, 0.1);
-	}
-</style>

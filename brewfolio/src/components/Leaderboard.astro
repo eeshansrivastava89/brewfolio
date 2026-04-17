@@ -1,4 +1,29 @@
 ---
+/**
+ * Leaderboard — Ranked list with medal icons, optional "YOU" badge, and score display.
+ * Supports gold/silver/bronze medal rendering, current-user highlighting, and optional delta.
+ *
+ * USE CASES
+ *   • Quiz/game leaderboards — quizzard, ab-simulator
+ *   • A/B experiment results ranking
+ *   • Any ranked list with a score and optional change indicator
+ *
+ * SOURCE APP: ab-simulator (leaderboard-ui.js), quizzard (host.ts)
+ * THIS COMPONENT: Fully static — data passed as props; no JS required for rendering
+ *
+ * PROPS
+ *   entries[]     — { rank, name, score, delta?, isCurrentUser?, variant? }
+ *                    variant: 'gold' | 'silver' | 'bronze' | 'default' (for rank ≤3)
+ *   title         — list header (default 'Leaderboard')
+ *   showDelta     — show score change badge (default false)
+ *   showRank      — show rank badge/medal (default true)
+ *
+ * STYLING NOTES
+ *   Medal SVG fill colors (gold/silver/bronze — inline style attributes) — CSS only
+ *   Current-user left-border accent — CSS only (.is-you selector)
+ *   All layout/spacing/colors — via Tailwind
+ */
+
 interface LeaderboardEntry {
 	rank: number
 	name: string
@@ -27,52 +52,64 @@ const {
 const podium = ['gold', 'silver', 'bronze']
 ---
 
-<div class={`brewfolio-leaderboard ${className}`}>
+<div class={`brewfolio-leaderboard rounded-xl border bg-card shadow border-border overflow-hidden
+	${className}`}>
 	{title && (
-		<div class="leaderboard-header">
-			<h3 class="leaderboard-title">{title}</h3>
+		<div class="px-4 py-3 border-b border-input">
+			<h3 class="font-serif text-[15px] font-bold text-foreground m-0">{title}</h3>
 		</div>
 	)}
 
-	<ol class="leaderboard-list" aria-label={title}>
+	<ol class="leaderboard-list list-none m-0 p-0" aria-label={title}>
 		{entries.map((entry) => {
 			const medal = showRank && entry.rank <= 3 ? podium[entry.rank - 1] : null
 			const displayRank = entry.rank <= 3 ? '' : entry.rank
 
 			return (
-				<li
-					class={`leaderboard-entry ${entry.isCurrentUser ? 'is-you' : ''} ${medal ? `medal-${medal}` : ''}`}
-					data-rank={entry.rank}
-				>
+				<li class={`leaderboard-entry flex items-center gap-2.5 px-4 py-2.5
+					border-b border-input transition-colors duration-100 hover:bg-secondary
+					${entry.isCurrentUser ? 'is-you relative' : ''}`}
+					data-rank={entry.rank}>
 					{showRank && (
-						<div class="entry-rank" aria-label={`Rank ${entry.rank}`}>
+						<div class="entry-rank w-8 h-8 flex items-center justify-center shrink-0">
 							{medal ? (
-								<div class={`medal-icon medal-${medal}`} aria-hidden="true">
-									<svg width="14" height="14" viewBox="0 0 24 24" fill={medal === 'gold' ? '#CBA258' : medal === 'silver' ? '#9CA3AF' : '#CD7F32'} stroke="none" aria-hidden="true">
-										<path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
-									</svg>
-								</div>
+								<svg width="16" height="16" viewBox="0 0 24 24"
+									fill={medal === 'gold' ? '#CBA258' : medal === 'silver' ? '#9CA3AF' : '#CD7F32'}
+									aria-hidden="true">
+									<path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+								</svg>
 							) : (
-								<span class="rank-number">{displayRank}</span>
+								<span class="rank-number font-mono text-[13px] font-bold
+									text-muted-foreground min-w-[20px] text-center">
+									{displayRank}
+								</span>
 							)}
 						</div>
 					)}
 
-					<div class="entry-info">
-						<span class="entry-name">{entry.name}</span>
+					<div class="entry-info flex-1 min-w-0 flex items-center gap-2">
+						<span class="entry-name text-[14px] font-medium text-foreground
+							whitespace-nowrap overflow-hidden text-ellipsis">
+							{entry.name}
+						</span>
 						{entry.isCurrentUser && (
-							<span class="you-badge" aria-label="You">You</span>
+							<span class="you-badge shrink-0 text-[9px] font-bold uppercase
+								tracking-wider text-primary bg-[rgba(var(--primary-rgb),0.1)]
+								px-1.5 py-0.5 rounded-full border border-[rgba(var(--primary-rgb),0.2)]">
+								You
+							</span>
 						)}
 					</div>
 
-					<div class="entry-score-col">
-						<span class="entry-score">
+					<div class="entry-score-col flex flex-col items-end gap-px shrink-0">
+						<span class="entry-score font-mono text-[14px] font-bold text-foreground">
 							{typeof entry.score === 'number'
 								? entry.score.toLocaleString()
 								: entry.score}
 						</span>
 						{showDelta && entry.delta !== undefined && (
-							<span class={`entry-delta ${Number(entry.delta) >= 0 ? 'positive' : 'negative'}`}>
+							<span class={`entry-delta font-mono text-[11px] font-medium
+								${Number(entry.delta) >= 0 ? 'text-green' : 'text-red'}`}>
 								{Number(entry.delta) >= 0 ? '+' : ''}{entry.delta}
 							</span>
 						)}
@@ -83,152 +120,23 @@ const podium = ['gold', 'silver', 'bronze']
 	</ol>
 
 	{entries.length === 0 && (
-		<div class="leaderboard-empty">No entries yet.</div>
+		<div class="px-4 py-6 text-center text-[13px] text-muted-foreground italic">
+			No entries yet.
+		</div>
 	)}
 </div>
 
 <style>
-	.brewfolio-leaderboard {
-		background: var(--card);
-		border: 1px solid var(--border);
-		border-radius: var(--radius-lg);
-		box-shadow: var(--shadow);
-		overflow: hidden;
-		font-family: var(--font-sans, system-ui, sans-serif);
-	}
-
-	.leaderboard-header {
-		padding: 12px 16px 10px;
-		border-bottom: 1px solid var(--input);
-	}
-
-	.leaderboard-title {
-		font-family: var(--font-serif, Georgia, serif);
-		font-size: 15px;
-		font-weight: 700;
-		color: var(--foreground);
-		margin: 0;
-	}
-
-	.leaderboard-list {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-	}
-
-	.leaderboard-entry {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		padding: 10px 16px;
-		border-bottom: 1px solid var(--input);
-		transition: background 0.12s ease, transform 0.12s ease;
-		position: relative;
-	}
-
-	.leaderboard-entry:last-child {
-		border-bottom: none;
-	}
-
-	.leaderboard-entry:hover {
-		background: var(--secondary);
-	}
-
-	.leaderboard-entry.is-you {
-		background: rgba(var(--primary-rgb), 0.04);
-	}
-
+	/* Current-user left-border accent — CSS only */
 	.leaderboard-entry.is-you::before {
 		content: '';
 		position: absolute;
-		left: 0;
-		top: 0;
-		bottom: 0;
+		left: 0; top: 0; bottom: 0;
 		width: 3px;
 		background: var(--primary);
 		border-radius: 0 2px 2px 0;
 	}
 
-	/* Medal variants */
-	.leaderboard-entry.medal-gold { }
-	.leaderboard-entry.medal-silver { }
-	.leaderboard-entry.medal-bronze { }
-
-	.entry-rank {
-		width: 32px;
-		height: 32px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		flex-shrink: 0;
-	}
-
-	.medal-icon {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.rank-number {
-		font-family: var(--font-mono, monospace);
-		font-size: 13px;
-		font-weight: 700;
-		color: var(--muted-foreground);
-		min-width: 20px;
-		text-align: center;
-	}
-
-	.entry-info {
-		flex: 1;
-		min-width: 0;
-		display: flex;
-		align-items: center;
-		gap: 8px;
-	}
-
-	.entry-name {
-		font-size: 14px;
-		font-weight: 500;
-		color: var(--foreground);
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-
-	.you-badge {
-		font-size: 9px;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
-		color: var(--primary);
-		background: rgba(var(--primary-rgb), 0.1);
-		padding: 2px 6px;
-		border-radius: 20px;
-		border: 1px solid rgba(var(--primary-rgb), 0.2);
-		flex-shrink: 0;
-	}
-
-	.entry-score-col {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-end;
-		gap: 2px;
-		flex-shrink: 0;
-	}
-
-	.entry-score {
-		font-family: var(--font-mono, monospace);
-		font-size: 14px;
-		font-weight: 700;
-		color: var(--foreground);
-	}
-
-	.entry-delta {
-		font-family: var(--font-mono, monospace);
-		font-size: 11px;
-		font-weight: 500;
-	}
-
-	.entry-delta.positive { color: var(--green); }
-	.entry-delta.negative { color: var(--red); }
+	/* Last entry no border */
+	.leaderboard-entry:last-child { border-bottom: none; }
 </style>

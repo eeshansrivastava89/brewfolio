@@ -1,4 +1,27 @@
 ---
+/**
+ * StatusCard — Animated status indicator dot with optional label.
+ * Shows a colored dot that reflects a process state, with pulse/glow animations
+ * for active states (live, running) and static fill for terminal states.
+ *
+ * USE CASES
+ *   • Inline status badge anywhere a live/Paused/Completed/Failed state needs display
+ *   • Task queue processors, experiment runs, background workers, connection states
+ *   • Works well inside table rows, card headers, or list items
+ *
+ * SOURCE APP: llm-bench (inline status dot with pulse)
+ *
+ * PROPS
+ *   status     — 'live' | 'running' | 'completed' | 'failed' | 'idle' | 'paused'
+ *   showLabel  — whether to render the text label next to the dot (default false)
+ *   size       — 'sm' | 'md' | 'lg' (controls dot diameter, default 'md')
+ *
+ * ANIMATIONS (CSS only — Tailwind can't express keyframe-based pulse/glow)
+ *   live:  subtle radial glow pulse every 2s
+ *   running: expanding ring pulse every 1.4s
+ *   All animations disabled via prefers-reduced-motion
+ */
+
 type Status = 'live' | 'running' | 'completed' | 'failed' | 'idle' | 'paused'
 
 interface Props {
@@ -34,14 +57,14 @@ const dotSize = sizeMap[size].dot
 const labelSize = sizeMap[size].label
 ---
 
-<div class={`brewfolio-status ${className}`} data-status={status}>
+<div class={`brewfolio-status-card inline-flex items-center gap-[7px] ${className}`} data-status={status}>
 	<span
-		class="status-dot"
+		class="status-dot rounded-full inline-block shrink-0"
 		style={`width: ${dotSize}; height: ${dotSize};`}
 		aria-hidden="true"
 	></span>
 	{showLabel && (
-		<span class="status-label" style={`font-size: ${labelSize}`}>
+		<span class="text-muted-foreground font-medium" style={`font-size: ${labelSize}`}>
 			{labelMap[status]}
 		</span>
 	)}
@@ -49,33 +72,19 @@ const labelSize = sizeMap[size].label
 </div>
 
 <style>
-	.brewfolio-status {
-		display: inline-flex;
-		align-items: center;
-		gap: 7px;
-	}
-
-	.status-dot {
-		border-radius: 50%;
-		display: inline-block;
-		flex-shrink: 0;
-		position: relative;
-	}
-
-	/* Live — solid green with subtle glow */
+	/* Live — solid green with radial glow pulse */
 	[data-status='live'] .status-dot {
 		background: var(--green);
-		box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.4);
 		animation: liveGlow 2s ease-out infinite;
 	}
 
-	/* Running — blue with pulse ring */
+	/* Running — blue with expanding ring pulse */
 	[data-status='running'] .status-dot {
 		background: var(--blue);
 		animation: runningPulse 1.4s ease-out infinite;
 	}
 
-	/* Completed — emerald with check */
+	/* Completed — solid green, no animation */
 	[data-status='completed'] .status-dot {
 		background: var(--green);
 	}
@@ -85,7 +94,7 @@ const labelSize = sizeMap[size].label
 		background: var(--red);
 	}
 
-	/* Idle — gray */
+	/* Idle — dim gray */
 	[data-status='idle'] .status-dot {
 		background: var(--muted-foreground);
 		opacity: 0.5;
@@ -96,49 +105,29 @@ const labelSize = sizeMap[size].label
 		background: #eab308;
 	}
 
-	.status-label {
-		font-family: var(--font-sans, system-ui, sans-serif);
-		font-weight: 500;
-		color: var(--muted-foreground);
-		letter-spacing: 0.01em;
-	}
-
 	.sr-only {
 		position: absolute;
-		width: 1px;
-		height: 1px;
-		padding: 0;
-		margin: -1px;
+		width: 1px; height: 1px;
+		padding: 0; margin: -1px;
 		overflow: hidden;
-		clip: rect(0, 0, 0, 0);
+		clip: rect(0,0,0,0);
 		white-space: nowrap;
 		border-width: 0;
 	}
 
 	@keyframes liveGlow {
-		0% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.4); }
-		50% { box-shadow: 0 0 0 4px rgba(22, 163, 74, 0); }
+		0%   { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.4); }
+		50%  { box-shadow: 0 0 0 4px rgba(22, 163, 74, 0); }
 		100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
 	}
 
 	@keyframes runningPulse {
-		0% {
-			box-shadow: 0 0 0 0 rgba(26, 91, 219, 0.5);
-			transform: scale(1);
-		}
-		70% {
-			box-shadow: 0 0 0 8px rgba(26, 91, 219, 0);
-			transform: scale(0.95);
-		}
-		100% {
-			box-shadow: 0 0 0 0 rgba(26, 91, 219, 0);
-			transform: scale(1);
-		}
+		0%   { box-shadow: 0 0 0 0 rgba(26, 91, 219, 0.5); transform: scale(1); }
+		70%  { box-shadow: 0 0 0 8px rgba(26, 91, 219, 0); transform: scale(0.95); }
+		100% { box-shadow: 0 0 0 0 rgba(26, 91, 219, 0); transform: scale(1); }
 	}
 
 	@media (prefers-reduced-motion: reduce) {
-		.status-dot {
-			animation: none !important;
-		}
+		.status-dot { animation: none !important; }
 	}
 </style>

@@ -1,4 +1,27 @@
 ---
+/**
+ * ExecutionPanel — Real-time event stream display for experiment runs or batch jobs.
+ * Connects to a Server-Sent Events (SSE) endpoint and renders a scrolling event log
+ * with color-coded entries, a progress bar, and a live summary row.
+ *
+ * USE CASES
+ *   • LLM benchmark run tracking — show case-by-case progress, F1 scores, latency
+ *   • Any long-running server-side job: batch processing, AI inference pipelines
+ *   • Reusable across llm-bench, ab-simulator, howiprompt
+ *
+ * SOURCE APP: llm-bench (ExecutionPanel.tsx)
+ * FEATURES: SSE connect/disconnect, progress bar, case summary, colored log lines,
+ *           reconnect + clear controls, reduced-motion support
+ *
+ * PROPS
+ *   sourceUrl    — SSE endpoint URL (e.g. /api/runs/:id/events)
+ *   title        — header label (default 'Execution')
+ *   autoConnect  — auto-connect on mount (default true)
+ *
+ * EVENTS (dispatched on the element)
+ *   CustomEvent('filter-change', { detail: { value, active } })
+ */
+
 type EventType =
 	| 'run_started'
 	| 'case_progress'
@@ -7,12 +30,6 @@ type EventType =
 	| 'run_failed'
 	| 'model_result'
 	| 'error'
-
-interface RunEvent {
-	type: EventType
-	timestamp?: number
-	[key: string]: unknown
-}
 
 interface Props {
 	sourceUrl: string
@@ -29,23 +46,27 @@ const {
 } = Astro.props
 ---
 
-<div class={`brewfolio-execution ${className}`} data-source={sourceUrl}>
-	<div class="exec-header">
-		<div class="exec-status">
-			<span class="exec-dot" aria-hidden="true"></span>
-			<span class="exec-status-text">{title}</span>
+<div class={`brewfolio-execpanel flex flex-col overflow-hidden rounded-xl border bg-card shadow
+	border-border ${className}`} data-source={sourceUrl}>
+	<!-- Header -->
+	<div class="flex items-center justify-between px-3.5 py-2.5 border-b border-input shrink-0">
+		<div class="flex items-center gap-2">
+			<span class="exec-dot w-2.5 h-2.5 rounded-full shrink-0" aria-hidden="true"></span>
+			<span class="text-[13px] font-semibold text-foreground">{title}</span>
 		</div>
-		<div class="exec-actions">
-			<button class="exec-btn reconnect-btn" aria-label="Reconnect">
-				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+		<div class="flex gap-1">
+			<button class="exec-btn" aria-label="Reconnect">
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+					stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 					<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
 					<path d="M21 3v5h-5"/>
 					<path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
 					<path d="M3 21v-5h5"/>
 				</svg>
 			</button>
-			<button class="exec-btn clear-btn" aria-label="Clear log">
-				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+			<button class="exec-btn" aria-label="Clear log">
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+					stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 					<path d="M3 6h18"/>
 					<path d="M8 6V4h8v2"/>
 					<path d="M19 6l-1 14H6L5 6"/>
@@ -54,387 +75,210 @@ const {
 		</div>
 	</div>
 
-	<div class="exec-progress" aria-live="polite">
-		<div class="exec-progress-bar" style="width: 0%"></div>
+	<!-- Progress bar -->
+	<div class="h-[3px] bg-input shrink-0">
+		<div class="exec-progress-bar h-full rounded-full transition-all duration-300"
+			style="width: 0%"></div>
 	</div>
 
-	<div class="exec-summary" aria-live="polite">
+	<!-- Summary row -->
+	<div class="flex items-center justify-between px-3.5 py-1.5 border-b border-input
+		text-[12px] text-muted-foreground min-h-[32px] shrink-0">
+		<span class="exec-summary"></span>
+		<span class="exec-pct font-mono font-semibold"></span>
 	</div>
 
-	<div class="exec-log" role="log" aria-live="off" aria-label="Event stream">
-		<div class="exec-log-empty">Waiting for events...</div>
+	<!-- Event log -->
+	<div class="exec-log flex-1 overflow-y-auto py-1.5 min-h-[120px] max-h-[340px]"
+		role="log" aria-live="off" aria-label="Event stream">
+		<div class="exec-log-empty text-center text-[13px] text-muted-foreground
+			italic px-3.5 py-6">Waiting for events...</div>
 	</div>
 </div>
 
 <script is:inline define:vars={{ sourceUrl, autoConnect }}>
 (function () {
-	const el = document.currentScript?.closest('.brewfolio-execution')
-	if (!el) return
+	function init(el) {
+		const dot = el.querySelector('.exec-dot')
+		const statusText = el.querySelector('.exec-status-text')
+		const progressBar = el.querySelector('.exec-progress-bar')
+		const summaryEl = el.querySelector('.exec-summary')
+		const logEl = el.querySelector('.exec-log')
+		const emptyEl = el.querySelector('.exec-log-empty')
+		const reconnectBtn = el.querySelector('.reconnect-btn')
+		const clearBtn = el.querySelector('.clear-btn')
 
-	const dot = el.querySelector('.exec-dot')
-	const statusText = el.querySelector('.exec-status-text')
-	const progressBar = el.querySelector('.exec-progress-bar')
-	const summaryEl = el.querySelector('.exec-summary')
-	const logEl = el.querySelector('.exec-log')
-	const emptyEl = el.querySelector('.exec-log-empty')
-	const reconnectBtn = el.querySelector('.reconnect-btn')
-	const clearBtn = el.querySelector('.clear-btn')
+		let events = []
+		let es = null
+		let state = 'idle'
+		let totalCases = 0
+		let casesDone = 0
 
-	let events = []
-	let es = null
-	let state = 'idle' // idle | connected | running | completed | failed
-	let totalCases = 0
-	let casesDone = 0
-
-	function formatTime(ts) {
-		if (!ts) return ''
-		const d = new Date(ts)
-		return d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })
-	}
-
-	function formatLatency(ms) {
-		if (!ms) return ''
-		if (ms < 1000) return `${ms}ms`
-		return `${(ms / 1000).toFixed(2)}s`
-	}
-
-	function setState(s) {
-		state = s
-		if (!dot) return
-		dot.className = `exec-dot ${s}`
-	}
-
-	function renderLog() {
-		if (!logEl) return
-		if (events.length === 0) {
-			if (emptyEl) emptyEl.style.display = ''
-			return
+		function formatTime(ts) {
+			if (!ts) return ''
+			const d = new Date(ts)
+			return d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })
 		}
-		if (emptyEl) emptyEl.style.display = 'none'
 
-		const lines = events.map((ev) => {
-			const ts = formatTime(ev.timestamp)
-			switch (ev.type) {
-				case 'run_started':
-					return `<div class="log-line log-line--info"><span class="log-ts">${ts}</span> <span class="log-msg">Run started — <span class="log-mono">${ev.model_id || ''}</span></span></div>`
-				case 'case_progress':
-					return `<div class="log-line log-line--progress"><span class="log-ts">${ts}</span> <span class="log-msg">Case ${ev.case_index} done — F1: <span class="log-mono">${ev.score?.overall_f1 != null ? ev.score.overall_f1.toFixed(4) : '—'}</span> · latency: <span class="log-mono">${formatLatency(ev.latency_ms)}</span></span></div>`
-				case 'run_progress':
-					return `<div class="log-line log-line--progress"><span class="log-ts">${ts}</span> <span class="log-msg">Progress: ${ev.cases_done}/${ev.total_cases} cases · avg F1: <span class="log-mono">${ev.avg_f1?.toFixed(4) || '—'}</span></span></div>`
-				case 'model_result':
-					return `<div class="log-line log-line--result"><span class="log-ts">${ts}</span> <span class="log-msg log-mono">${ev.model_id}</span> — F1: <span class="log-mono">${ev.avg_f1?.toFixed(4) || '—'}</span> · latency: <span class="log-mono">${formatLatency(ev.avg_latency_ms)}</span></span></div>`
-				case 'run_completed':
-					return `<div class="log-line log-line--success"><span class="log-ts">${ts}</span> <span class="log-msg">Run completed · <span class="log-mono">${ev.total_cases}</span> cases</span></div>`
-				case 'run_failed':
-					return `<div class="log-line log-line--error"><span class="log-ts">${ts}</span> <span class="log-msg log-error">${ev.error || 'Unknown error'}</span></div>`
-				case 'error':
-					return `<div class="log-line log-line--error"><span class="log-ts">${ts}</span> <span class="log-msg log-error">${ev.error || 'Unknown error'}</span></div>`
-				default:
-					return `<div class="log-line log-line--debug"><span class="log-ts">${ts}</span> <span class="log-msg log-mono">${JSON.stringify(ev)}</span></div>`
+		function formatLatency(ms) {
+			if (!ms) return ''
+			return ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(2)}s`
+		}
+
+		function setState(s) {
+			state = s
+			if (!dot) return
+			dot.className = `exec-dot w-2.5 h-2.5 rounded-full shrink-0 transition-all duration-200 ${s}`
+		}
+
+		function renderLog() {
+			if (!logEl) return
+			if (events.length === 0) {
+				if (emptyEl) emptyEl.style.display = ''
+				return
 			}
-		})
+			if (emptyEl) emptyEl.style.display = 'none'
 
-		logEl.innerHTML = lines.join('')
-		logEl.scrollTop = logEl.scrollHeight
-	}
-
-	function renderSummary() {
-		if (!summaryEl) return
-		if (state === 'idle') {
-			summaryEl.innerHTML = ''
-			return
+			const lines = events.map((ev) => {
+				const ts = formatTime(ev.timestamp)
+				switch (ev.type) {
+					case 'run_started':
+						return `<div class="log-line log-line--info"><span class="log-ts">${ts}</span> <span class="log-msg">Run started — <span class="log-mono">${ev.model_id || ''}</span></span></div>`
+					case 'case_progress':
+						return `<div class="log-line log-line--progress"><span class="log-ts">${ts}</span> <span class="log-msg">Case ${ev.case_index} done — F1: <span class="log-mono">${ev.score?.overall_f1 != null ? ev.score.overall_f1.toFixed(4) : '—'}</span> · latency: <span class="log-mono">${formatLatency(ev.latency_ms)}</span></span></div>`
+					case 'run_progress':
+						return `<div class="log-line log-line--progress"><span class="log-ts">${ts}</span> <span class="log-msg">Progress: ${ev.cases_done}/${ev.total_cases} cases · avg F1: <span class="log-mono">${ev.avg_f1?.toFixed(4) || '—'}</span></span></div>`
+					case 'model_result':
+						return `<div class="log-line log-line--result"><span class="log-ts">${ts}</span> <span class="log-msg log-mono">${ev.model_id}</span> — F1: <span class="log-mono">${ev.avg_f1?.toFixed(4) || '—'}</span> · latency: <span class="log-mono">${formatLatency(ev.avg_latency_ms)}</span></span></div>`
+					case 'run_completed':
+						return `<div class="log-line log-line--success"><span class="log-ts">${ts}</span> <span class="log-msg">Run completed · <span class="log-mono">${ev.total_cases}</span> cases</span></div>`
+					case 'run_failed':
+					case 'error':
+						return `<div class="log-line log-line--error"><span class="log-ts">${ts}</span> <span class="log-msg log-error">${ev.error || 'Unknown error'}</span></div>`
+					default:
+						return `<div class="log-line log-line--debug"><span class="log-ts">${ts}</span> <span class="log-msg log-mono">${JSON.stringify(ev)}</span></div>`
+				}
+			})
+			logEl.innerHTML = lines.join('')
+			logEl.scrollTop = logEl.scrollHeight
 		}
-		if (state === 'running' && totalCases > 0) {
-			const pct = totalCases > 0 ? Math.round((casesDone / totalCases) * 100) : 0
-			summaryEl.innerHTML = `<span>${casesDone} / ${totalCases} cases</span> <span class="exec-pct">${pct}%</span>`
-		}
-	}
 
-	function updateProgress() {
-		if (!progressBar || totalCases === 0) return
-		const pct = totalCases > 0 ? (casesDone / totalCases) * 100 : 0
-		progressBar.style.width = `${pct}%`
-	}
-
-	function pushEvent(ev) {
-		events.push({ ...ev, timestamp: Date.now() })
-		renderLog()
-
-		if (ev.type === 'run_started') {
-			setState('running')
-			if (statusText) statusText.textContent = 'Running…'
-			totalCases = ev.total_cases || 0
-			casesDone = 0
-		} else if (ev.type === 'case_progress') {
-			casesDone = ev.cases_done || casesDone
-			updateProgress()
-			renderSummary()
-		} else if (ev.type === 'run_progress') {
-			totalCases = ev.total_cases || totalCases
-			casesDone = ev.cases_done || casesDone
-			updateProgress()
-			renderSummary()
-		} else if (ev.type === 'run_completed') {
-			setState('completed')
-			if (statusText) statusText.textContent = 'Completed'
-			casesDone = totalCases
-			updateProgress()
-			renderSummary()
-		} else if (ev.type === 'run_failed' || ev.type === 'error') {
-			setState('failed')
-			if (statusText) statusText.textContent = 'Failed'
-		}
-	}
-
-	function connect() {
-		if (!sourceUrl) return
-		disconnect()
-
-		setState('connected')
-		if (statusText) statusText.textContent = 'Connected…'
-
-		try {
-			es = new EventSource(sourceUrl)
-
-			es.onmessage = function (e) {
-				try {
-					const ev = JSON.parse(e.data)
-					pushEvent(ev)
-				} catch {}
+		function renderSummary() {
+			if (!summaryEl) return
+			if (state === 'idle') { summaryEl.innerHTML = ''; return }
+			if (state === 'running' && totalCases > 0) {
+				const pct = Math.round((casesDone / totalCases) * 100)
+				summaryEl.innerHTML = `<span>${casesDone} / ${totalCases} cases</span>`
+				const pctEl = el.querySelector('.exec-pct')
+				if (pctEl) pctEl.textContent = `${pct}%`
 			}
+		}
 
-			es.onerror = function () {
+		function updateProgress() {
+			if (!progressBar || totalCases === 0) return
+			progressBar.style.width = `${(casesDone / totalCases) * 100}%`
+		}
+
+		function pushEvent(ev) {
+			events.push({ ...ev, timestamp: Date.now() })
+			renderLog()
+			if (ev.type === 'run_started') {
+				setState('running')
+				if (statusText) statusText.textContent = 'Running…'
+				totalCases = ev.total_cases || 0; casesDone = 0
+			} else if (ev.type === 'case_progress') {
+				casesDone = ev.cases_done || casesDone
+				updateProgress(); renderSummary()
+			} else if (ev.type === 'run_progress') {
+				totalCases = ev.total_cases || totalCases
+				casesDone = ev.cases_done || casesDone
+				updateProgress(); renderSummary()
+			} else if (ev.type === 'run_completed') {
+				setState('completed')
+				if (statusText) statusText.textContent = 'Completed'
+				casesDone = totalCases; updateProgress(); renderSummary()
+			} else if (ev.type === 'run_failed' || ev.type === 'error') {
 				setState('failed')
-				if (statusText) statusText.textContent = 'Connection error'
-				disconnect()
+				if (statusText) statusText.textContent = 'Failed'
 			}
-		} catch {}
-	}
-
-	function disconnect() {
-		if (es) {
-			es.close()
-			es = null
 		}
+
+		function connect() {
+			if (!sourceUrl) return
+			disconnect()
+			setState('connected')
+			try {
+				es = new EventSource(sourceUrl)
+				es.onmessage = function (e) {
+					try { pushEvent(JSON.parse(e.data)) } catch {}
+				}
+				es.onerror = function () {
+					setState('failed')
+					if (statusText) statusText.textContent = 'Connection error'
+					disconnect()
+				}
+			} catch {}
+		}
+
+		function disconnect() {
+			if (es) { es.close(); es = null }
+		}
+
+		function clearLog() {
+			events = []; totalCases = 0; casesDone = 0
+			setState('idle')
+			if (progressBar) progressBar.style.width = '0%'
+			if (summaryEl) summaryEl.innerHTML = ''
+			renderLog()
+		}
+
+		if (reconnectBtn) reconnectBtn.addEventListener('click', connect)
+		if (clearBtn) clearBtn.addEventListener('click', clearLog)
+		if (autoConnect && sourceUrl) connect()
 	}
 
-	function clearLog() {
-		events = []
-		totalCases = 0
-		casesDone = 0
-		setState('idle')
-		if (statusText) statusText.textContent = 'Execution'
-		if (progressBar) progressBar.style.width = '0%'
-		if (summaryEl) summaryEl.innerHTML = ''
-		renderLog()
-	}
-
-	if (reconnectBtn) reconnectBtn.addEventListener('click', connect)
-	if (clearBtn) clearBtn.addEventListener('click', clearLog)
-
-	if (autoConnect && sourceUrl) {
-		connect()
-	}
+	document.querySelectorAll('.brewfolio-execpanel').forEach(init)
 })()
 </script>
 
 <style>
-	.brewfolio-execution {
-		background: var(--card);
-		border: 1px solid var(--border);
-		border-radius: var(--radius-lg);
-		box-shadow: var(--shadow);
-		display: flex;
-		flex-direction: column;
-		overflow: hidden;
-		font-family: var(--font-sans, system-ui, sans-serif);
-	}
-
-	.exec-header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 10px 14px;
-		border-bottom: 1px solid var(--input);
-		flex-shrink: 0;
-	}
-
-	.exec-status {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-	}
-
-	.exec-dot {
-		width: 10px;
-		height: 10px;
-		border-radius: 50%;
-		background: var(--muted-foreground);
-		opacity: 0.4;
-		flex-shrink: 0;
-		transition: background 0.2s ease, opacity 0.2s ease;
-	}
-
+	.exec-dot { background: var(--muted-foreground); opacity: 0.4; }
 	.exec-dot.connected,
-	.exec-dot.running {
-		background: var(--blue);
-		opacity: 1;
-		animation: execPulse 1.4s ease-out infinite;
-	}
-
-	.exec-dot.completed {
-		background: var(--green);
-		opacity: 1;
-		animation: none;
-	}
-
-	.exec-dot.failed {
-		background: var(--red);
-		opacity: 1;
-		animation: none;
-	}
-
-	.exec-status-text {
-		font-size: 13px;
-		font-weight: 600;
-		color: var(--foreground);
-	}
-
-	.exec-actions {
-		display: flex;
-		gap: 4px;
-	}
+	.exec-dot.running { background: var(--blue); opacity: 1; animation: execPulse 1.4s ease-out infinite; }
+	.exec-dot.completed { background: var(--green); opacity: 1; animation: none; }
+	.exec-dot.failed { background: var(--red); opacity: 1; animation: none; }
 
 	.exec-btn {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		width: 28px;
-		height: 28px;
-		border: 1px solid var(--border);
-		border-radius: var(--radius-sm);
-		background: transparent;
-		color: var(--muted-foreground);
-		cursor: pointer;
-		transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+		display: inline-flex; align-items: center; justify-content: center;
+		w-7 h-7 border border-border rounded-lg bg-transparent text-muted-foreground
+		cursor-pointer transition-all duration-150;
 	}
-
 	.exec-btn:hover {
-		border-color: var(--primary);
-		color: var(--primary);
-		background: rgba(var(--primary-rgb), 0.04);
+		border-color var(--primary) text-primary bg-[rgba(var(--primary-rgb),0.04)];
 	}
 
-	.exec-progress {
-		height: 3px;
-		background: var(--input);
-		flex-shrink: 0;
-	}
-
-	.exec-progress-bar {
-		height: 100%;
-		background: var(--primary);
-		border-radius: 999px;
-		transition: width 0.3s ease;
-		width: 0%;
-	}
-
-	.exec-summary {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 6px 14px;
-		font-size: 12px;
-		color: var(--muted-foreground);
-		border-bottom: 1px solid var(--input);
-		flex-shrink: 0;
-		min-height: 32px;
-	}
-
-	.exec-pct {
-		font-family: var(--font-mono, monospace);
-		font-weight: 600;
-	}
-
-	.exec-log {
-		flex: 1;
-		overflow-y: auto;
-		scrollbar-width: thin;
-		scrollbar-color: var(--border) transparent;
-		min-height: 120px;
-		max-height: 340px;
-		padding: 8px 0;
-	}
-
-	.exec-log::-webkit-scrollbar {
-		width: 6px;
-	}
-
-	.exec-log::-webkit-scrollbar-track {
-		background: transparent;
-	}
-
-	.exec-log::-webkit-scrollbar-thumb {
-		background: var(--border);
-		border-radius: 999px;
-	}
-
-	.exec-log-empty {
-		padding: 24px 14px;
-		text-align: center;
-		font-size: 13px;
-		color: var(--muted-foreground);
-		font-style: italic;
-	}
+	.exec-progress-bar { background: var(--primary); }
 
 	:global(.log-line) {
-		display: flex;
-		align-items: baseline;
-		gap: 10px;
-		padding: 3px 14px;
-		font-size: 12px;
-		line-height: 1.5;
-		border-radius: 2px;
-		margin: 0 6px;
+		display: flex; align-items: baseline; gap: 10px;
+		padding: 3px 14px; font-size: 12px; line-height: 1.5;
+		border-radius: 2px; margin: 0 6px;
 	}
-
-	:global(.log-line:hover) {
-		background: var(--secondary);
-	}
-
+	:global(.log-line:hover) { background: var(--secondary); }
 	:global(.log-ts) {
-		font-family: var(--font-mono, monospace);
-		font-size: 10px;
-		color: var(--muted-foreground);
-		opacity: 0.6;
-		flex-shrink: 0;
-		min-width: 68px;
+		font-family: var(--font-mono, monospace); font-size: 10px;
+		color: var(--muted-foreground); opacity: 0.6; flex-shrink: 0; min-width: 68px;
 	}
+	:global(.log-msg) { color: var(--foreground); }
+	:global(.log-mono) { font-family: var(--font-mono, monospace); }
+	:global(.log-error) { color: var(--destructive); }
+	:global(.log-line--success) { color: var(--green); }
+	:global(.log-line--error) { color: var(--destructive); }
+	:global(.log-line--debug) { opacity: 0.5; }
 
-	:global(.log-msg) {
-		color: var(--foreground);
-	}
-
-	:global(.log-mono) {
-		font-family: var(--font-mono, monospace);
-	}
-
-	:global(.log-error) {
-		color: var(--destructive);
-	}
-
-	:global(.log-line--info) { }
-	:global(.log-line--progress) { }
-	:global(.log-line--result) { }
-	:global(.log-line--success) {
-		color: var(--green);
-	}
-	:global(.log-line--error) {
-		color: var(--destructive);
-	}
-	:global(.log-line--debug) {
-		opacity: 0.5;
-	}
+	.exec-log::-webkit-scrollbar { width: 6px; }
+	.exec-log::-webkit-scrollbar-track { background: transparent; }
+	.exec-log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
 
 	@keyframes execPulse {
 		0% { box-shadow: 0 0 0 0 rgba(26, 91, 219, 0.5); }
@@ -443,8 +287,6 @@ const {
 	}
 
 	@media (prefers-reduced-motion: reduce) {
-		.exec-dot {
-			animation: none !important;
-		}
+		.exec-dot { animation: none !important; }
 	}
 </style>

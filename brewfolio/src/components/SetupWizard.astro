@@ -1,4 +1,38 @@
 ---
+/**
+ * SetupWizard — Full-screen multi-step onboarding wizard with progress bar.
+ * Slot-based step panels; step visibility is controlled by a `data-step` attribute.
+ * Fires `step-change` and `wizard-complete` CustomEvents on the element.
+ *
+ * USE CASES
+ *   • First-run app setup — howiprompt uses it for Detect → Configure → Analyze flow
+ *   • Multi-step configuration flows, modal-based onboarding
+ *   • Quizzard-style game participant onboarding
+ *
+ * SOURCE APP: howiprompt (SetupWizard.astro)
+ * CONCEPTS: Detect, Configure, Analyze steps; progress bar; log output area
+ *
+ * PROPS
+ *   steps[]       — array of { id, label, description? }
+ *   currentStep   — id of the initially active step (default: first step)
+ *
+ * SLOTS / STEP PANELS
+ *   Each step panel should have `data-step="step-id"` and `hidden` attribute set
+ *   by the wizard JS based on the current step:
+ *     <div class="step-panel" data-step="detect" hidden> ... </div>
+ *
+ * EVENTS
+ *   CustomEvent('step-change', { detail: { step, index } })
+ *   CustomEvent('wizard-complete')
+ *
+ * STYLING NOTES
+ *   Full-screen overlay + fixed positioning — CSS only (not expressible in Tailwind)
+ *   Step indicator state (active/done) via contextual .wizard-step.active selectors — CSS only
+ *   Progress bar fill width transition — CSS only
+ *   pointer-events trick for overlay stacking — CSS only
+ *   All layout/spacing/colors — via Tailwind vars
+ */
+
 interface Step {
 	id: string
 	label: string
@@ -8,7 +42,6 @@ interface Step {
 interface Props {
 	steps: Step[]
 	currentStep?: string
-	onsave?: string
 	class?: string
 }
 
@@ -22,62 +55,93 @@ const stepId = `wizard-${Math.random().toString(36).slice(2, 8)}`
 ---
 
 <div class={`brewfolio-setupwizard ${className}`} data-current={currentStep} id={stepId}>
-	<div class="wizard-overlay"></div>
-	<div class="wizard-panel">
-		<div class="wizard-header">
-			<div class="wizard-steps" role="list">
+	<!-- Full-screen backdrop -->
+	<div class="wizard-overlay fixed inset-0 z-[200] bg-background opacity-96" aria-hidden="true"></div>
+
+	<!-- Centered panel -->
+	<div class="wizard-panel fixed inset-0 z-[201] flex flex-col items-center justify-center
+		p-6 pointer-events-none">
+		<!-- Header: step indicators + progress bar -->
+		<div class="w-full max-w-[520px] bg-card border border-border
+			rounded-t-xl border-b-0 shadow-[var(--shadow)] px-7 py-6">
+			<div class="wizard-steps flex flex-col gap-0" role="list">
 				{steps.map((step, index) => {
 					const isDone = steps.findIndex(s => s.id === currentStep) > index
 					const isActive = step.id === currentStep
 					return (
-						<div
-							class={`wizard-step ${isActive ? 'active' : ''} ${isDone ? 'done' : ''}`}
+						<div class={`wizard-step flex items-center gap-3 py-1.5
+							${isActive ? 'active' : ''} ${isDone ? 'done' : ''}`}
 							data-step-id={step.id}
 							role="listitem"
-							aria-current={isActive ? 'step' : undefined}
-						>
-							<div class="step-indicator">
+							aria-current={isActive ? 'step' : undefined}>
+							<div class="step-indicator w-7 h-7 rounded-full border-2 border-border
+								bg-secondary flex items-center justify-center
+								text-[12px] font-bold text-muted-foreground shrink-0
+								transition-all duration-200">
 								{isDone ? (
-									<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+									<svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+										stroke="currentColor" stroke-width="2.5"
+										stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 										<polyline points="20 6 9 17 4 12"/>
 									</svg>
 								) : (
 									<span>{index + 1}</span>
 								)}
 							</div>
-							<div class="step-text">
-								<span class="step-label">{step.label}</span>
-								{step.description && <span class="step-desc">{step.description}</span>}
+							<div class="flex flex-col gap-px">
+								<span class="step-label text-[14px] font-semibold text-muted-foreground
+									transition-colors duration-200">{step.label}</span>
+								{step.description && (
+									<span class="step-desc text-[12px] text-muted-foreground opacity-70">
+										{step.description}
+									</span>
+								)}
 							</div>
 						</div>
 					)
 				})}
 			</div>
-			<div class="wizard-progress-track">
-				<div class="wizard-progress-fill" style={`width: ${((steps.findIndex(s => s.id === currentStep) + 1) / steps.length) * 100}%`}></div>
+			<!-- Progress bar -->
+			<div class="h-px.75 bg-input rounded-full mt-4 overflow-hidden">
+				<div class="wizard-progress-fill h-full rounded-full
+					transition-all duration-500 ease-[ease-out]"
+					style={`width: ${((steps.findIndex(s => s.id === currentStep) + 1) / steps.length) * 100}%`}
+					aria-hidden="true"></div>
 			</div>
 		</div>
 
-		<div class="wizard-body">
-			<div class="wizard-slot-wrap">
+		<!-- Body: step content slots -->
+		<div class="w-full max-w-[520px] bg-card border border-t-0 border-border
+			px-7 py-6 shadow-[var(--shadow)] min-h-[200px]">
+			<div class="wizard-slot-wrap flex flex-col gap-4">
 				<slot />
 			</div>
 		</div>
 
-		<div class="wizard-footer">
-			<div class="wizard-nav">
-				<button class="wizard-btn wizard-btn-ghost prev-btn" type="button" disabled>
-					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+		<!-- Footer: navigation -->
+		<div class="w-full max-w-[520px] bg-card border border-t-0 border-border
+			rounded-b-xl px-5 py-4 shadow-[var(--shadow)]">
+			<div class="wizard-nav flex items-center justify-between gap-3">
+				<button class="wizard-btn wizard-btn-ghost inline-flex items-center gap-1.5
+					px-4 py-2 rounded-lg text-[13px] font-medium cursor-pointer
+					transition-all duration-150 disabled:opacity-35 disabled:cursor-not-allowed"
+					type="button" disabled>
+					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+						stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 						<polyline points="15 18 9 12 15 6"/>
 					</svg>
 					Back
 				</button>
-				<div class="wizard-step-count" aria-live="polite">
+				<span class="wizard-step-count text-[12px] text-muted-foreground" aria-live="polite">
 					Step {steps.findIndex(s => s.id === currentStep) + 1} of {steps.length}
-				</div>
-				<button class="wizard-btn wizard-btn-primary next-btn" type="button">
+				</span>
+				<button class="wizard-btn wizard-btn-primary inline-flex items-center gap-1.5
+					px-4 py-2 rounded-lg text-[13px] font-medium cursor-pointer
+					transition-all duration-150 disabled:opacity-35 disabled:cursor-not-allowed"
+					type="button">
 					Next
-					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+						stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 						<polyline points="9 18 15 12 9 6"/>
 					</svg>
 				</button>
@@ -89,15 +153,15 @@ const stepId = `wizard-${Math.random().toString(36).slice(2, 8)}`
 <script is:inline>
 (function () {
 	function initWizard(el) {
-		const steps = Array.from(el.querySelectorAll('.wizard-step')).map((s) => s.getAttribute('data-step-id'))
+		const steps = Array.from(el.querySelectorAll('.wizard-step'))
+			.map((s) => s.getAttribute('data-step-id'))
 		const progressFill = el.querySelector('.wizard-progress-fill')
 		const prevBtn = el.querySelector('.prev-btn')
 		const nextBtn = el.querySelector('.next-btn')
 		const stepCount = el.querySelector('.wizard-step-count')
 		const slotWrap = el.querySelector('.wizard-slot-wrap')
 
-		let currentIndex = steps.findIndex((s) => s === el.getAttribute('data-current'))
-		if (currentIndex < 0) currentIndex = 0
+		let currentIndex = Math.max(0, steps.indexOf(el.getAttribute('data-current') || ''))
 
 		function render() {
 			const current = steps[currentIndex]
@@ -113,13 +177,13 @@ const stepId = `wizard-${Math.random().toString(36).slice(2, 8)}`
 			if (progressFill) {
 				progressFill.style.width = `${((currentIndex + 1) / steps.length) * 100}%`
 			}
-
 			if (prevBtn) prevBtn.disabled = currentIndex === 0
 			if (nextBtn) {
 				nextBtn.disabled = currentIndex === steps.length - 1
-				nextBtn.textContent = currentIndex === steps.length - 1 ? 'Finish' : 'Next'
+				nextBtn.innerHTML = currentIndex === steps.length - 1
+					? 'Finish <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>'
+					: 'Next <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>'
 			}
-
 			if (stepCount) {
 				stepCount.textContent = `Step ${currentIndex + 1} of ${steps.length}`
 			}
@@ -131,8 +195,7 @@ const stepId = `wizard-${Math.random().toString(36).slice(2, 8)}`
 			}
 
 			el.dispatchEvent(new CustomEvent('step-change', {
-				detail: { step: current, index: currentIndex },
-				bubbles: true,
+				detail: { step: current, index: currentIndex }, bubbles: true,
 			}))
 		}
 
@@ -157,201 +220,22 @@ const stepId = `wizard-${Math.random().toString(36).slice(2, 8)}`
 </script>
 
 <style>
-	.brewfolio-setupwizard {
-		position: relative;
-	}
-
-	.wizard-overlay {
-		position: fixed;
-		inset: 0;
-		z-index: 200;
-		background: var(--background);
-		opacity: 0.96;
-	}
-
-	.wizard-panel {
-		position: fixed;
-		inset: 0;
-		z-index: 201;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		padding: 24px;
-		pointer-events: none;
-	}
-
-	.wizard-panel > * {
-		pointer-events: auto;
-	}
-
-	.wizard-header {
-		width: 100%;
-		max-width: 520px;
-		background: var(--card);
-		border: 1px solid var(--border);
-		border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-		border-bottom: none;
-		padding: 24px 28px 20px;
-		box-shadow: var(--shadow);
-	}
-
-	.wizard-steps {
-		display: flex;
-		flex-direction: column;
-		gap: 0;
-	}
-
-	.wizard-step {
-		display: flex;
-		align-items: center;
-		gap: 12px;
-		padding: 6px 0;
-	}
-
-	.step-indicator {
-		width: 28px;
-		height: 28px;
-		border-radius: 50%;
-		border: 2px solid var(--border);
-		background: var(--secondary);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 12px;
-		font-weight: 700;
-		color: var(--muted-foreground);
-		flex-shrink: 0;
-		transition: border-color 0.2s, background 0.2s, color 0.2s;
-	}
-
+	/* Step indicator state transitions — CSS only (contextual selectors) */
 	.wizard-step.active .step-indicator {
 		border-color: var(--primary);
 		background: var(--primary);
 		color: var(--primary-foreground);
 	}
-
 	.wizard-step.done .step-indicator {
 		border-color: var(--green);
 		background: var(--green);
 		color: white;
 	}
+	.wizard-step.active .step-label { color: var(--foreground); }
 
-	.step-text {
-		display: flex;
-		flex-direction: column;
-		gap: 1px;
-	}
+	/* Button disabled state — CSS only */
+	.wizard-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
-	.step-label {
-		font-size: 14px;
-		font-weight: 600;
-		color: var(--muted-foreground);
-		transition: color 0.2s;
-	}
-
-	.wizard-step.active .step-label {
-		color: var(--foreground);
-	}
-
-	.step-desc {
-		font-size: 12px;
-		color: var(--muted-foreground);
-		opacity: 0.7;
-	}
-
-	.wizard-progress-track {
-		height: 3px;
-		background: var(--input);
-		border-radius: 999px;
-		margin-top: 16px;
-		overflow: hidden;
-	}
-
-	.wizard-progress-fill {
-		height: 100%;
-		background: var(--primary);
-		border-radius: 999px;
-		transition: width 0.4s ease;
-	}
-
-	.wizard-body {
-		width: 100%;
-		max-width: 520px;
-		background: var(--card);
-		border: 1px solid var(--border);
-		border-top: none;
-		padding: 24px 28px;
-		box-shadow: var(--shadow);
-		min-height: 200px;
-	}
-
-	.wizard-slot-wrap {
-		display: flex;
-		flex-direction: column;
-		gap: 16px;
-	}
-
-	.wizard-footer {
-		width: 100%;
-		max-width: 520px;
-		background: var(--card);
-		border: 1px solid var(--border);
-		border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-		border-top: none;
-		padding: 16px 20px;
-		box-shadow: var(--shadow);
-	}
-
-	.wizard-nav {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 12px;
-	}
-
-	.wizard-step-count {
-		font-size: 12px;
-		color: var(--muted-foreground);
-	}
-
-	.wizard-btn {
-		display: inline-flex;
-		align-items: center;
-		gap: 6px;
-		padding: 8px 18px;
-		border-radius: var(--radius-sm);
-		font-family: var(--font-sans, system-ui, sans-serif);
-		font-size: 13px;
-		font-weight: 500;
-		cursor: pointer;
-		transition: border-color 0.15s, color 0.15s, background 0.15s, opacity 0.15s;
-		border: 1px solid transparent;
-	}
-
-	.wizard-btn:disabled {
-		opacity: 0.35;
-		cursor: not-allowed;
-	}
-
-	.wizard-btn-ghost {
-		background: transparent;
-		border-color: var(--border);
-		color: var(--muted-foreground);
-	}
-
-	.wizard-btn-ghost:hover:not(:disabled) {
-		border-color: var(--muted-foreground);
-		color: var(--foreground);
-	}
-
-	.wizard-btn-primary {
-		background: var(--primary);
-		border-color: var(--primary);
-		color: var(--primary-foreground);
-	}
-
-	.wizard-btn-primary:hover:not(:disabled) {
-		opacity: 0.9;
-	}
+	/* Allow children to receive pointer events despite parent being pointer-events:none */
+	.wizard-panel > * { pointer-events: auto; }
 </style>

@@ -1,4 +1,38 @@
 ---
+/**
+ * Timer — Countdown or count-up timer with urgency states and an optional progress bar.
+ * Tick-driven display update every 250ms; fires `timer-complete` when countdown hits zero.
+ * Supports pause/resume/reset via CustomEvents dispatched on the element.
+ *
+ * USE CASES
+ *   • Quiz game countdown — quizzard (countdown, warning at 50%, danger at 20%)
+ *   • A/B test time tracking (count-up)
+ *   • Any precision timer with urgency indicators
+ *
+ * SOURCE APP: quizzard (countdown bar), ab-simulator (core.js timer)
+ * CONCEPTS: countdown/countup variants; starbucks-gold → amber → red urgency colors
+ *
+ * PROPS
+ *   variant      — 'countdown' (default) or 'countup'
+ *   totalMs      — total time in ms (default 60000 = 60s)
+ *   startedAt    — unix timestamp (ms) to calculate elapsed from (for countup)
+ *   showBar      — show progress bar (default true)
+ *   showDigits   — show MM:SS digits (default true)
+ *   size         — 'sm' | 'md' | 'lg' (controls digit + bar size, default 'md')
+ *
+ * EVENTS (dispatch on element)
+ *   'timer-pause'  — pause the timer
+ *   'timer-resume' — resume after pause
+ *   'timer-reset'  — reset to initial state
+ *   'timer-complete' — fired when countdown reaches 0
+ *
+ * STYLING NOTES
+ *   @keyframes urgentPulse (opacity alternation in danger state) — CSS only
+ *   .sr-only screen-reader only text — CSS only
+ *   Urgency color changes (warning/danger) via class toggle — CSS only
+ *   All layout/spacing/colors — via Tailwind
+ */
+
 type TimerVariant = 'countdown' | 'countup'
 
 interface Props {
@@ -21,13 +55,6 @@ const {
 	class: className = '',
 } = Astro.props
 
-const sizeMap = {
-	sm: { digit: '24px', bar: '4px', label: '10px' },
-	md: { digit: '40px', bar: '8px', label: '12px' },
-	lg: { digit: '64px', bar: '12px', label: '14px' },
-}
-
-const sizing = sizeMap[size]
 const timerId = `timer-${Math.random().toString(36).slice(2, 8)}`
 ---
 
@@ -40,17 +67,20 @@ const timerId = `timer-${Math.random().toString(36).slice(2, 8)}`
 	data-show-bar={showBar ? 'true' : 'false'}
 	data-size={size}
 >
-	<div class="timer-layout">
+	<div class="timer-layout flex flex-col gap-2.5 items-start">
 		{showDigits && (
 			<div class="timer-digits" aria-live="off" aria-label="Timer">
-				<span class="digit-display" aria-hidden="true">00:00</span>
+				<span class="digit-display font-mono text-[40px] font-bold tracking-[-0.02em]
+					text-foreground font-variant-numeric tabular-nums leading-none
+					transition-colors duration-300" aria-hidden="true">00:00</span>
 				<span class="sr-only">0 minutes, 0 seconds remaining</span>
 			</div>
 		)}
 
 		{showBar && (
-			<div class="timer-bar-track" aria-hidden="true">
-				<div class="timer-bar-fill"></div>
+			<div class="timer-bar-track w-full h-2 bg-input rounded-full overflow-hidden" aria-hidden="true">
+				<div class="timer-bar-fill h-full bg-primary rounded-full
+					transition-all duration-300"></div>
 			</div>
 		)}
 	</div>
@@ -62,7 +92,6 @@ const timerId = `timer-${Math.random().toString(36).slice(2, 8)}`
 		const variant = el.getAttribute('data-variant') || 'countdown'
 		const totalMs = parseInt(el.getAttribute('data-total')) || 60000
 		const startedAt = parseInt(el.getAttribute('data-started')) || null
-		const showBar = el.getAttribute('data-show-bar') === 'true'
 		const barFill = el.querySelector('.timer-bar-fill')
 		const digitDisplay = el.querySelector('.digit-display')
 		const srOnly = el.querySelector('.sr-only')
@@ -93,7 +122,7 @@ const timerId = `timer-${Math.random().toString(36).slice(2, 8)}`
 		}
 
 		function render() {
-			let elapsed = Date.now() - startTime
+			const elapsed = Date.now() - startTime
 			if (variant === 'countdown') {
 				remaining = Math.max(0, totalMs - elapsed)
 			} else {
@@ -108,6 +137,9 @@ const timerId = `timer-${Math.random().toString(36).slice(2, 8)}`
 
 			if (digitDisplay) {
 				digitDisplay.textContent = formatMs(remaining)
+				if (urgency === 'warning') digitDisplay.style.color = '#eab308'
+				else if (urgency === 'danger') digitDisplay.style.color = 'var(--red)'
+				else digitDisplay.style.color = 'var(--foreground)'
 			}
 
 			if (srOnly && variant === 'countdown') {
@@ -119,8 +151,18 @@ const timerId = `timer-${Math.random().toString(36).slice(2, 8)}`
 
 			if (barFill) {
 				barFill.style.width = `${Math.max(0, Math.min(100, pct * 100))}%`
-				barFill.classList.toggle('warning', urgency === 'warning')
-				barFill.classList.toggle('danger', urgency === 'danger')
+				if (urgency === 'warning') {
+					barFill.classList.add('warning')
+					barFill.classList.remove('danger')
+					barFill.style.background = '#eab308'
+				} else if (urgency === 'danger') {
+					barFill.classList.add('danger')
+					barFill.classList.remove('warning')
+					barFill.style.background = 'var(--red)'
+				} else {
+					barFill.classList.remove('warning', 'danger')
+					barFill.style.background = 'var(--primary)'
+				}
 			}
 
 			if (variant === 'countdown' && remaining <= 0) {
@@ -147,70 +189,23 @@ const timerId = `timer-${Math.random().toString(36).slice(2, 8)}`
 </script>
 
 <style>
-	.brewfolio-timer {
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-	}
-
-	.timer-layout {
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-		align-items: flex-start;
-	}
-
-	.timer-digits {
-		display: flex;
-		align-items: baseline;
-	}
-
-	.digit-display {
-		font-family: var(--font-mono, 'JetBrains Mono', monospace);
-		font-size: 40px;
-		font-weight: 700;
-		letter-spacing: -0.02em;
-		color: var(--foreground);
-		font-variant-numeric: tabular-nums;
-		line-height: 1;
-		transition: color 0.3s ease;
-	}
-
-	.brewfolio-timer.warning .digit-display { color: #eab308; }
-	.brewfolio-timer.danger .digit-display { color: var(--red); animation: urgentPulse 0.5s ease-in-out infinite alternate; }
-
-	.timer-bar-track {
-		width: 100%;
-		height: 8px;
-		background: var(--input);
-		border-radius: 999px;
-		overflow: hidden;
-	}
-
-	.timer-bar-fill {
-		height: 100%;
-		background: var(--primary);
-		border-radius: 999px;
-		transition: width 0.25s linear, background 0.3s ease;
-	}
-
-	.timer-bar-fill.warning { background: #eab308; }
-	.timer-bar-fill.danger { background: var(--red); }
-
+	/* Size variants via attribute selectors — CSS only */
 	.brewfolio-timer[data-size='sm'] .digit-display { font-size: 24px; }
 	.brewfolio-timer[data-size='lg'] .digit-display { font-size: 64px; }
-
 	.brewfolio-timer[data-size='sm'] .timer-bar-track { height: 4px; }
 	.brewfolio-timer[data-size='lg'] .timer-bar-track { height: 12px; }
 
+	/* Danger pulse animation — CSS only (Tailwind can't express keyframes) */
+	.brewfolio-timer.danger .digit-display {
+		animation: urgentPulse 0.5s ease-in-out infinite alternate;
+	}
+
 	.sr-only {
 		position: absolute;
-		width: 1px;
-		height: 1px;
-		padding: 0;
-		margin: -1px;
+		width: 1px; height: 1px;
+		padding: 0; margin: -1px;
 		overflow: hidden;
-		clip: rect(0, 0, 0, 0);
+		clip: rect(0,0,0,0);
 		white-space: nowrap;
 		border-width: 0;
 	}
@@ -221,8 +216,6 @@ const timerId = `timer-${Math.random().toString(36).slice(2, 8)}`
 	}
 
 	@media (prefers-reduced-motion: reduce) {
-		.brewfolio-timer.danger .digit-display {
-			animation: none;
-		}
+		.brewfolio-timer.danger .digit-display { animation: none; }
 	}
 </style>
