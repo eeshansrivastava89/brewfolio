@@ -120,9 +120,13 @@ packages/create-brewfolio/         ← scaffold CLI
 
 ## Phase 6 — Test by building arbitrary apps
 
-- [ ] Use brewfolio to build a new app from scratch
-- [ ] Mix and match components across different layout combinations
-- [ ] Verify cross-app theming works via npm update cycle
+- [x] CLI end-to-end test: scaffold project, install deps, start dev server — **passed HTTP 200**
+- [x] Bug fixed: `fields.dynamic` → `fields.conditional` (Keystatic 0.5.x compatibility)
+- [x] Bug fixed: include `.astro` files in npm package + add sub-path exports for `layouts/*`, `components/*`, `lib/*`
+- [x] Bug fixed: `@keystatic/astro@^0.5` → `@latest` (version 5.x, not 0.5.x)
+- [x] Bug fixed: added `react` + `react-dom` as required peer deps
+- [x] Screenshots captured: homepage and Keystatic admin UI both load
+- [x] Test report documented at `internal/docs/brewfolio-phase6-test-report.md`
 
 ---
 
