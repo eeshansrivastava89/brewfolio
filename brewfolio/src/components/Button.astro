@@ -1,0 +1,58 @@
+---
+interface Props {
+	variant?: 'default' | 'ghost' | 'outline'
+	size?: 'sm' | 'md' | 'lg'
+	href?: string
+	title: string
+	disabled?: boolean
+	class?: string
+}
+
+const {
+	variant = 'default',
+	size = 'md',
+	href,
+	title,
+	disabled = false,
+	class: className
+} = Astro.props
+
+const sizeClasses = {
+	sm: 'px-[10px] py-[4px] text-xs',
+	md: 'px-4 py-[7px] text-sm',
+	lg: 'px-[22px] py-[10px] text-base'
+}
+
+const variantClasses = {
+	default: 'bg-primary text-primary-foreground border-primary hover:opacity-90',
+	outline: 'bg-card text-foreground border-border hover:bg-accent hover:border-primary hover:text-primary',
+	ghost: 'bg-transparent text-foreground border-transparent hover:bg-accent hover:text-primary'
+}
+---
+
+{disabled ? (
+	<span class:list={['inline-flex items-center gap-1.5 rounded-md font-sans font-medium transition-all cursor-default border border-transparent', sizeClasses[size], variantClasses[variant], className]} aria-disabled="true">
+		<slot name="icon-before" />
+		<span>{title}</span>
+		<slot name="icon-after" />
+	</span>
+) : href ? (
+	<a class:list={['inline-flex items-center gap-1.5 rounded-md font-sans font-medium transition-all border border-transparent focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2', sizeClasses[size], variantClasses[variant], className]} href={href}>
+		<slot name="icon-before" />
+		<span>{title}</span>
+		<slot name="icon-after" />
+	</a>
+) : (
+	<button class:list={['inline-flex items-center gap-1.5 rounded-md font-sans font-medium transition-all border border-transparent focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2', sizeClasses[size], variantClasses[variant], className]} type="button" disabled={disabled}>
+		<slot name="icon-before" />
+		<span>{title}</span>
+		<slot name="icon-after" />
+	</button>
+)}
+
+<style>
+	.btn[aria-disabled='true'] {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+</style>

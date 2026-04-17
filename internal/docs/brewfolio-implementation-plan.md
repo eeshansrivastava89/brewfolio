@@ -1,30 +1,34 @@
 # Brewfolio implementation plan
 
-Last updated: April 16, 2026
+Last updated: April 17, 2026
+
+## Conventions
+
+**Tailwind-first** — All components use Tailwind utility classes exclusively. `<style>` blocks are only for pseudo-element shapes (notch `::before`/`::after`), keyframe animations, and CSS tricks Tailwind cannot express. Consuming apps must have Tailwind configured.
 
 ## Phase 1 — Package foundation
 
 ### Tokens + schema
 
-- [ ] `tokens.css` — design tokens (CSS variables, ported from datascienceapps)
-- [ ] `keystatic.config.ts` — full schema exported as a module from the package
-- [ ] `lib/` — content loading utilities, GitHub fetch, notebook renderer
+- [x] `tokens.css` — design tokens (CSS variables, ported from datascienceapps)
+- [x] `keystatic.config.ts` — full schema exported as a module from the package
+- [x] `lib/` — content loading utilities, GitHub fetch, notebook renderer
 
 ### Base components
 
-- [ ] `BaseHead` — meta, OG, fonts
-- [ ] `Header` — site header with logo, nav, and settings trigger slot
-- [ ] `Footer` — site footer
-- [ ] `ThemeProvider` — dark/light mode context
-- [ ] `Button` — reusable button with variants
-- [ ] `ContentModal` — modal shell with titlebar, close, scroll-spy TOC, sizes
-- [ ] `Breadcrumbs` — breadcrumb navigation
+- [x] `BaseHead` — meta, OG, fonts
+- [x] `Header` — site header with logo, nav, and settings trigger slot
+- [x] `Footer` — site footer
+- [x] `ThemeProvider` — dark/light mode context
+- [x] `Button` — reusable button with variants
+- [x] `ContentModal` — modal shell with titlebar, close, scroll-spy TOC, sizes
+- [x] `Breadcrumbs` — breadcrumb navigation
 
 ### Layouts (empty shells)
 
-- [ ] `DashboardLayout.astro` — placeholder shell
-- [ ] `AppLayout.astro` — placeholder shell
-- [ ] `GameLayout.astro` — placeholder shell
+- [x] `DashboardLayout.astro` — placeholder shell
+- [x] `AppLayout.astro` — placeholder shell
+- [x] `GameLayout.astro` — placeholder shell
 
 ---
 

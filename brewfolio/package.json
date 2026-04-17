@@ -1,0 +1,26 @@
+{
+	"name": "brewfolio",
+	"version": "0.1.0",
+	"description": "CMS-driven design system for personal apps — tokens, components, layouts, and Keystatic schemas",
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./styles/tokens.css": "./src/styles/tokens.css",
+		"./keystatic.config": "./src/keystatic.config.ts"
+	},
+	"files": [
+		"src/**/*",
+		"!src/**/*.astro"
+	],
+	"scripts": {
+		"typecheck": "tsc --noEmit"
+	},
+	"peerDependencies": {
+		"@keystatic/core": "^0.5",
+		"@keystatic/astro": "^0.5",
+		"astro": "^5.0.0"
+	},
+	"devDependencies": {
+		"typescript": "^5.7.0"
+	}
+}

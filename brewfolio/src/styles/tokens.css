@@ -1,0 +1,123 @@
+/* SHARED DESIGN TOKENS — coffee palette, shadcn naming
+ * Canonical source: brewfolio/src/styles/tokens.css
+ * Import this in your app's global CSS. Define --font-sans/serif/mono
+ * on :root in your own app.css before this file to set fonts.
+ * The theme switch is driven by [data-theme='light'/'dark'] on <html>. */
+
+:root,
+[data-theme='light'] {
+	--background: #f5f3f0;
+	--foreground: #3c3226;
+	--card: #ffffff;
+	--card-raised: #faf8f5;
+	--card-foreground: #3c3226;
+	--primary: #5c3d2e;
+	--primary-foreground: #f5f3f0;
+	--primary-rgb: 92, 61, 46;
+	--secondary: #ede6de;
+	--secondary-foreground: #3c3226;
+	--muted: #8a7d6f;
+	--muted-foreground: #6b5e50;
+	--accent: #ede6de;
+	--accent-foreground: #5c3d2e;
+	--popover: #ffffff;
+	--popover-foreground: #3c3226;
+	--destructive: #d20f39;
+	--destructive-foreground: #f5f3f0;
+	--border: #d9d2c9;
+	--input: #ebe5dc;
+	--ring: #5c3d2e;
+	--green: #16a34a;
+	--blue: #1a5bdb;
+	--red: #d20f39;
+	--shadow: 0 1px 3px rgba(60, 50, 38, 0.06), 0 4px 12px rgba(60, 50, 38, 0.04);
+	--shadow-hover: 0 4px 12px rgba(60, 50, 38, 0.1), 0 8px 24px rgba(60, 50, 38, 0.06);
+	--overlay: rgba(60, 50, 38, 0.4);
+	--radius-lg: 14px;
+	--radius-sm: 8px;
+	--substack: #ff6719;
+
+	--contrib-l0: var(--input);
+	--contrib-l1: rgba(201, 168, 130, 0.3);
+	--contrib-l2: rgba(201, 168, 130, 0.5);
+	--contrib-l3: rgba(201, 168, 130, 0.75);
+	--contrib-l4: var(--primary);
+
+	--tw-background: 30 14% 95%;
+	--tw-foreground: 25 28% 18%;
+	--tw-card: 0 0% 100%;
+	--tw-card-foreground: 25 28% 18%;
+	--tw-popover: 0 0% 100%;
+	--tw-popover-foreground: 25 28% 18%;
+	--tw-primary: 25 28% 18%;
+	--tw-primary-foreground: 30 14% 95%;
+	--tw-secondary: 30 14% 88%;
+	--tw-secondary-foreground: 25 28% 18%;
+	--tw-muted: 30 14% 88%;
+	--tw-muted-foreground: 25 12% 36%;
+	--tw-accent: 25 32% 27%;
+	--tw-accent-foreground: 30 14% 95%;
+	--tw-destructive: 0 100% 61%;
+	--tw-destructive-foreground: 30 14% 95%;
+	--tw-border: 25 16% 65%;
+	--tw-input: 25 16% 65%;
+	--tw-ring: 25 32% 27%;
+	--radius: 0.5rem;
+}
+
+[data-theme='dark'] {
+	--background: #1c1816;
+	--foreground: #e0d6cc;
+	--card: #2a2420;
+	--card-raised: #332c26;
+	--card-foreground: #e0d6cc;
+	--primary: #c9a882;
+	--primary-foreground: #1c1816;
+	--primary-rgb: 201, 168, 130;
+	--secondary: #2e261f;
+	--secondary-foreground: #e0d6cc;
+	--muted: #8a7d6f;
+	--muted-foreground: #b0a596;
+	--accent: #2e261f;
+	--accent-foreground: #c9a882;
+	--popover: #2a2420;
+	--popover-foreground: #e0d6cc;
+	--destructive: #f38ba8;
+	--destructive-foreground: #1c1816;
+	--border: #3d342c;
+	--input: #4a3f35;
+	--ring: #c9a882;
+	--green: #16a34a;
+	--blue: #89b4fa;
+	--red: #f38ba8;
+	--shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
+	--shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
+	--overlay: rgba(0, 0, 0, 0.6);
+	--substack: #ff6719;
+
+	--contrib-l0: var(--input);
+	--contrib-l1: rgba(201, 168, 130, 0.3);
+	--contrib-l2: rgba(201, 168, 130, 0.5);
+	--contrib-l3: rgba(201, 168, 130, 0.75);
+	--contrib-l4: var(--primary);
+
+	--tw-background: 25 14% 10%;
+	--tw-foreground: 30 18% 88%;
+	--tw-card: 25 12% 15%;
+	--tw-card-foreground: 30 18% 88%;
+	--tw-popover: 25 12% 15%;
+	--tw-popover-foreground: 30 18% 88%;
+	--tw-primary: 30 18% 88%;
+	--tw-primary-foreground: 25 14% 10%;
+	--tw-secondary: 25 10% 18%;
+	--tw-secondary-foreground: 30 18% 88%;
+	--tw-muted: 25 10% 18%;
+	--tw-muted-foreground: 25 14% 62%;
+	--tw-accent: 25 42% 59%;
+	--tw-accent-foreground: 25 14% 10%;
+	--tw-destructive: 0 72% 55%;
+	--tw-destructive-foreground: 30 18% 88%;
+	--tw-border: 25 10% 26%;
+	--tw-input: 25 10% 26%;
+	--tw-ring: 25 42% 59%;
+}

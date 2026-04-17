@@ -1,0 +1,371 @@
+---
+interface Props {
+	size?: 'default' | 'medium' | 'wide'
+}
+
+const { size = 'default' } = Astro.props
+---
+
+<div class="modal-overlay" id="contentModal" role="dialog" aria-modal="true" aria-label="Content modal">
+	<div class="modal-window" data-modal-size={size} onclick="event.stopPropagation()">
+		<div class="modal-titlebar">
+			<button class="modal-close" type="button" id="modalCloseBtn" aria-label="Close (Esc)">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+			</button>
+			<div class="modal-titlebar-left" id="modalTitlebarLeft"></div>
+			<div class="modal-titlebar-center" id="modalTitlebarCenter"></div>
+			<div class="modal-titlebar-right" id="modalTitlebarRight"></div>
+		</div>
+		<div class="modal-body">
+			<div class="modal-inner" id="modalBody">
+				<slot />
+			</div>
+		</div>
+	</div>
+</div>
+
+<script is:inline>
+(function () {
+	var modal = document.getElementById('contentModal')
+	var closeBtn = document.getElementById('modalCloseBtn')
+	var lastFocusedElement = null
+	var currentTocObserver = null
+
+	function teardownArticleTOC() {
+		if (currentTocObserver) {
+			currentTocObserver.disconnect()
+			currentTocObserver = null
+		}
+	}
+
+	function initArticleTOC() {
+		teardownArticleTOC()
+		var bodyEl = document.getElementById('modalBody')
+		var scrollEl = modal ? modal.querySelector('.modal-body') : null
+		if (!bodyEl || !scrollEl) return
+		var toc = bodyEl.querySelector('.article-toc')
+		if (!toc) return
+
+		var links = Array.prototype.slice.call(toc.querySelectorAll('[data-toc-link]'))
+		if (!links.length) return
+
+		var titleEl = bodyEl.querySelector('.modal-article-title, .modal-page-title')
+
+		var targets = []
+		links.forEach(function (link) {
+			var key = link.getAttribute('data-toc-link')
+			if (!key) return
+			if (key === '__top') {
+				if (titleEl) targets.push({ el: titleEl, key: key })
+				return
+			}
+			var headingEl = bodyEl.querySelector('#' + CSS.escape(key))
+			if (headingEl) targets.push({ el: headingEl, key: key })
+		})
+		if (!targets.length) return
+
+		var tocNav = toc.querySelector('.article-toc-nav') || toc
+		tocNav.addEventListener('click', function (e) {
+			var targetEl = e.target && e.target.closest ? e.target.closest('[data-toc-link]') : null
+			if (!targetEl) return
+			var key = targetEl.getAttribute('data-toc-link')
+			if (!key) return
+			e.preventDefault()
+			if (key === '__top') {
+				scrollEl.scrollTo({ top: 0, behavior: 'smooth' })
+				if (history.replaceState) {
+					history.replaceState(history.state, '', window.location.pathname + window.location.search)
+				}
+				return
+			}
+			var headingEl = bodyEl.querySelector('#' + CSS.escape(key))
+			if (!headingEl) return
+			headingEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
+			if (history.replaceState) {
+				history.replaceState(history.state, '', '#' + key)
+			}
+		})
+
+		if (typeof IntersectionObserver !== 'undefined') {
+			var visibleKeys = {}
+			currentTocObserver = new IntersectionObserver(
+				function (entries) {
+					entries.forEach(function (entry) {
+						var matchKey = null
+						for (var i = 0; i < targets.length; i++) {
+							if (targets[i].el === entry.target) {
+								matchKey = targets[i].key
+								break
+							}
+						}
+						if (!matchKey) return
+						if (entry.isIntersecting) {
+							visibleKeys[matchKey] = true
+						} else {
+							delete visibleKeys[matchKey]
+						}
+					})
+					var activeKey = null
+					for (var j = 0; j < targets.length; j++) {
+						if (visibleKeys[targets[j].key]) {
+							activeKey = targets[j].key
+							break
+						}
+					}
+					links.forEach(function (link) {
+						link.classList.toggle('active', link.getAttribute('data-toc-link') === activeKey)
+					})
+				},
+				{ root: scrollEl, rootMargin: '0px 0px -66% 0px', threshold: 0 }
+			)
+			targets.forEach(function (target) {
+				currentTocObserver.observe(target.el)
+			})
+		}
+
+		var hash = window.location.hash
+		if (hash && hash.length > 1) {
+			var hashTarget = bodyEl.querySelector(hash)
+			if (hashTarget) {
+				requestAnimationFrame(function () {
+					hashTarget.scrollIntoView({ behavior: 'auto', block: 'start' })
+				})
+			}
+		}
+	}
+
+	function openModal(centerHtml, rightHtml, leftHtml, bodyHtml, size) {
+		if (!modal) modal = document.getElementById('contentModal')
+		lastFocusedElement = document.activeElement
+		var leftEl = document.getElementById('modalTitlebarLeft')
+		var centerEl = document.getElementById('modalTitlebarCenter')
+		var rightEl = document.getElementById('modalTitlebarRight')
+		var bodyEl = document.getElementById('modalBody')
+		var scrollEl = modal ? modal.querySelector('.modal-body') : null
+		var windowEl = modal ? modal.querySelector('.modal-window') : null
+		if (leftEl) leftEl.innerHTML = leftHtml || ''
+		if (centerEl) centerEl.innerHTML = centerHtml || ''
+		if (rightEl) rightEl.innerHTML = rightHtml || ''
+		teardownArticleTOC()
+		if (bodyEl) bodyEl.innerHTML = bodyHtml || ''
+		if (windowEl) windowEl.setAttribute('data-modal-size', size || 'default')
+		if (scrollEl) scrollEl.scrollTop = 0
+		if (modal) modal.classList.add('visible')
+		document.body.style.overflow = 'hidden'
+		requestAnimationFrame(function () {
+			if (scrollEl) scrollEl.scrollTop = 0
+			initArticleTOC()
+		})
+		if (closeBtn) closeBtn.focus()
+	}
+
+	function closeModal() {
+		if (!modal) modal = document.getElementById('contentModal')
+		if (modal) modal.classList.remove('visible')
+		document.body.style.overflow = ''
+		teardownArticleTOC()
+		if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+			lastFocusedElement.focus()
+			lastFocusedElement = null
+		}
+	}
+
+	window.__brewfolioOpenModal = openModal
+	window.__brewfolioCloseModal = closeModal
+
+	if (closeBtn) closeBtn.addEventListener('click', closeModal)
+
+	if (modal) {
+		modal.addEventListener('click', function (e) {
+			if (e.target === modal) closeModal()
+		})
+	}
+
+	document.addEventListener('keydown', function (e) {
+		if (e.key === 'Escape' && modal && modal.classList.contains('visible')) {
+			closeModal()
+		}
+	})
+
+	document.addEventListener('keydown', function (e) {
+		if (!modal || !modal.classList.contains('visible')) return
+		if (e.key !== 'Tab') return
+		var focusable = modal.querySelectorAll('a[href], button, input, textarea, [tabindex]:not([tabindex="-1"])')
+		if (focusable.length === 0) return
+		var first = focusable[0]
+		var last = focusable[focusable.length - 1]
+		if (e.shiftKey && document.activeElement === first) {
+			e.preventDefault()
+			last.focus()
+		} else if (!e.shiftKey && document.activeElement === last) {
+			e.preventDefault()
+			first.focus()
+		}
+	})
+})()
+</script>
+
+<style is:global>
+	.modal-overlay {
+		position: fixed;
+		top: 52px;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: var(--overlay);
+		backdrop-filter: blur(6px);
+		z-index: 200;
+		display: flex;
+		padding: 16px;
+		opacity: 0;
+		visibility: hidden;
+		transition: opacity 0.2s ease, visibility 0.2s ease;
+	}
+
+	.modal-overlay.visible {
+		opacity: 1;
+		visibility: visible;
+	}
+
+	.modal-window {
+		background: var(--card);
+		border: 1px solid var(--border);
+		border-radius: var(--radius-lg);
+		box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.08);
+		width: 100%;
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+		transform: translateY(12px);
+		transition: transform 0.25s ease-out;
+	}
+
+	.modal-overlay.visible .modal-window {
+		transform: translateY(0);
+	}
+
+	.modal-titlebar {
+		display: flex;
+		align-items: center;
+		padding: 14px 20px;
+		border-bottom: 1px solid var(--input);
+		background: var(--card);
+		flex-shrink: 0;
+		gap: 16px;
+		min-height: 64px;
+	}
+
+	.modal-close {
+		width: 40px;
+		height: 40px;
+		border-radius: 6px;
+		border: 1px solid var(--border);
+		background: var(--card-raised);
+		color: var(--muted-foreground);
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+		flex-shrink: 0;
+		font-size: 18px;
+		line-height: 1;
+	}
+
+	.modal-close:hover {
+		background: var(--input);
+		color: var(--foreground);
+	}
+
+	.modal-close svg {
+		width: 16px;
+		height: 16px;
+	}
+
+	.modal-titlebar-left,
+	.modal-titlebar-right {
+		display: flex;
+		align-items: center;
+		flex-shrink: 0;
+	}
+
+	.modal-titlebar-left:empty,
+	.modal-titlebar-right:empty {
+		display: none;
+	}
+
+	.modal-titlebar-center {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 0;
+		padding: 0 12px;
+	}
+
+	.modal-titlebar-center:empty {
+		display: none;
+	}
+
+	.modal-titlebar-title {
+		font-family: var(--font-serif, 'Fraunces', Georgia, serif);
+		font-style: italic;
+		font-size: 15px;
+		color: var(--muted);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.modal-body {
+		padding: 40px 56px 56px;
+		overflow-y: auto;
+		overscroll-behavior: contain;
+		flex: 1;
+		scrollbar-width: none;
+	}
+
+	.modal-body::-webkit-scrollbar {
+		display: none;
+	}
+
+	.modal-inner {
+		max-width: 680px;
+		margin: 0 auto;
+	}
+
+	.modal-window[data-modal-size='medium'] .modal-inner {
+		max-width: 820px;
+	}
+
+	.modal-window[data-modal-size='wide'] .modal-inner {
+		max-width: 1020px;
+	}
+
+	@media (max-width: 768px) {
+		.modal-overlay {
+			padding: 0;
+			top: 0;
+		}
+
+		.modal-window {
+			border-radius: 0;
+			border: none;
+		}
+
+		.modal-titlebar {
+			padding: 12px 16px;
+			min-height: 52px;
+		}
+
+		.modal-body {
+			padding: 20px 16px 32px;
+		}
+
+		.modal-close {
+			width: 36px;
+			height: 36px;
+		}
+	}
+</style>

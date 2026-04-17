@@ -84,6 +84,17 @@ Theme is stored in Keystatic via the siteConfig singleton and generates CSS vari
 4. All repos update: `npm update brewfolio`
 5. All sites rebuild with the new theme
 
+### Tailwind-first convention
+
+All consuming apps use **Tailwind CSS** exclusively for styling. Brewfolio components follow the same convention:
+
+- **Tailwind utility classes** for all layout, spacing, color, and typography styles
+- **`<style>` blocks only for** pseudo-element shapes (`::before`/`::after` with box-shadow tricks like the notch), keyframe animations, and CSS custom property tricks Tailwind genuinely cannot express
+- **CSS variables from `tokens.css`** for color/spacing values — e.g. `text-foreground`, `bg-card`, `border-border` via the `tw-*` HSL variables mapped from `--foreground`, `--card`, `--border`
+- **Dark mode via `dark:` prefix** — Tailwind's `dark:` variant + CSS variable mapping handles light/dark switching automatically
+
+This keeps the design system enforceable and consistent across all apps. Plain CSS in component `<style>` blocks is an escape hatch, not a pattern.
+
 ---
 
 ## CLI

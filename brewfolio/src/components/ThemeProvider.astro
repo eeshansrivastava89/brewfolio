@@ -1,0 +1,34 @@
+<script is:inline>
+	function getTheme() {
+		const stored = localStorage.getItem('site-theme')
+		if (stored === 'light' || stored === 'dark') return stored
+		return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+	}
+
+	function setTheme(theme) {
+		localStorage.setItem('site-theme', theme)
+		const root = document.documentElement
+		root.setAttribute('data-theme', theme)
+		root.style.colorScheme = theme
+		if (theme === 'dark') {
+			root.classList.add('dark')
+		} else {
+			root.classList.remove('dark')
+		}
+	}
+
+	window.__toggleTheme = function () {
+		const current = getTheme()
+		setTheme(current === 'dark' ? 'light' : 'dark')
+	}
+
+	setTheme(getTheme())
+
+	document.addEventListener('astro:after-swap', () => setTheme(getTheme()))
+
+	window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+		if (!localStorage.getItem('site-theme')) {
+			setTheme(e.matches ? 'dark' : 'light')
+		}
+	})
+</script>

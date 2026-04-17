@@ -1,0 +1,114 @@
+---
+import BaseHead from '../components/BaseHead.astro'
+import Header from '../components/Header.astro'
+import Footer from '../components/Footer.astro'
+import ThemeProvider from '../components/ThemeProvider.astro'
+
+interface Props {
+	meta?: {
+		title?: string
+		description?: string
+		ogImage?: string
+		articleDate?: string
+		canonicalUrl?: string
+	}
+	showFooter?: boolean
+	headerNavItems?: { label: string; href: string }[]
+}
+
+const { meta = {}, showFooter = true, headerNavItems } = Astro.props
+---
+
+<html lang="en" class="scroll-smooth">
+	<head>
+		<BaseHead
+			title={meta.title}
+			description={meta.description}
+			ogImage={meta.ogImage}
+			articleDate={meta.articleDate}
+			canonicalUrl={meta.canonicalUrl}
+		/>
+	</head>
+	<body>
+		<a href="#main-content" class="skip-link">Skip to content</a>
+		<ThemeProvider />
+		<div class="app-shell">
+			<Header navItems={headerNavItems} />
+			<main class="app-main" id="main-content">
+				<slot />
+			</main>
+			{showFooter && <Footer />}
+		</div>
+	</body>
+</html>
+
+<style is:global>
+	html,
+	body {
+		min-height: 100%;
+		margin: 0;
+	}
+
+	html {
+		scroll-behavior: smooth;
+	}
+
+	body {
+		min-height: 100vh;
+		font-family: var(--font-sans);
+		font-weight: 400;
+		background: var(--background);
+		color: var(--foreground);
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+
+	.color-scheme-dark {
+		color-scheme: dark;
+	}
+
+	.skip-link {
+		position: absolute;
+		top: -100px;
+		left: 0;
+		background: var(--primary);
+		color: var(--card);
+		padding: 8px 16px;
+		z-index: 999;
+		font-size: 14px;
+		text-decoration: none;
+		border-radius: 0 0 4px 0;
+	}
+
+	.skip-link:focus {
+		top: 0;
+	}
+
+	.app-shell {
+		min-height: 100vh;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.app-main {
+		flex: 1;
+		min-height: 0;
+		padding: 72px 12px 12px;
+	}
+
+	@media (max-width: 768px) {
+		.app-main {
+			padding: 60px 12px 12px;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		*,
+		*::before,
+		*::after {
+			animation-duration: 0.01ms !important;
+			animation-iteration-count: 1 !important;
+			transition-duration: 0.01ms !important;
+		}
+	}
+</style>

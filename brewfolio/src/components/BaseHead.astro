@@ -1,0 +1,72 @@
+---
+interface Props {
+	articleDate?: string
+	description?: string
+	ogImage?: string
+	title?: string
+	canonicalUrl?: string
+	fontsUrl?: string
+	fontRootCss?: string
+	siteTitle?: string
+	lang?: string
+	ogLocale?: string
+	generator?: string
+}
+
+const {
+	articleDate,
+	description = 'Personal site',
+	ogImage,
+	title,
+	canonicalUrl,
+	fontsUrl = 'https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=JetBrains+Mono:wght@400;500;600;700&display=swap',
+	fontRootCss = ':root{--font-sans:Geist,system-ui,sans-serif;--font-serif:Newsreader,Georgia,serif;--font-mono:JetBrains Mono,monospace;}',
+	siteTitle = 'Personal Site',
+	lang = 'en',
+	ogLocale = 'en_US',
+	generator = 'Astro'
+} = Astro.props
+
+const titleSeparator = '•'
+const siteTitleResolved = title && title !== siteTitle ? `${title} ${titleSeparator} ${siteTitle}` : siteTitle
+const canonicalURL = canonicalUrl || new URL(Astro.url.pathname, Astro.site ?? 'https://example.com').href
+const socialImageURL = ogImage ? new URL(ogImage, Astro.url).href : '/social-card.png'
+---
+
+<meta charset="utf-8" />
+<meta content="width=device-width, initial-scale=1.0, shrink-to-fit=no" name="viewport" />
+<meta content="IE=edge" http-equiv="X-UA-Compatible" />
+<title>{siteTitleResolved}</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href={fontsUrl} media="print" onload="this.media='all'" />
+<style is:global set:html={fontRootCss}></style>
+
+<link rel="apple-touch-icon" sizes="180x180" href="/shared-assets/favicon/apple-touch-icon.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="/shared-assets/favicon/favicon-32x32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="/shared-assets/favicon/favicon-16x16.png" />
+<link rel="manifest" href="/shared-assets/favicon/site.webmanifest" />
+
+<link href="/rss.xml" rel="alternate" title={siteTitle} type="application/rss+xml" />
+
+<meta content={generator} name="generator" />
+
+<link rel="canonical" href={canonicalURL} />
+<meta name="description" content={description} />
+<meta name="theme-color" content="#f5f3f0" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#1c1816" media="(prefers-color-scheme: dark)" />
+
+<meta property="og:title" content={siteTitleResolved} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonicalURL} />
+<meta property="og:site_name" content={siteTitle} />
+<meta property="og:locale" content={ogLocale} />
+<meta property="og:type" content={articleDate ? 'article' : 'website'} />
+<meta property="og:image" content={socialImageURL} />
+{articleDate && <meta property="article:published_time" content={articleDate} />}
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={siteTitleResolved} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={socialImageURL} />
