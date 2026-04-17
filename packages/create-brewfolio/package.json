@@ -1,0 +1,27 @@
+{
+	"name": "create-brewfolio",
+	"version": "0.1.0",
+	"description": "Scaffold a new Astro project with brewfolio pre-configured",
+	"type": "module",
+	"bin": {
+		"create-brewfolio": "./src/index.js"
+	},
+	"files": [
+		"src/**/*",
+		"template/**/*"
+	],
+	"scripts": {
+		"typecheck": "tsc --noEmit",
+		"lint": "eslint src --ext .js,.ts"
+	},
+	"engines": {
+		"node": ">=18.0.0"
+	},
+	"dependencies": {
+		"commander": "^12.0.0",
+		"ora": "^8.0.0"
+	},
+	"peerDependencies": {
+		"astro": "^5.0.0"
+	}
+}

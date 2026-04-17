@@ -93,12 +93,28 @@ The `sections` singleton was planned for AppLayout but not yet implemented in `d
 
 ## Phase 5 — CLI scaffolding
 
-- [ ] `create-brewfolio` CLI (`npx create-brewfolio my-site`)
-  - Scaffolds Astro project with `npm create astro@latest --template minimal`
+- [x] `create-brewfolio` CLI (`npx create-brewfolio <project-name>`)
+  - Scaffolds Astro project with `npm create astro@latest --template <template>`
   - Installs `brewfolio`, `@keystatic/core`, `@keystatic/astro`
-  - Copies starter `keystatic.config.ts` (imports schema from brewfolio)
-  - Creates starter pages with appropriate layouts
+  - Copies starter template (`keystatic.config.ts`, `astro.config.mjs`, `global.css`, `index.astro`)
   - Prints next steps
+  - `--template`, `--no-git`, `--dry-run` options
+
+## Packages layout
+
+```
+brewfolio/                          ← design system npm package
+packages/create-brewfolio/         ← scaffold CLI
+  src/
+    index.js                        ← CLI entry (commander + ora)
+    utils.js                        ← copyTemplateOverlay, runProcess, updatePackageJsonDeps
+  template/                         ← starter files overlaid after Astro scaffold
+    keystatic.config.ts
+    astro.config.mjs
+    src/
+      styles/global.css
+      pages/index.astro
+```
 
 ---
 

@@ -1,0 +1,11 @@
+---
+import AppLayout from 'brewfolio/layouts/AppLayout.astro'
+import { sections } from 'brewfolio/keystatic.config'
+---
+
+<AppLayout
+  meta={{ title: 'My Brewfolio Site' }}
+  sections={sections}
+>
+  <p class="text-muted-foreground">Your content goes here.</p>
+</AppLayout>

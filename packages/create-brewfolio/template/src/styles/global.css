@@ -1,0 +1,41 @@
+@import 'brewfolio/styles/tokens.css';
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+  }
+}
+
+@layer components {
+  .text-muted-foreground {
+    color: var(--muted-foreground);
+  }
+
+  .bg-card {
+    background-color: var(--card);
+    border-color: var(--border);
+  }
+
+  .border-border {
+    border-color: var(--border);
+  }
+
+  .text-primary {
+    color: var(--primary);
+  }
+
+  .bg-card-raised {
+    background-color: var(--card-raised);
+  }
+
+  .border-input {
+    border-color: var(--input);
+  }
+}
