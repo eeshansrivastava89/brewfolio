@@ -1,0 +1,23 @@
+---
+/**
+ * Search Data Provider
+ * Renders a JSON script block that SearchOverlay reads
+ */
+
+interface SearchEntry {
+  id: string
+  title: string
+  href: string
+  category: string
+  excerpt?: string
+}
+
+interface Props {
+  data: SearchEntry[]
+}
+
+const { data } = Astro.props
+const jsonData = JSON.stringify(data)
+---
+
+<script type="application/json" id="search-data" set:html={jsonData} />

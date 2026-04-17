@@ -1,0 +1,397 @@
+---
+interface ContributionDay {
+	date: string
+	contributionCount: number
+}
+
+interface ContributionWeek {
+	contributionDays: ContributionDay[]
+}
+
+interface ActivityItem {
+	category: 'commit' | 'repo' | 'issue' | 'pr'
+	repo: string
+	message: string
+	url: string
+}
+
+interface GitHubData {
+	weeks?: ContributionWeek[]
+	recentActivity?: ActivityItem[]
+	activityTotals?: {
+		commits: number
+		issues: number
+		prs: number
+		repos: number
+	}
+}
+
+interface Props {
+	data: GitHubData
+	username?: string
+}
+
+const {
+	data,
+	username = 'eeshansrivastava89'
+} = Astro.props
+
+const WEEKS_TO_SHOW = 26
+const allWeeks = data?.weeks ?? []
+const weeks = allWeeks.slice(-WEEKS_TO_SHOW)
+
+const sixMonthContributions = weeks
+	.flatMap((w) => w.contributionDays)
+	.reduce((sum, d) => sum + (d.contributionCount || 0), 0)
+
+const activity = data?.recentActivity ?? []
+const totals = data?.activityTotals ?? { commits: 0, issues: 0, prs: 0, repos: 0 }
+
+const commitActivity = activity.filter((a) => a.category === 'commit')
+const repoActivity = activity.filter((a) => a.category === 'repo')
+const issueActivity = activity.filter((a) => a.category === 'issue')
+const prActivity = activity.filter((a) => a.category === 'pr')
+
+const commitRepoCount = new Set(commitActivity.map((a) => a.repo)).size
+
+const allDays = data?.weeks?.flatMap((w) => w.contributionDays) ?? []
+const maxDayCount = Math.max(...allDays.map((d) => d.contributionCount), 1)
+
+function getContribLevel(count: number): number {
+	if (count === 0) return 0
+	if (count <= maxDayCount * 0.25) return 1
+	if (count <= maxDayCount * 0.5) return 2
+	if (count <= maxDayCount * 0.75) return 3
+	return 4
+}
+
+const COMMIT_ROW_CAP = 5
+const REPO_ROW_CAP = 3
+const ISSUE_ROW_CAP = 3
+const PR_ROW_CAP = 3
+
+const commitRows = commitActivity.slice(0, COMMIT_ROW_CAP).map((a) => ({
+	repo: a.repo,
+	detail: a.message,
+	url: a.url
+}))
+
+const repoRows = repoActivity.slice(0, REPO_ROW_CAP).map((a) => ({
+	repo: a.repo,
+	detail: a.message.replace(/^Created repository\s*/i, '').replace(/^·\s*/, '') || 'New repo',
+	url: a.url
+}))
+
+const issueRows = issueActivity.slice(0, ISSUE_ROW_CAP).map((a) => ({
+	repo: a.repo,
+	detail: a.message.replace(/^Opened issue:\s*/i, ''),
+	url: a.url
+}))
+
+const prRows = prActivity.slice(0, PR_ROW_CAP).map((a) => ({
+	repo: a.repo,
+	detail: a.message.replace(/^Opened PR:\s*/i, ''),
+	url: a.url
+}))
+
+const COMMIT_ICON = '<path d="M10.5 7.75a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Zm1.43.75a4.002 4.002 0 0 1-7.86 0H.75a.75.75 0 0 1 0-1.5h3.32a4.002 4.002 0 0 1 7.86 0h3.32a.75.75 0 0 1 0 1.5Zm-1.43-.75a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0Z"/>'
+const REPO_ICON = '<path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8Z"/>'
+const ISSUE_ICON = '<path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"/>'
+const PR_ICON = '<path d="M1.5 3.25a2.25 2.25 0 1 1 3 2.122v5.256a2.251 2.251 0 1 1-1.5 0V5.372A2.25 2.25 0 0 1 1.5 3.25Zm5.677-.177L9.573.677A.25.25 0 0 1 10 .854V2.5h1A2.5 2.5 0 0 1 13.5 5v5.628a2.251 2.251 0 1 1-1.5 0V5a1 1 0 0 0-1-1h-1v1.646a.25.25 0 0 1-.427.177L7.177 3.427a.25.25 0 0 1 0-.354ZM3.75 2.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm0 9.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm8.25.75a.75.75 0 1 0 1.5 0 .75.75 0 0 0-1.5 0Z"/>'
+---
+
+<section class="pane pane-github" data-pane="github" aria-label="GitHub">
+	<div class="pane-header">
+		<h2>GitHub</h2>
+		<a class="gh-pane-link" href={`https://github.com/${username}`} target="_blank" rel="noopener noreferrer">
+			<svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12" aria-hidden="true">
+				<path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+			</svg>
+			<span>@{username}</span>
+		</a>
+	</div>
+	<div class="pane-body">
+		<div class="gh-contrib-container">
+			<div class="gh-contrib-header">
+				<span class="gh-contrib-count">{sixMonthContributions.toLocaleString()} contributions in the last 6 months</span>
+			</div>
+			<div class="gh-contrib-grid" style={`--weeks: ${weeks.length};`}>
+				{weeks.map((week) => (
+					<div class="gh-contrib-week">
+						{week.contributionDays.map((day) => (
+							<div
+								class:list={['gh-contrib-day', `l${getContribLevel(day.contributionCount)}`]}
+								title={`${day.date}: ${day.contributionCount} contribution${day.contributionCount === 1 ? '' : 's'}`}
+							></div>
+						))}
+					</div>
+				))}
+			</div>
+		</div>
+
+		<div class="gh-timeline">
+			<div class="gh-timeline-section" style="--section-order: 0;">
+				<div class="gh-timeline-section-header">
+					<span class="gh-timeline-icon">
+						<svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14" set:html={COMMIT_ICON} />
+					</span>
+					<span>{totals.commits.toLocaleString()} commits in {commitRepoCount} {commitRepoCount === 1 ? 'repository' : 'repositories'}</span>
+				</div>
+				<div class="gh-timeline-items">
+					{commitRows.length === 0 ? (
+						<div class="gh-timeline-empty">No commits yet</div>
+					) : (
+						commitRows.map((row, i) => (
+							<a href={row.url} target="_blank" rel="noopener noreferrer" class="gh-timeline-row" style={`--row-index: ${i};`}>
+								<span class="gh-timeline-repo">{row.repo}</span>
+								<span class="gh-timeline-detail">{row.detail}</span>
+							</a>
+						))
+					)}
+				</div>
+			</div>
+
+			<div class="gh-timeline-section" style="--section-order: 1;">
+				<div class="gh-timeline-section-header">
+					<span class="gh-timeline-icon">
+						<svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14" set:html={REPO_ICON} />
+					</span>
+					<span>Created {totals.repos} {totals.repos === 1 ? 'repository' : 'repositories'}</span>
+				</div>
+				<div class="gh-timeline-items">
+					{repoRows.length === 0 ? (
+						<div class="gh-timeline-empty">No new repos</div>
+					) : (
+						repoRows.map((row, i) => (
+							<a href={row.url} target="_blank" rel="noopener noreferrer" class="gh-timeline-row" style={`--row-index: ${i};`}>
+								<span class="gh-timeline-repo">{row.repo}</span>
+								<span class="gh-timeline-detail">{row.detail}</span>
+							</a>
+						))
+					)}
+				</div>
+			</div>
+
+			<div class="gh-timeline-section" style="--section-order: 2;">
+				<div class="gh-timeline-section-header">
+					<span class="gh-timeline-icon">
+						<svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14" set:html={ISSUE_ICON} />
+					</span>
+					<span>Opened {totals.issues} {totals.issues === 1 ? 'issue' : 'issues'}</span>
+				</div>
+				<div class="gh-timeline-items">
+					{issueRows.length === 0 ? (
+						<div class="gh-timeline-empty">No issues opened</div>
+					) : (
+						issueRows.map((row, i) => (
+							<a href={row.url} target="_blank" rel="noopener noreferrer" class="gh-timeline-row" style={`--row-index: ${i};`}>
+								<span class="gh-timeline-repo">{row.repo}</span>
+								<span class="gh-timeline-detail">{row.detail}</span>
+							</a>
+						))
+					)}
+				</div>
+			</div>
+
+			<div class="gh-timeline-section" style="--section-order: 3;">
+				<div class="gh-timeline-section-header">
+					<span class="gh-timeline-icon">
+						<svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14" set:html={PR_ICON} />
+					</span>
+					<span>Opened {totals.prs} pull {totals.prs === 1 ? 'request' : 'requests'}</span>
+				</div>
+				<div class="gh-timeline-items">
+					{prRows.length === 0 ? (
+						<div class="gh-timeline-empty">No pull requests yet</div>
+					) : (
+						prRows.map((row, i) => (
+							<a href={row.url} target="_blank" rel="noopener noreferrer" class="gh-timeline-row" style={`--row-index: ${i};`}>
+								<span class="gh-timeline-repo">{row.repo}</span>
+								<span class="gh-timeline-detail">{row.detail}</span>
+							</a>
+						))
+					)}
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<style>
+	.gh-pane-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		font-family: var(--font-mono);
+		font-size: 11px;
+		color: var(--muted);
+		text-decoration: none;
+		transition: color 0.15s ease;
+	}
+
+	.gh-pane-link:hover {
+		color: var(--primary);
+		text-decoration: none;
+	}
+
+	.gh-pane-link svg {
+		flex-shrink: 0;
+	}
+
+	.gh-contrib-container {
+		padding: 10px 14px 8px;
+	}
+
+	.gh-contrib-header {
+		margin-bottom: 8px;
+	}
+
+	.gh-contrib-count {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		color: var(--muted);
+	}
+
+	.gh-contrib-grid {
+		display: grid;
+		grid-template-columns: repeat(var(--weeks), minmax(0, 1fr));
+		gap: 3px;
+		width: 100%;
+		align-items: start;
+	}
+
+	.gh-contrib-week {
+		display: grid;
+		grid-template-rows: repeat(7, minmax(0, 1fr));
+		gap: 3px;
+		min-width: 0;
+	}
+
+	.gh-contrib-day {
+		width: 100%;
+		aspect-ratio: 1 / 1;
+		border-radius: 2px;
+		background: transparent;
+		border: 1px solid var(--input);
+		box-sizing: border-box;
+	}
+
+	.gh-contrib-day.l1 {
+		background: rgba(var(--primary-rgb), 0.4);
+		border-color: transparent;
+	}
+
+	.gh-contrib-day.l2 {
+		background: rgba(var(--primary-rgb), 0.6);
+		border-color: transparent;
+	}
+
+	.gh-contrib-day.l3 {
+		background: rgba(var(--primary-rgb), 0.8);
+		border-color: transparent;
+	}
+
+	.gh-contrib-day.l4 {
+		background: var(--primary);
+		border-color: transparent;
+	}
+
+	.gh-timeline {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		padding: 4px 14px 12px;
+	}
+
+	.gh-timeline-section {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		animation: ghSlideIn 0.45s ease-out backwards;
+		animation-delay: calc(0.08s * var(--section-order, 0));
+	}
+
+	.gh-timeline-section-header {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		font-size: 12px;
+		font-weight: 600;
+		color: var(--foreground);
+		padding-bottom: 6px;
+		border-bottom: 1px solid var(--input);
+	}
+
+	.gh-timeline-icon {
+		display: inline-flex;
+		align-items: center;
+		color: var(--muted);
+	}
+
+	.gh-timeline-items {
+		display: flex;
+		flex-direction: column;
+		gap: 1px;
+	}
+
+	.gh-timeline-row {
+		display: grid;
+		grid-template-columns: minmax(0, 120px) minmax(0, 1fr);
+		gap: 10px;
+		padding: 4px 8px 4px 26px;
+		border-radius: 5px;
+		font-size: 12px;
+		text-decoration: none;
+		color: inherit;
+		transition: background-color 0.15s ease;
+		animation: ghSlideIn 0.35s ease-out backwards;
+		animation-delay: calc(0.08s * var(--section-order, 0) + 0.03s * var(--row-index, 0) + 0.1s);
+	}
+
+	.gh-timeline-row:hover {
+		background: var(--card-raised);
+		text-decoration: none;
+	}
+
+	.gh-timeline-repo {
+		color: var(--primary);
+		font-weight: 500;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.gh-timeline-detail {
+		color: var(--muted);
+		font-family: var(--font-mono);
+		font-size: 11px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.gh-timeline-empty {
+		font-size: 12px;
+		color: var(--muted);
+		padding: 8px 10px 8px 26px;
+		font-style: italic;
+	}
+
+	@keyframes ghSlideIn {
+		from {
+			opacity: 0;
+			transform: translateX(10px);
+		}
+		to {
+			opacity: 1;
+			transform: translateX(0);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.gh-timeline-section,
+		.gh-timeline-row {
+			animation: none;
+		}
+	}
+</style>

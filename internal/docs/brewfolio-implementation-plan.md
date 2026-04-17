@@ -38,27 +38,27 @@ Components from `datascienceapps` that map to a Keystatic collection or singleto
 
 ### Dashboard grid
 
-- [ ] `Dashboard.astro` — 5-pane grid orchestrator with concept filtering
-- [ ] `ConceptsPane` — concept filter list + editable intro copy
-- [ ] `ProjectsPane` — project tiles grid with status/tags/links
-- [ ] `WritingPane` — post list with tags + subscribe button
-- [ ] `GitHubPane` — contribution grid + activity timeline
-- [ ] `AnalysisPane` — notebook list
+- [x] `Dashboard.astro` — 5-pane grid orchestrator with concept filtering
+- [x] `ConceptsPane` — concept filter list + editable intro copy
+- [x] `ProjectsPane` — project tiles grid with status/tags/links
+- [x] `WritingPane` — post list with tags + subscribe button
+- [x] `GitHubPane` — contribution grid + activity timeline
+- [x] `AnalysisPane` — notebook list
 
 ### Portfolio singletons
 
-- [ ] `ImpactShelf` — impact sections with left-border accent
-- [ ] `WorkTimeline` — work/education timeline with expandable entries
-- [ ] `NotebookSummaryCard` — card for notebook catalog
-- [ ] `ArticleTOC` — table of contents with scroll spy
+- [x] `ImpactShelf` — impact sections with left-border accent
+- [x] `WorkTimeline` — work/education timeline with expandable entries
+- [x] `NotebookSummaryCard` — card for notebook catalog
+- [x] `ArticleTOC` — table of contents with scroll spy
 
 ### Navigation + search
 
-- [ ] `SearchOverlay` — full-screen search overlay
-- [ ] `SearchData` — search index data provider
-- [ ] `ModalSource` — template marker for modal content extraction
-- [ ] `HomeHeader` — home page header with nav + active route
-- [ ] `MiniClockWeather` — clock + weather mini widget
+- [x] `SearchOverlay` — full-screen search overlay
+- [x] `SearchData` — search index data provider
+- [x] `ModalSource` — template marker for modal content extraction
+- [x] `HomeHeader` — home page header with nav + active route
+- [x] `MiniClockWeather` — clock + weather mini widget
 
 ---
 

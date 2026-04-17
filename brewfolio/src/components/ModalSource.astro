@@ -1,0 +1,14 @@
+---
+/**
+ * Modal Source Template
+ * Marker for modal content extraction by dashboard
+ */
+---
+
+<div data-brewfolio-modal-source style="display:none;">
+  <div data-brewfolio-modal-left><slot name="left" /></div>
+  <div data-brewfolio-modal-center><slot name="center" /></div>
+  <div data-brewfolio-modal-right><slot name="right" /></div>
+  <div data-brewfolio-modal-titlebar><slot name="titlebar" /></div>
+  <div data-brewfolio-modal-body><slot /></div>
+</div>

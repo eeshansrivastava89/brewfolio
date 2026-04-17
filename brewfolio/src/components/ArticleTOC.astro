@@ -1,0 +1,180 @@
+---
+/**
+ * Article Table of Contents - Sticky floating TOC with scroll spy
+ */
+
+interface Heading {
+  id: string
+  text: string
+  level: 2 | 3
+}
+
+interface Props {
+  headings: Heading[]
+  topLabel?: string
+  minEntries?: number
+}
+
+const { headings, topLabel = 'Overview', minEntries = 3 } = Astro.props
+const visible = headings.length >= minEntries
+---
+
+{visible && (
+  <aside class="article-toc" aria-label="Table of contents">
+    <div class="article-toc-label">On this page</div>
+    <nav class="article-toc-nav" id="tocNav">
+      {topLabel && (
+        <a
+          href="#top"
+          class="article-toc-link article-toc-top"
+          data-toc-link="__top"
+        >
+          {topLabel}
+        </a>
+      )}
+      {headings.map((heading) => (
+        <a
+          href={`#${heading.id}`}
+          class:list={[
+            'article-toc-link',
+            `article-toc-level-${heading.level}`
+          ]}
+          data-toc-link={heading.id}
+        >
+          {heading.text}
+        </a>
+      ))}
+    </nav>
+  </aside>
+)}
+
+<script is:inline>
+(function() {
+  function initTOC() {
+    const tocLinks = document.querySelectorAll('[data-toc-link]')
+    if (!tocLinks.length) return
+
+    const headingElements = []
+    tocLinks.forEach(function(link) {
+      const id = link.getAttribute('data-toc-link')
+      if (id === '__top') {
+        headingElements.push({ id: '__top', element: document.querySelector('.modal-article-title, .modal-page-title, [data-toc-top]') || document.body })
+      } else {
+        const el = document.getElementById(id)
+        if (el) headingElements.push({ id: id, element: el })
+      }
+    })
+
+    let activeId = null
+
+    var observer = new IntersectionObserver(
+      function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            var id = entry.target.id || '__top'
+            if (id !== activeId) {
+              activeId = id
+              tocLinks.forEach(function(link) {
+                link.classList.toggle('active', link.getAttribute('data-toc-link') === id)
+              })
+            }
+          }
+        })
+      },
+      {
+        rootMargin: '-80px 0px -70% 0px',
+        threshold: 0
+      }
+    )
+
+    headingElements.forEach(function(item) {
+      if (item.element) observer.observe(item.element)
+    })
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTOC)
+  } else {
+    initTOC()
+  }
+})()
+</script>
+
+<style>
+  .article-toc {
+    position: sticky;
+    top: 100px;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .article-toc::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .article-toc::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .article-toc::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 2px;
+  }
+
+  .article-toc-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted-foreground);
+    margin-bottom: 12px;
+  }
+
+  .article-toc-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .article-toc-link {
+    display: block;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--muted-foreground);
+    text-decoration: none;
+    padding: 4px 0;
+    border-left: 2px solid transparent;
+    padding-left: 12px;
+    margin-left: -14px;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .article-toc-link:hover {
+    color: var(--foreground);
+  }
+
+  .article-toc-link.active {
+    color: var(--primary);
+    border-left-color: var(--primary);
+    font-weight: 500;
+  }
+
+  .article-toc-level-3 {
+    font-size: 12px;
+    padding-left: 24px;
+    margin-left: -26px;
+  }
+
+  .article-toc-top {
+    margin-bottom: 8px;
+  }
+
+  @media (max-width: 1200px) {
+    .article-toc {
+      display: none;
+    }
+  }
+</style>

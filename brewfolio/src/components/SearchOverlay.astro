@@ -1,0 +1,249 @@
+---
+/**
+ * Search Overlay - Full-screen search modal
+ * Opens with Cmd/Ctrl+K or '/' key
+ */
+interface Props {
+  placeholder?: string
+}
+
+const { placeholder = "Search projects, writing, concepts…" } = Astro.props
+---
+
+<div class="search-overlay" id="searchOverlay" role="dialog" aria-modal="true" aria-label="Search">
+  <div class="search-panel" onclick="event.stopPropagation()">
+    <div class="search-input-wrap">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="11" cy="11" r="8" />
+        <path d="m21 21-4.35-4.35" />
+      </svg>
+      <input
+        type="text"
+        class="search-input"
+        id="searchInput"
+        placeholder={placeholder}
+        aria-label="Search across all content"
+        autocomplete="off"
+      />
+      <kbd class="search-kbd">ESC</kbd>
+    </div>
+    <div class="search-results" id="searchResults">
+      <div class="search-empty">
+        <span class="search-empty-icon">⌘K</span>
+        <span>Type to search across all content</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+(function() {
+  function openSearch() {
+    var overlay = document.getElementById('searchOverlay')
+    if (!overlay) return
+    overlay.classList.add('visible')
+    setTimeout(function() {
+      var input = document.getElementById('searchInput')
+      if (input) input.focus()
+    }, 50)
+  }
+
+  function closeSearch() {
+    var overlay = document.getElementById('searchOverlay')
+    if (overlay) overlay.classList.remove('visible')
+    var input = document.getElementById('searchInput')
+    if (input) input.value = ''
+    var results = document.getElementById('searchResults')
+    if (results) results.innerHTML = '<div class="search-empty"><span class="search-empty-icon">⌘K</span><span>Type to search across all content</span></div>'
+  }
+
+  window.__brewfolioOpenSearch = openSearch
+  window.__brewfolioCloseSearch = closeSearch
+
+  document.addEventListener('keydown', function(event) {
+    if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+      event.preventDefault()
+      openSearch()
+    }
+    if (event.key === '/' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      var active = document.activeElement
+      if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) return
+      event.preventDefault()
+      openSearch()
+    }
+    if (event.key === 'Escape') {
+      var overlay = document.getElementById('searchOverlay')
+      if (overlay && overlay.classList.contains('visible')) closeSearch()
+    }
+  })
+
+  var overlay = document.getElementById('searchOverlay')
+  if (overlay) {
+    overlay.addEventListener('click', function(event) {
+      if (event.target === overlay) closeSearch()
+    })
+  }
+})()
+</script>
+
+<style is:global>
+  .search-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--overlay);
+    z-index: 100;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 15vh;
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+  }
+
+  .search-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .search-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-hover);
+    width: 520px;
+    max-width: 90vw;
+    overflow: hidden;
+  }
+
+  .search-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--input);
+  }
+
+  .search-icon {
+    width: 18px;
+    height: 18px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .search-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-family: var(--font-sans, 'DM Sans', system-ui, sans-serif);
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.25;
+    color: var(--foreground);
+    outline: none;
+  }
+
+  .search-input::placeholder {
+    color: var(--muted);
+    font-weight: 400;
+    opacity: 0.9;
+  }
+
+  .search-kbd {
+    font-family: var(--font-mono, monospace);
+    font-size: 11px;
+    padding: 3px 6px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--muted);
+    background: var(--card-raised);
+  }
+
+  .search-results {
+    max-height: 340px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+    padding: 6px 0;
+  }
+
+  .search-results::-webkit-scrollbar {
+    display: none;
+  }
+
+  .search-result {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    text-align: left;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: background-color 0.1s ease;
+    background: transparent;
+    border: 0;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .search-result:hover {
+    background: var(--card-raised);
+    text-decoration: none;
+  }
+
+  .search-result:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+  }
+
+  .search-result-type {
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .search-result-title {
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--foreground);
+  }
+
+  .search-result-excerpt {
+    font-size: 12px;
+    color: var(--muted-foreground);
+    line-height: 1.4;
+    margin-top: 2px;
+  }
+
+  .search-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 24px 16px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.4;
+  }
+
+  .search-empty-icon {
+    font-size: 16px;
+    opacity: 0.6;
+  }
+
+  @media (max-width: 768px) {
+    .search-overlay {
+      padding-top: 8vh;
+    }
+
+    .search-panel {
+      width: 95vw;
+    }
+  }
+</style>

@@ -1,0 +1,193 @@
+---
+interface Props {
+	title?: string
+}
+
+const { title = 'Home' } = Astro.props
+---
+
+<div class="brewfolio-dashboard" data-brefolio-dashboard>
+	<slot />
+</div>
+
+<script is:inline>
+(function () {
+	function normalizePath(path) {
+		if (!path) return '/'
+		var normalized = path.split('#')[0].split('?')[0]
+		if (normalized.length > 1 && normalized.endsWith('/')) {
+			normalized = normalized.slice(0, -1)
+		}
+		return normalized || '/'
+	}
+
+	function updateNavActive(path) {
+		var normalized = normalizePath(path || window.location.pathname)
+		document.querySelectorAll('.nav-pill[data-route]').forEach(function (pill) {
+			var route = pill.getAttribute('data-route') || ''
+			var active = normalized !== '/' && (normalized === route || normalized.indexOf(route + '/') === 0)
+			pill.classList.toggle('active', active)
+		})
+	}
+
+	document.addEventListener('click', function (event) {
+		var modalLink = event.target.closest('a[data-modal-link]')
+		if (modalLink) {
+			if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return
+			event.preventDefault()
+			var href = modalLink.getAttribute('href') || '/'
+			window.__brewfolioOpenPathModal && window.__brewfolioOpenPathModal(href)
+			return
+		}
+
+		var conceptTrigger = event.target.closest('[data-concept-filter]')
+		if (conceptTrigger) {
+			event.preventDefault()
+			var slug = conceptTrigger.getAttribute('data-concept-filter') || ''
+			window.__brewfolioToggleConcept && window.__brewfolioToggleConcept(slug)
+			return
+		}
+
+		var pane = event.target.closest('.pane')
+		if (pane) {
+			document.querySelectorAll('.pane').forEach(function (candidate) {
+				candidate.classList.remove('focused')
+			})
+			pane.classList.add('focused')
+		}
+	})
+
+	document.addEventListener('DOMContentLoaded', function () {
+		updateNavActive(window.location.pathname)
+	})
+})()
+</script>
+
+<style is:global>
+	.brewfolio-dashboard {
+		display: grid;
+		grid-template-columns: 30fr 40fr 30fr;
+		grid-template-rows: minmax(0, 55fr) minmax(0, 45fr);
+		gap: 12px;
+		height: 100%;
+		min-height: 0;
+	}
+
+	.pane {
+		position: relative;
+		background: var(--card);
+		border: 1px solid var(--border);
+		border-radius: var(--radius-lg);
+		box-shadow: var(--shadow);
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+		min-height: 0;
+		transition: box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+	}
+
+	.pane:hover {
+		box-shadow: var(--shadow-hover);
+	}
+
+	.pane.focused {
+		border-color: var(--primary);
+		box-shadow: var(--shadow-hover);
+	}
+
+	.pane-header,
+	.writing-pane-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 10px;
+		padding: 10px 14px;
+		border-bottom: 1px solid var(--input);
+		flex-shrink: 0;
+	}
+
+	.pane-header h2,
+	.writing-pane-header h2 {
+		font-family: var(--font-serif);
+		font-size: 17px;
+		font-weight: 700;
+		letter-spacing: -0.02em;
+		color: var(--foreground);
+	}
+
+	.pane-header-link,
+	.writing-pane-header-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		text-decoration: none;
+		color: inherit;
+		min-width: 0;
+	}
+
+	.pane-header-link:hover,
+	.writing-pane-header-link:hover {
+		color: var(--primary);
+		text-decoration: none;
+	}
+
+	.pane-header-right {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.pane-body {
+		flex: 1;
+		min-height: 0;
+		overflow-y: auto;
+		scrollbar-width: none;
+		padding: 8px 0;
+	}
+
+	.pane-body::-webkit-scrollbar {
+		display: none;
+	}
+
+	.pane-concepts { grid-column: 1; grid-row: 1; }
+	.pane-github { grid-column: 1; grid-row: 2; }
+	.pane-projects { grid-column: 2; grid-row: 1 / 3; }
+	.pane-writing { grid-column: 3; grid-row: 1; }
+	.pane-analysis { grid-column: 3; grid-row: 2; }
+
+	@media (max-width: 768px) {
+		.brewfolio-dashboard {
+			display: flex;
+			flex-direction: column;
+			height: auto;
+		}
+
+		.pane {
+			min-height: 220px;
+		}
+
+		.pane-concepts { order: 1; }
+		.pane-writing { order: 2; }
+		.pane-projects { order: 3; min-height: 320px; }
+		.pane-analysis { order: 4; }
+		.pane-github { order: 5; }
+
+		.pane-body {
+			max-height: none;
+		}
+	}
+
+	@media (min-width: 769px) and (max-width: 1024px) {
+		.brewfolio-dashboard {
+			grid-template-columns: 1fr 1fr;
+			grid-template-rows: auto;
+			height: auto;
+		}
+
+		.pane-concepts { grid-column: 1; grid-row: auto; }
+		.pane-writing { grid-column: 2; grid-row: auto; }
+		.pane-projects { grid-column: 1 / 3; grid-row: auto; }
+		.pane-analysis { grid-column: 1; grid-row: auto; }
+		.pane-github { grid-column: 2; grid-row: auto; }
+	}
+</style>

@@ -1,0 +1,510 @@
+---
+interface NavItem {
+	label: string
+	href: string
+}
+
+interface Props {
+	navItems?: NavItem[]
+	siteName?: string
+	showSearch?: boolean
+	showThemeToggle?: boolean
+	showClockWeather?: boolean
+	latitude?: number
+	longitude?: number
+	timezone?: string
+	cityName?: string
+}
+
+const {
+	navItems = [
+		{ label: 'Writing', href: '/writing' },
+		{ label: 'Analysis', href: '/analysis' },
+		{ label: 'About', href: '/about' }
+	],
+	siteName = 'Eeshan S.',
+	showSearch = true,
+	showThemeToggle = true,
+	showClockWeather = true,
+	latitude = 47.6062,
+	longitude = -122.3321,
+	timezone = 'America/Los_Angeles',
+	cityName = 'Seattle'
+} = Astro.props
+---
+
+<div class="notch-bar">
+	<div class="notch" id="notch">
+		<strong class="notch-name">{siteName}</strong>
+		<span class="notch-sep hidden">›</span>
+		<span class="notch-page hidden"></span>
+	</div>
+</div>
+
+<header class="brewfolio-home-header">
+	{showClockWeather && (
+		<div class="header-left">
+			<div class="header-clock-weather">
+				<div class="mini-clock-face" id="miniClockFace" aria-hidden="true">
+					<div class="tick-marks">
+						{Array.from({ length: 12 }, (_, i) => (
+							<div class:list={['tick', i % 3 === 0 && 'major']} style={`transform: rotate(${i * 30}deg)`}></div>
+						))}
+					</div>
+					<div class="clock-center"></div>
+					<div class="clock-hand hour" id="miniHourHand"></div>
+					<div class="clock-hand minute" id="miniMinuteHand"></div>
+					<div class="clock-hand second" id="miniSecondHand"></div>
+				</div>
+				<div class="digital-clock" id="miniDigitalClock">--:--</div>
+				<div class="clock-divider"></div>
+				<div class="weather" id="headerWeather">
+					<span class="weather-icon" id="weatherIcon">⛅</span>
+					<span class="weather-temp" id="weatherTemp">--°F</span>
+					<span class="weather-loc">{cityName}</span>
+				</div>
+			</div>
+		</div>
+	)}
+	<span class="mobile-notch-label" aria-hidden="true">{siteName}</span>
+	<div class="header-right">
+		<nav class="nav-pills" aria-label="Primary">
+			{navItems.map((item) => (
+				<a href={item.href} class="nav-pill" data-route={item.href}>
+					{item.label}
+				</a>
+			))}
+		</nav>
+		{showThemeToggle && (
+			<button class="theme-toggle" type="button" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode">
+				<svg class="theme-icon theme-icon-moon w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+				<svg class="theme-icon theme-icon-sun w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+			</button>
+		)}
+		{showSearch && (
+			<button class="search-hint" type="button" aria-label="Search">
+				<span class="search-hint-desktop">/ search</span>
+				<span class="search-hint-mobile">Search</span>
+			</button>
+		)}
+		<slot name="settings-trigger" />
+	</div>
+</header>
+
+<script is:inline define:vars={{ latitude, longitude, timezone }}>
+	(function () {
+		var hourHand = document.getElementById('miniHourHand')
+		var minuteHand = document.getElementById('miniMinuteHand')
+		var secondHand = document.getElementById('miniSecondHand')
+		var digitalClock = document.getElementById('miniDigitalClock')
+
+		var partsFormatter = new Intl.DateTimeFormat('en-US', {
+			timeZone: timezone,
+			hour: 'numeric',
+			minute: 'numeric',
+			second: 'numeric',
+			hour12: false
+		})
+
+		function getSitePart(parts, type) {
+			var found = parts.find(function (p) { return p.type === type })
+			return found ? parseInt(found.value, 10) : 0
+		}
+
+		function updateClock() {
+			var now = new Date()
+			var parts = partsFormatter.formatToParts(now)
+			var h = getSitePart(parts, 'hour') % 12
+			var m = getSitePart(parts, 'minute')
+			var s = getSitePart(parts, 'second')
+			var ms = now.getMilliseconds()
+			var secondAngle = (s + ms / 1000) * 6
+			var minuteAngle = (m + s / 60) * 6
+			var hourAngle = (h + m / 60) * 30
+			if (hourHand) hourHand.style.transform = 'rotate(' + hourAngle + 'deg)'
+			if (minuteHand) minuteHand.style.transform = 'rotate(' + minuteAngle + 'deg)'
+			if (secondHand) secondHand.style.transform = 'rotate(' + secondAngle + 'deg)'
+			if (digitalClock) {
+				var hours24 = getSitePart(parts, 'hour')
+				var minutes = String(m).padStart(2, '0')
+				var ampm = hours24 >= 12 ? 'PM' : 'AM'
+				var h12 = hours24 % 12 || 12
+				digitalClock.textContent = h12 + ':' + minutes + ' ' + ampm
+			}
+		}
+
+		updateClock()
+		setInterval(updateClock, 1000)
+
+		var weatherIcon = document.getElementById('weatherIcon')
+		var weatherTemp = document.getElementById('weatherTemp')
+		var weatherLastFetch = 0
+
+		function weatherEmoji(code) {
+			if (code >= 0 && code <= 1) return '☀️'
+			if (code >= 2 && code <= 3) return '⛅'
+			if (code >= 45 && code <= 48) return '☁️'
+			if (code >= 51 && code <= 67) return '🌧️'
+			if (code >= 71 && code <= 77) return '❄️'
+			if (code >= 80 && code <= 82) return '🌧️'
+			if (code >= 95) return '⛈️'
+			return '⛅'
+		}
+
+		function fetchWeather() {
+			var now = Date.now()
+			if (now - weatherLastFetch < 30 * 60 * 1000) return
+			weatherLastFetch = now
+			var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + latitude + '&longitude=' + longitude + '&current=temperature_2m,weather_code&temperature_unit=fahrenheit&timezone=' + encodeURIComponent(timezone)
+			fetch(url)
+				.then(function (response) { return response.json() })
+				.then(function (data) {
+					var current = data && data.current
+					if (!current) return
+					if (weatherTemp && typeof current.temperature_2m === 'number') {
+						weatherTemp.textContent = Math.round(current.temperature_2m) + '\u00B0F'
+					}
+					if (weatherIcon) weatherIcon.textContent = weatherEmoji(current.weather_code)
+				})
+				.catch(function () {})
+		}
+
+		fetchWeather()
+		setInterval(fetchWeather, 30 * 60 * 1000)
+	})()
+</script>
+
+<script is:inline>
+	document.getElementById('themeToggle')?.addEventListener('click', function () {
+		if (window.__toggleTheme) window.__toggleTheme()
+	})
+	document.addEventListener('keydown', function (event) {
+		if (event.key === 'd' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+			var active = document.activeElement
+			if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) return
+			if (window.__toggleTheme) window.__toggleTheme()
+		}
+	})
+</script>
+
+<style>
+	.notch-bar {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		display: flex;
+		justify-content: center;
+		z-index: 65;
+		pointer-events: none;
+	}
+
+	.notch {
+		position: relative;
+		pointer-events: auto;
+		padding: 10px 30px 4px;
+		font-size: 13px;
+		font-weight: 500;
+		letter-spacing: 0.03em;
+		color: var(--muted);
+		background: var(--card);
+		border-left: 1px solid var(--border);
+		border-right: 1px solid var(--border);
+		border-bottom: 1px solid var(--border);
+		border-radius: 0 0 14px 14px;
+	}
+
+	.notch::before,
+	.notch::after {
+		content: '';
+		position: absolute;
+		top: 0;
+		width: 14px;
+		height: 14px;
+		background: transparent;
+	}
+
+	.notch::before {
+		left: -14px;
+		border-top-right-radius: 14px;
+		box-shadow: 5px 0 0 0 var(--card);
+		border-top: 1px solid var(--border);
+		border-right: 1px solid var(--border);
+	}
+
+	.notch::after {
+		right: -14px;
+		border-top-left-radius: 14px;
+		box-shadow: -5px 0 0 0 var(--card);
+		border-top: 1px solid var(--border);
+		border-left: 1px solid var(--border);
+	}
+
+	.notch-name { color: var(--primary); font-weight: 600; }
+	.notch-sep { color: var(--muted); margin: 0 6px; }
+	.notch-page { color: var(--foreground); font-weight: 500; }
+
+	.brewfolio-home-header {
+		height: 52px;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0 12px;
+		gap: 10px;
+	}
+
+	.header-left {
+		display: flex;
+		align-items: center;
+	}
+
+	.header-clock-weather {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		padding: 3px 12px;
+		border-radius: 6px;
+		border: 1px solid var(--border);
+		background: var(--card);
+	}
+
+	.mini-clock-face {
+		width: 28px;
+		height: 28px;
+		border-radius: 50%;
+		border: 1.5px solid var(--border);
+		background: var(--card);
+		position: relative;
+		flex-shrink: 0;
+	}
+
+	.tick-marks {
+		position: absolute;
+		inset: 0;
+	}
+
+	.tick {
+		position: absolute;
+		top: 2px;
+		left: 50%;
+		width: 1px;
+		height: 4px;
+		margin-left: -0.5px;
+		background: var(--muted);
+		transform-origin: 50% 12px;
+		opacity: 0.7;
+	}
+
+	.tick.major {
+		height: 5px;
+		background: var(--foreground);
+		opacity: 0.9;
+	}
+
+	.clock-center {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		width: 3px;
+		height: 3px;
+		background: var(--foreground);
+		border-radius: 50%;
+		transform: translate(-50%, -50%);
+		z-index: 4;
+	}
+
+	.clock-hand {
+		position: absolute;
+		bottom: 50%;
+		left: 50%;
+		transform-origin: 50% 100%;
+		border-radius: 1px;
+	}
+
+	.clock-hand.hour {
+		width: 2px;
+		height: 8px;
+		background: var(--foreground);
+		margin-left: -1px;
+		z-index: 3;
+	}
+
+	.clock-hand.minute {
+		width: 1.5px;
+		height: 10px;
+		background: var(--foreground);
+		margin-left: -0.75px;
+		z-index: 2;
+	}
+
+	.clock-hand.second {
+		width: 1px;
+		height: 11px;
+		background: var(--primary);
+		margin-left: -0.5px;
+		z-index: 1;
+	}
+
+	.digital-clock,
+	.weather-temp {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		font-weight: 600;
+		color: var(--foreground);
+		white-space: nowrap;
+	}
+
+	.clock-divider {
+		width: 1px;
+		height: 18px;
+		background: var(--border);
+	}
+
+	.weather {
+		display: flex;
+		align-items: center;
+		gap: 5px;
+	}
+
+	.weather-icon { font-size: 14px; line-height: 1; }
+	.weather-loc { font-size: 10px; color: var(--muted); }
+
+	.mobile-notch-label { display: none; }
+
+	.nav-pills { display: flex; gap: 6px; }
+
+	.nav-pill {
+		padding: 7px 16px;
+		border-radius: 6px;
+		border: 1px solid var(--border);
+		background: var(--card);
+		color: var(--foreground);
+		font-size: 14px;
+		font-weight: 500;
+		cursor: pointer;
+		transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+		text-decoration: none;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		touch-action: manipulation;
+	}
+
+	.nav-pill:hover, .nav-pill.active {
+		background: var(--accent);
+		border-color: var(--primary);
+		color: var(--primary);
+		text-decoration: none;
+	}
+
+	.nav-pill:focus-visible,
+	.theme-toggle:focus-visible,
+	.search-hint:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
+	}
+
+	.header-right { display: flex; align-items: center; gap: 8px; }
+
+	.theme-toggle,
+	.search-hint {
+		padding: 5px 12px;
+		border-radius: 6px;
+		border: 1px solid var(--border);
+		background: var(--card);
+		color: var(--muted-foreground);
+		font-size: 14px;
+		cursor: pointer;
+		transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		touch-action: manipulation;
+	}
+
+	.theme-toggle { padding: 7px 10px; }
+
+	:global([data-theme='light']) .theme-icon-sun,
+	:global([data-theme='dark']) .theme-icon-moon { display: none; }
+
+	.search-hint {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		color: var(--muted);
+	}
+
+	.theme-toggle:hover,
+	.search-hint:hover {
+		background: var(--accent);
+		border-color: var(--primary);
+		color: var(--primary);
+	}
+
+	.search-hint-mobile { display: none; }
+
+	@media (max-width: 768px) {
+		.notch-bar { display: none; }
+
+		.brewfolio-home-header {
+			height: auto;
+			flex-wrap: wrap;
+			padding: 8px 12px;
+			gap: 8px;
+		}
+
+		.header-left { order: 1; }
+
+		.header-clock-weather { font-size: 12px; padding: 2px 8px; gap: 6px; }
+
+		.mini-clock-face { display: none; }
+
+		.mobile-notch-label {
+			display: inline-block;
+			order: 1;
+			font-size: 13px;
+			font-weight: 600;
+			color: var(--primary);
+			letter-spacing: 0.02em;
+		}
+
+		.header-right {
+			order: 2;
+			width: 100%;
+			gap: 8px;
+		}
+
+		.nav-pills {
+			flex: 1;
+			min-width: 0;
+			overflow-x: auto;
+			flex-wrap: nowrap;
+			padding-bottom: 4px;
+			-webkit-overflow-scrolling: touch;
+			scrollbar-width: none;
+		}
+
+		.nav-pills::-webkit-scrollbar { display: none; }
+
+		.nav-pill {
+			white-space: nowrap;
+			flex-shrink: 0;
+			padding: 6px 12px;
+			font-size: 13px;
+		}
+
+		.theme-toggle { padding: 4px 10px; }
+
+		.search-hint {
+			display: inline-flex;
+			padding: 4px 10px;
+		}
+
+		.search-hint-desktop { display: none; }
+
+		.search-hint-mobile {
+			display: inline;
+			font-size: 12px;
+			font-weight: 600;
+		}
+	}
+</style>

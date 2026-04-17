@@ -1,0 +1,227 @@
+---
+import { Icon } from 'astro-icon/components'
+import type { Project } from '@/lib/types'
+
+interface Props {
+	projects: Project[]
+	showUntaggedBadge?: boolean
+}
+
+const { projects, showUntaggedBadge = false } = Astro.props
+
+function getStatusDot(status: string): string {
+	if (status === 'live') return 'live'
+	return 'dev'
+}
+
+function getStatusLabel(status: string): string {
+	if (status === 'live') return 'Live'
+	if (status === 'in-progress') return 'In Dev'
+	return status
+}
+---
+
+<section class="pane pane-projects" data-pane="projects" aria-label="Projects">
+	<div class="pane-header">
+		<h2>Projects</h2>
+	</div>
+	<div class="pane-body">
+		<div class="project-tiles">
+			{projects.map((project) => (
+				<article class="project-tile" data-project-id={project.id}>
+					<div class="project-tile-header">
+						<div class="project-tile-name">{project.name}</div>
+						<span class="project-tile-status">
+							<span class={`status-dot ${getStatusDot(project.status)}`}></span>
+							{getStatusLabel(project.status)}
+						</span>
+					</div>
+					<div class="project-tile-desc">{project.shortDescription || project.description}</div>
+					{project.tags && project.tags.length > 0 && (
+						<div class="project-tile-tags">
+							{project.tags.slice(0, 4).map((tag) => (
+								<span class="tech-tag">{tag.name}</span>
+							))}
+						</div>
+					)}
+					<div class="project-tile-actions">
+						{project.url && (
+							<a href={project.url} target="_blank" rel="noopener noreferrer" class="project-cta">
+								Try it
+								<Icon name="lucide:external-link" class="project-cta-icon" />
+							</a>
+						)}
+						{project.repo && (
+							<a href={project.repo} target="_blank" rel="noopener noreferrer" class="project-cta-secondary">
+								<Icon name="simple-icons:github" class="project-cta-icon" />
+								Source
+							</a>
+						)}
+					</div>
+				</article>
+			))}
+		</div>
+	</div>
+</section>
+
+<style>
+	.project-tiles {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 10px;
+		padding: 10px;
+	}
+
+	.project-tile {
+		background: var(--card-raised);
+		border: 1px solid var(--input);
+		border-radius: var(--radius-sm);
+		padding: 14px;
+		transition: border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.3s ease, background-color 0.2s ease;
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		min-height: 184px;
+	}
+
+	.project-tile:hover {
+		border-color: rgba(var(--primary-rgb), 0.35);
+		box-shadow: var(--shadow-hover);
+	}
+
+	.project-tile.highlighted {
+		background: var(--accent);
+		border-color: var(--primary);
+	}
+
+	.project-tile.dimmed {
+		opacity: 0.25;
+	}
+
+	.project-tile-header {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 8px;
+	}
+
+	.project-tile-name {
+		font-family: var(--font-serif);
+		font-weight: 700;
+		font-size: 17px;
+		letter-spacing: -0.02em;
+		color: var(--foreground);
+	}
+
+	.project-tile-status {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		font-family: var(--font-mono);
+		font-size: 11px;
+		color: var(--muted-foreground);
+		flex-shrink: 0;
+	}
+
+	.status-dot {
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		display: inline-block;
+	}
+
+	.status-dot.live {
+		background: var(--green);
+	}
+
+	.status-dot.dev {
+		background: #eab308;
+	}
+
+	:global([data-theme='dark']) .status-dot.dev {
+		background: #fbbf24;
+	}
+
+	.project-tile-desc {
+		font-size: 13px;
+		color: var(--muted-foreground);
+		line-height: 1.45;
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
+	.project-tile-tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px;
+	}
+
+	.tech-tag {
+		font-family: var(--font-mono);
+		font-size: 10px;
+		background: rgba(var(--primary-rgb), 0.08);
+		color: var(--primary);
+		padding: 2px 8px;
+		border-radius: 20px;
+		font-weight: 500;
+	}
+
+	.project-tile-actions {
+		display: flex;
+		gap: 6px;
+		align-items: center;
+		margin-top: auto;
+	}
+
+	.project-cta,
+	.project-cta-secondary {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		font-size: 12px;
+		text-decoration: none;
+		padding: 5px 12px;
+		border-radius: 999px;
+		transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+	}
+
+	.project-cta-icon {
+		width: 11px;
+		height: 11px;
+		flex-shrink: 0;
+	}
+
+	.project-cta {
+		font-weight: 600;
+		color: var(--primary);
+		border: 1px solid rgba(var(--primary-rgb), 0.28);
+		background: rgba(var(--primary-rgb), 0.04);
+	}
+
+	.project-cta:hover {
+		background: var(--primary);
+		border-color: var(--primary);
+		color: var(--card);
+		text-decoration: none;
+	}
+
+	.project-cta-secondary {
+		font-weight: 500;
+		color: var(--muted-foreground);
+		border: 1px solid var(--border);
+	}
+
+	.project-cta-secondary:hover {
+		border-color: var(--primary);
+		color: var(--primary);
+		text-decoration: none;
+	}
+
+	@media (max-width: 768px) {
+		.project-tiles {
+			grid-template-columns: 1fr;
+		}
+	}
+</style>

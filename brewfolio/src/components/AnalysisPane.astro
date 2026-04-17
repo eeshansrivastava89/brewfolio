@@ -1,0 +1,90 @@
+---
+interface Notebook {
+	id: string
+	title: string
+	date: string
+}
+
+interface Props {
+	notebooks: Notebook[]
+	showUntaggedBadge?: boolean
+}
+
+const { notebooks = [], showUntaggedBadge = false } = Astro.props
+---
+
+<section class="pane pane-analysis" data-pane="analysis" aria-label="Analysis">
+	<div class="pane-header">
+		<a href="/analysis" class="pane-header-link" data-modal-link data-route="/analysis">
+			<h2>Analysis</h2>
+		</a>
+	</div>
+	<div class="pane-body">
+		{notebooks.length === 0 && <div class="analysis-empty">No analyses yet</div>}
+		{notebooks.map((notebook) => (
+			<a href={`/analysis/${notebook.id}`} class="analysis-row" data-modal-link data-notebook-slug={notebook.id}>
+				<div class="analysis-title">{notebook.title}</div>
+				<div class="analysis-meta">
+					<span class="analysis-date">{new Date(notebook.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+				</div>
+			</a>
+		))}
+	</div>
+</section>
+
+<style>
+	.analysis-row {
+		display: block;
+		padding: 10px 14px;
+		transition: opacity 0.2s ease, border-left-color 0.2s ease, background-color 0.15s ease;
+		border-left: 3px solid transparent;
+		text-decoration: none;
+		touch-action: manipulation;
+	}
+
+	.analysis-row:hover {
+		background: var(--card-raised);
+		text-decoration: none;
+	}
+
+	.analysis-row:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+
+	.analysis-row.highlighted {
+		border-left-color: var(--primary);
+	}
+
+	.analysis-row.dimmed {
+		opacity: 0.25;
+	}
+
+	.analysis-title {
+		font-weight: 500;
+		font-size: 14px;
+		color: var(--foreground);
+		line-height: 1.4;
+	}
+
+	.analysis-meta {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-top: 3px;
+		flex-wrap: wrap;
+	}
+
+	.analysis-date {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		color: var(--muted);
+	}
+
+	.analysis-empty {
+		font-size: 14px;
+		color: var(--muted);
+		text-align: center;
+		padding: 32px 16px;
+	}
+</style>
