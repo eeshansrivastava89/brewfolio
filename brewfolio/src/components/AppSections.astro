@@ -1,0 +1,359 @@
+---
+/**
+ * AppSections — Renders an ordered list of content sections driven by a `sections`
+ * singleton from Keystatic. Each section can be: metrics-grid, results-list, notebook,
+ * or github-timeline.
+ *
+ * USE CASES
+ *   • Page-building in AppLayout — composing a page from CMS-configured section blocks
+ *   • Replaces hardcoded section order with CMS-driven ordering
+ *   • Enables non-technical users to reorder/reconfigure page sections via Keystatic
+ *
+ * SOURCE: brewfolio-deprecated AppSections.astro + MetricsGrid.astro
+ *
+ * PROPS
+ *   sections[]         — array of section configs from the `sections` Keystatic singleton
+ *   notebookEntries[]   — notebook catalog entries (for notebook section type)
+ *   githubData         — GitHub data object (for github-timeline section type)
+ *   githubProfileUrl   — profile URL for GitHub timeline link
+ *   githubProfileHandle — handle for GitHub timeline display
+ *   analysisBasePath   — base path for notebook links (default '/analysis')
+ *   showHints          — show empty-state hints when data is missing (default true)
+ */
+
+interface MetricItem {
+	label: string
+	value: string
+	delta?: string
+	delta_direction?: 'up' | 'down' | 'neutral'
+	context?: string
+}
+
+interface ResultsItem {
+	title: string
+	href?: string
+	meta?: string
+}
+
+interface SectionEntry {
+	discriminant: 'metrics-grid' | 'results-list' | 'notebook' | 'github-timeline'
+	value: {
+		title?: string
+		metrics?: MetricItem[]
+		items?: ResultsItem[]
+		notebookId?: string
+	}
+}
+
+interface Props {
+	sections: SectionEntry[]
+	notebookEntries?: { id: string; title: string }[]
+	githubData?: unknown | null
+	githubProfileUrl?: string
+	githubProfileHandle?: string
+	analysisBasePath?: string
+	showHints?: boolean
+	class?: string
+}
+
+const {
+	sections = [],
+	notebookEntries = [],
+	githubData = null,
+	githubProfileUrl,
+	githubProfileHandle,
+	analysisBasePath = '/analysis',
+	showHints = true,
+	class: className = '',
+} = Astro.props
+
+const notebooksById = new Map(notebookEntries.map((nb) => [nb.id, nb]))
+const basePath = analysisBasePath.endsWith('/') ? analysisBasePath.slice(0, -1) : analysisBasePath
+---
+
+<div class={`brewfolio-appsections flex flex-col gap-6 ${className}`}>
+	{sections.map((section) => {
+		if (section.discriminant === 'notebook') {
+			const nb = notebooksById.get(section.value.notebookId || '')
+			if (!nb) {
+				return showHints ? (
+					<section class="appsection-empty">
+						{section.value.title && <h2>{section.value.title}</h2>}
+						<p class="empty-hint">
+							Notebook <code>{section.value.notebookId}</code> was not found.
+							Add or fix it in <strong>Keystatic → Content → Notebooks</strong>.
+						</p>
+					</section>
+				) : null
+			}
+			return (
+				<section class="appsection">
+					{section.value.title && (
+						<header class="appsection-header">
+							<h2 class="appsection-title">{section.value.title}</h2>
+						</header>
+					)}
+					<a href={`${basePath}/${nb.id}`} class="notebook-link">
+						<span class="notebook-link-title">{nb.title}</span>
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+							<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+							<polyline points="15 3 21 3 21 9"/>
+							<line x1="10" y1="14" x2="21" y2="3"/>
+						</svg>
+					</a>
+				</section>
+			)
+		}
+
+		if (section.discriminant === 'metrics-grid') {
+			const metrics = section.value.metrics || []
+			if (metrics.length === 0) {
+				return showHints ? (
+					<section class="appsection-empty">
+						{section.value.title && <h2>{section.value.title}</h2>}
+						<p class="empty-hint">
+							No metrics configured. Add items in
+							<strong>Keystatic → Sections → Sections</strong>.
+						</p>
+					</section>
+				) : null
+			}
+			return (
+				<section class="appsection">
+					{section.value.title && (
+						<header class="appsection-header">
+							<h2 class="appsection-title">{section.value.title}</h2>
+						</header>
+					)}
+					<div class="metrics-grid" style={`--cols: ${Math.min(metrics.length, 4)}`}>
+						{metrics.map((m) => (
+							<div class="metric-card">
+								<span class="metric-label">{m.label}</span>
+								<span class={`metric-value ${m.delta_direction ? `metric-${m.delta_direction}` : ''}`}>
+									{m.value}
+								</span>
+								{m.delta && (
+									<span class={`metric-delta metric-delta-${m.delta_direction || 'neutral'}`}>
+										{m.delta}
+									</span>
+								)}
+								{m.context && <span class="metric-context">{m.context}</span>}
+							</div>
+						))}
+					</div>
+				</section>
+			)
+		}
+
+		if (section.discriminant === 'results-list') {
+			const items = section.value.items || []
+			if (items.length === 0) {
+				return showHints ? (
+					<section class="appsection-empty">
+						{section.value.title && <h2>{section.value.title}</h2>}
+						<p class="empty-hint">
+							No result rows configured. Add items in
+							<strong>Keystatic → Sections → Sections</strong>.
+						</p>
+					</section>
+				) : null
+			}
+			return (
+				<section class="appsection">
+					{section.value.title && (
+						<header class="appsection-header">
+							<h2 class="appsection-title">{section.value.title}</h2>
+						</header>
+					)}
+					<ul class="results-list">
+						{items.map((item) => (
+							<li class="results-item">
+								{item.href ? (
+									<a href={item.href} class="result-link">{item.title}</a>
+								) : (
+									<span class="result-link">{item.title}</span>
+								)}
+								{item.meta && <span class="result-meta">{item.meta}</span>}
+							</li>
+						))}
+					</ul>
+				</section>
+			)
+		}
+
+		if (section.discriminant === 'github-timeline') {
+			return (
+				<section class="appsection">
+					{section.value.title && (
+						<header class="appsection-header">
+							<h2 class="appsection-title">{section.value.title}</h2>
+						</header>
+					)}
+					{githubData ? (
+						<p class="text-sm text-muted-foreground">
+							GitHub timeline — connect via <code class="font-mono text-xs">githubData</code> prop.
+						</p>
+					) : showHints ? (
+						<section class="appsection-empty">
+							<p class="empty-hint">
+								GitHub data unavailable. Pass <code class="font-mono text-xs">githubData</code> prop
+								to AppSections or set your profile in
+								<strong>Keystatic → Site Config</strong>.
+							</p>
+						</section>
+					) : null}
+				</section>
+			)
+		}
+
+		return null
+	})}
+</div>
+
+<style>
+	.appsection {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+
+	.appsection-header {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.appsection-title {
+		font-family: var(--font-serif, Georgia, serif);
+		font-size: 22px;
+		font-weight: 700;
+		color: var(--foreground);
+		margin: 0;
+	}
+
+	.appsection-empty {
+		border: 1px dashed var(--border);
+		border-radius: var(--radius-lg);
+		padding: 20px 24px;
+		color: var(--muted-foreground);
+	}
+
+	.empty-hint {
+		font-size: 13px;
+		color: var(--muted-foreground);
+		margin: 0;
+		line-height: 1.5;
+	}
+
+	/* Metrics grid */
+	.metrics-grid {
+		display: grid;
+		grid-template-columns: repeat(var(--cols, 4), 1fr);
+		gap: 12px;
+	}
+
+	.metric-card {
+		background: var(--card);
+		border: 1px solid var(--border);
+		border-radius: var(--radius-lg);
+		padding: 18px 20px;
+		display: flex;
+		flex-direction: column;
+		gap: 3px;
+	}
+
+	.metric-label {
+		font-family: var(--font-mono, monospace);
+		font-size: 11px;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: var(--muted-foreground);
+	}
+
+	.metric-value {
+		font-size: 28px;
+		font-weight: 700;
+		color: var(--foreground);
+		line-height: 1.1;
+		margin-top: 4px;
+	}
+
+	.metric-delta {
+		font-family: var(--font-mono, monospace);
+		font-size: 12px;
+		font-weight: 500;
+		margin-top: 2px;
+	}
+	.metric-delta-up { color: var(--green); }
+	.metric-delta-down { color: var(--red); }
+	.metric-delta-neutral { color: var(--muted-foreground); }
+
+	.metric-context {
+		font-size: 11px;
+		color: var(--muted-foreground);
+		margin-top: 2px;
+	}
+
+	/* Results list */
+	.results-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		background: var(--card);
+		border: 1px solid var(--border);
+		border-radius: var(--radius-lg);
+		overflow: hidden;
+	}
+
+	.results-item {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		padding: 12px 16px;
+		border-bottom: 1px solid var(--input);
+	}
+	.results-item:last-child { border-bottom: none; }
+
+	.result-link {
+		font-size: 14px;
+		color: var(--foreground);
+		text-decoration: none;
+	}
+	.result-link:hover { color: var(--primary); }
+
+	.result-meta {
+		font-family: var(--font-mono, monospace);
+		font-size: 11px;
+		color: var(--muted-foreground);
+	}
+
+	/* Notebook link */
+	.notebook-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		padding: 14px 18px;
+		background: var(--card);
+		border: 1px solid var(--border);
+		border-radius: var(--radius-lg);
+		text-decoration: none;
+		color: var(--primary);
+		font-weight: 500;
+		font-size: 14px;
+		transition: border-color 0.15s, box-shadow 0.15s;
+	}
+	.notebook-link:hover {
+		border-color: var(--primary);
+		box-shadow: var(--shadow-hover);
+		text-decoration: none;
+	}
+
+	@media (max-width: 768px) {
+		.metrics-grid { grid-template-columns: repeat(2, 1fr); }
+	}
+
+	@media (max-width: 480px) {
+		.metrics-grid { grid-template-columns: 1fr; }
+	}
+</style>

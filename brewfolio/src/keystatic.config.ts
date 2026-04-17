@@ -74,6 +74,71 @@ export default config({
 		})
 	},
 	singletons: {
+		sections: singleton({
+			label: 'Sections',
+			path: 'src/data/sections',
+			schema: {
+				sections: fields.array(
+					fields.object({
+						discriminant: fields.select({
+							label: 'Type',
+							options: [
+								{ label: 'Metrics Grid', value: 'metrics-grid' },
+								{ label: 'Results List', value: 'results-list' },
+								{ label: 'Notebook', value: 'notebook' },
+								{ label: 'GitHub Timeline', value: 'github-timeline' }
+							],
+							defaultValue: 'metrics-grid'
+						}),
+						value: fields.dynamic({
+							choose: fields.fields().discriminant,
+							options: {
+								'metrics-grid': fields.fields({
+									title: fields.text({ label: 'Title' }),
+									metrics: fields.array(
+										fields.object({
+											label: fields.text({ label: 'Label', validation: { isRequired: true } }),
+											value: fields.text({ label: 'Value', validation: { isRequired: true } }),
+											delta: fields.text({ label: 'Delta (e.g. +2.1%)' }),
+											delta_direction: fields.select({
+												label: 'Delta direction',
+												options: [
+													{ label: 'Up', value: 'up' },
+													{ label: 'Down', value: 'down' },
+													{ label: 'Neutral', value: 'neutral' }
+												],
+												defaultValue: 'neutral'
+											}),
+											context: fields.text({ label: 'Context line below value' })
+										}),
+										{ label: 'Metrics', itemLabel: (props) => props.fields.label.value || 'Metric' }
+									)
+								}),
+								'results-list': fields.fields({
+									title: fields.text({ label: 'Title' }),
+									items: fields.array(
+										fields.object({
+											title: fields.text({ label: 'Title', validation: { isRequired: true } }),
+											href: fields.url({ label: 'Link URL' }),
+											meta: fields.text({ label: 'Meta subtitle' })
+										}),
+										{ label: 'Items', itemLabel: (props) => props.fields.title.value || 'Item' }
+									)
+								}),
+								notebook: fields.fields({
+									title: fields.text({ label: 'Title' }),
+									notebookId: fields.text({ label: 'Notebook ID', validation: { isRequired: true } })
+								}),
+								'github-timeline': fields.fields({
+									title: fields.text({ label: 'Title' })
+								})
+							}
+						})
+					}),
+					{ label: 'Sections', itemLabel: (props) => `${props.fields.discriminant.value} — ${props.fields.value.value?.title || props.fields.discriminant.value}` }
+				)
+			}
+		}),
 		concepts: singleton({
 			label: 'Concepts',
 			path: 'src/data/concepts',

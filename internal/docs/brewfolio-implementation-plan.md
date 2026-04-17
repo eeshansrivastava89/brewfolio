@@ -84,8 +84,9 @@ Identified during app mapping. Cross-app components that are not tied to a speci
 
 The `sections` singleton was planned for AppLayout but not yet implemented in `datascienceapps`.
 
-- [ ] Define `sections` Keystatic schema (ordered list of section blocks)
-- [ ] Wire `sections` into AppLayout — page reads CMS config instead of hardcoded section order
+- [x] Define `sections` Keystatic schema (ordered list of section blocks: metrics-grid, results-list, notebook, github-timeline)
+- [x] Build `AppSections.astro` component — renders section blocks from CMS data
+- [x] Wire `sections` into AppLayout — page reads CMS config instead of hardcoded section order
 - [ ] Verify section reordering works via Keystatic UI
 
 ---

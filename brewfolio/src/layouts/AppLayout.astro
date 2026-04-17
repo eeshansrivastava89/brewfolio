@@ -3,6 +3,17 @@ import BaseHead from '../components/BaseHead.astro'
 import Header from '../components/Header.astro'
 import Footer from '../components/Footer.astro'
 import ThemeProvider from '../components/ThemeProvider.astro'
+import AppSections from '../components/AppSections.astro'
+
+interface SectionEntry {
+	discriminant: 'metrics-grid' | 'results-list' | 'notebook' | 'github-timeline'
+	value: {
+		title?: string
+		metrics?: { label: string; value: string; delta?: string; delta_direction?: string; context?: string }[]
+		items?: { title: string; href?: string; meta?: string }[]
+		notebookId?: string
+	}
+}
 
 interface Props {
 	meta?: {
@@ -14,9 +25,19 @@ interface Props {
 	}
 	showFooter?: boolean
 	headerNavItems?: { label: string; href: string }[]
+	sections?: SectionEntry[]
+	notebookEntries?: { id: string; title: string }[]
+	githubData?: unknown | null
 }
 
-const { meta = {}, showFooter = true, headerNavItems } = Astro.props
+const {
+	meta = {},
+	showFooter = true,
+	headerNavItems,
+	sections = [],
+	notebookEntries = [],
+	githubData = null,
+} = Astro.props
 ---
 
 <html lang="en" class="scroll-smooth">
@@ -35,7 +56,15 @@ const { meta = {}, showFooter = true, headerNavItems } = Astro.props
 		<div class="app-shell">
 			<Header navItems={headerNavItems} />
 			<main class="app-main" id="main-content">
-				<slot />
+				{sections.length > 0 ? (
+					<AppSections
+						sections={sections}
+						notebookEntries={notebookEntries}
+						githubData={githubData}
+					/>
+				) : (
+					<slot />
+				)}
 			</main>
 			{showFooter && <Footer />}
 		</div>
