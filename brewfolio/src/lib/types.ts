@@ -70,3 +70,65 @@ export interface About {
 	bio: string
 	thisSite: string
 }
+
+// ─── GitHub data types ───────────────────────────────────────────────────────
+
+export interface ContributionDay {
+	date: string
+	contributionCount: number
+}
+
+export interface ContributionWeek {
+	contributionDays: ContributionDay[]
+}
+
+export type GitHubActivityCategory = 'commit' | 'repo' | 'issue' | 'pr'
+
+export interface GitHubActivityItem {
+	category: GitHubActivityCategory
+	repo: string
+	message: string
+	url: string
+}
+
+export interface GitHubActivityTotals {
+	commits: number
+	issues: number
+	prs: number
+	repos: number
+}
+
+export interface GitHubData {
+	weeks: ContributionWeek[]
+	recentActivity: GitHubActivityItem[]
+	activityTotals: GitHubActivityTotals
+}
+
+// ─── Section config ─────────────────────────────────────────────────────────
+
+export type SectionType = 'metrics-grid' | 'notebook' | 'github-timeline' | 'results-list'
+
+export interface MetricItem {
+	label: string
+	value: string
+	delta?: string
+	delta_direction?: 'up' | 'down' | 'neutral'
+	context?: string
+}
+
+export interface ResultItem {
+	title: string
+	href?: string
+	meta?: string
+}
+
+/**
+ * Discriminated shape produced by Keystatic's `fields.conditional`.
+ * `discriminant` = the section type; `value` holds type-specific fields.
+ * App page renderers switch on `discriminant`.
+ */
+export type SectionConfig =
+	| { discriminant: 'notebook';        value: { title?: string; notebookId: string } }
+	| { discriminant: 'metrics-grid';    value: { title?: string; metrics: MetricItem[] } }
+	| { discriminant: 'github-timeline'; value: { title?: string } }
+	| { discriminant: 'results-list';    value: { title?: string; items: ResultItem[] } }
