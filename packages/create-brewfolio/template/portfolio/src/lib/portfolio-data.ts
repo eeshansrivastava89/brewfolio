@@ -485,10 +485,22 @@ async function resolveArticleContent(articleUrl: string): Promise<string> {
 		const posts = await feedCache.get(feedUrl)!
 		const normalizedUrl = normalizeArticleUrl(articleUrl)
 		const match = posts.find((post) => normalizeArticleUrl(post.link) === normalizedUrl)
-		if (match?.content) return match.content
+		if (match?.content) return normalizeArticleHtml(match.content)
 	}
 
-	return fetchArticlePageContent(articleUrl)
+	return normalizeArticleHtml(await fetchArticlePageContent(articleUrl))
+}
+
+function normalizeArticleHtml(html: string): string {
+	if (!html) return ''
+
+	return html
+		.replace(
+			/<h1([^>]*)>([\s\S]*?)<div[^>]*header-anchor-parent[\s\S]*?<\/div>\s*<\/h1>/gi,
+			(_match, attrs, content) => `<h2${attrs}>${content.trim()}</h2>`,
+		)
+		.replace(/<h1([^>]*)>/gi, '<h2$1>')
+		.replace(/<\/h1>/gi, '</h2>')
 }
 
 export async function dashboardHeader(config: PortfolioConfig) {

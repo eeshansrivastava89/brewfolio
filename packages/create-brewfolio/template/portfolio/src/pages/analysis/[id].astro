@@ -87,7 +87,7 @@ const headerConfig = await dashboardHeader(config)
 	<SearchData slot="search-data" data={searchData} />
 </DashboardLayout>
 
-<style>
+<style is:global>
 	.notebook-subtitle {
 		margin: 14px 0 0;
 		font-size: 1.08rem;
@@ -267,16 +267,16 @@ const headerConfig = await dashboardHeader(config)
 		opacity: 0.75;
 	}
 
-	:where([data-theme='dark']) .notebook-content .token.string,
-	:where([data-theme='dark']) .notebook-content .token.char,
-	:where([data-theme='dark']) .notebook-content .token.attr-value {
+	[data-theme='dark'] .notebook-content .token.string,
+	[data-theme='dark'] .notebook-content .token.char,
+	[data-theme='dark'] .notebook-content .token.attr-value {
 		color: #5fcc7a;
 	}
 
-	:where([data-theme='dark']) .notebook-content .token.number,
-	:where([data-theme='dark']) .notebook-content .token.boolean,
-	:where([data-theme='dark']) .notebook-content .token.function,
-	:where([data-theme='dark']) .notebook-content .token.class-name {
+	[data-theme='dark'] .notebook-content .token.number,
+	[data-theme='dark'] .notebook-content .token.boolean,
+	[data-theme='dark'] .notebook-content .token.function,
+	[data-theme='dark'] .notebook-content .token.class-name {
 		color: #89b4fa;
 	}
 
