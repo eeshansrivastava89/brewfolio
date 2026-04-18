@@ -11,7 +11,7 @@ import {
 } from 'brewfolio/keystatic.config'
 
 const portfolioConfig = singleton({
-	label: 'Config',
+	label: 'Site',
 	path: 'src/data/site-config',
 	schema: {
 		siteTitle: fields.text({
@@ -20,15 +20,16 @@ const portfolioConfig = singleton({
 		}),
 		conceptsIntro: fields.text({
 			label: 'Concepts intro',
+			description: 'Shown at the top of the Concepts pane on the homepage.',
 			multiline: true,
 		}),
 		city: fields.text({
 			label: 'City',
-			description: 'Shown in the header weather widget. Coordinates and timezone are auto-resolved in code.',
+			description: 'Shown in the weather widget in the header.',
 		}),
 		country: fields.text({
 			label: 'Country (optional)',
-			description: 'Helps disambiguate cities with the same name.',
+			description: 'Use this only if the city name is ambiguous.',
 		}),
 	},
 })
@@ -39,20 +40,22 @@ const github = singleton({
 	schema: {
 		handle: fields.text({
 			label: 'GitHub handle',
-			description: 'Without the @ sign.',
+			description: 'Without the @ sign. Used in the GitHub pane.',
 		}),
 	},
 })
 
 const writingSettings = singleton({
-	label: 'Writing / Substack',
+	label: 'Writing settings',
 	path: 'src/data/writing-config',
 	schema: {
 		publicationName: fields.text({
 			label: 'Publication name',
+			description: 'Shown in the Writing pane and writing modal header.',
 		}),
 		subscribeUrl: fields.url({
 			label: 'Subscribe URL',
+			description: 'Used for the subscribe buttons in Writing.',
 		}),
 	},
 })
@@ -61,17 +64,17 @@ export default config({
 	storage: { kind: 'local' },
 	ui: {
 		navigation: [
+			'config',
 			'concepts',
+			'about',
 			'github',
 			'projects',
 			'writingSettings',
 			'writing',
 			'notebooks',
-			'about',
 			'timeline',
 			'impact',
 			'secrets',
-			'config',
 		],
 	},
 	collections: {

@@ -3,15 +3,25 @@ import { config, collection, singleton, fields } from '@keystatic/core'
 // ─── Collections ────────────────────────────────────────────────────────────
 
 export const writing = collection({
-	label: 'Writing (auto from Substack)',
+	label: 'Writing posts',
 	slugField: 'slug',
 	path: 'src/data/writing/*',
 	schema: {
 		slug: fields.slug({ name: { label: 'Slug' } }),
-		title: fields.text({ label: 'Title' }),
-		pubDate: fields.text({ label: 'Published date (YYYY-MM-DD)' }),
-		substack_url: fields.url({ label: 'Substack URL' }),
-		description: fields.text({ label: 'Description', multiline: true })
+		title: fields.text({ label: 'Post title' }),
+		pubDate: fields.text({
+			label: 'Published date',
+			description: 'Use YYYY-MM-DD.',
+		}),
+		substack_url: fields.url({
+			label: 'Post URL',
+			description: 'Used for the “Read on …” button.',
+		}),
+		description: fields.text({
+			label: 'Card description',
+			description: 'Shown on the writing list and article header.',
+			multiline: true,
+		})
 	}
 })
 
@@ -21,25 +31,25 @@ export const notebooks = collection({
 	path: 'src/data/notebooks/*',
 	schema: {
 		id: fields.slug({ name: { label: 'Notebook ID' } }),
-		title: fields.text({ label: 'Title', validation: { isRequired: true } }),
+		title: fields.text({ label: 'Notebook title', validation: { isRequired: true } }),
 		project: fields.relationship({
 			label: 'Project',
 			collection: 'projects',
 			validation: { isRequired: true }
 		}),
 		github_url: fields.url({
-			label: 'GitHub URL',
-			description: 'Blob, raw, or raw.githubusercontent URL for the .ipynb file.'
+			label: 'Notebook URL',
+			description: 'Paste the GitHub URL for the .ipynb file.'
 		}),
 		description: fields.text({
-			label: 'Description',
-			description: 'Shown on the catalog card and notebook header.',
+			label: 'Card description',
+			description: 'Shown in the analysis list and at the top of the notebook page.',
 			multiline: true
 		}),
-		date: fields.date({ label: 'Date', defaultValue: { kind: 'today' } }),
+		date: fields.date({ label: 'Published date', defaultValue: { kind: 'today' } }),
 		summary_status: fields.select({
-			label: 'Experiment status',
-			description: 'Set to anything other than "None" to show the summary card.',
+			label: 'Summary status',
+			description: 'Choose a result to show the summary card on the notebook page.',
 			options: [
 				{ label: 'None', value: 'none' },
 				{ label: 'Significant', value: 'significant' },
@@ -50,26 +60,26 @@ export const notebooks = collection({
 			defaultValue: 'none'
 		}),
 		summary_decision: fields.text({
-			label: 'Decision',
-			description: 'Key finding or recommendation shown prominently in the summary card.',
+			label: 'Summary headline',
+			description: 'The main takeaway shown at the top of the summary card.',
 			multiline: true
 		}),
 		summary_methodology: fields.text({
-			label: 'Methodology',
-			description: 'Brief description of the methods used.',
+			label: 'How you got the result',
+			description: 'A short explanation of the method, test, or workflow.',
 			multiline: true
 		}),
 		summary_warnings: fields.array(
-			fields.text({ label: 'Warning' }),
-			{ label: 'Warnings', itemLabel: (props: any) => props.value || 'Warning' }
+			fields.text({ label: 'Note' }),
+			{ label: 'Things to watch', itemLabel: (props: any) => props.value || 'Note' }
 		),
 		summary_metrics: fields.array(
 			fields.object({
-				label: fields.text({ label: 'Metric name', validation: { isRequired: true } }),
-				value: fields.text({ label: 'Value', validation: { isRequired: true } }),
-				delta: fields.text({ label: 'Delta', description: 'For example +12% or -5%.' }),
+				label: fields.text({ label: 'Metric label', validation: { isRequired: true } }),
+				value: fields.text({ label: 'Metric value', validation: { isRequired: true } }),
+				delta: fields.text({ label: 'Change', description: 'For example +12% or -5%.' }),
 				delta_direction: fields.select({
-					label: 'Direction',
+					label: 'Change direction',
 					options: [
 						{ label: 'Up', value: 'up' },
 						{ label: 'Down', value: 'down' },
@@ -77,9 +87,9 @@ export const notebooks = collection({
 					],
 					defaultValue: 'neutral'
 				}),
-				context: fields.text({ label: 'Context', description: 'For example vs baseline.' })
+				context: fields.text({ label: 'Context', description: 'For example “vs baseline”.' })
 			}),
-			{ label: 'Metrics', itemLabel: (props: any) => props.fields.label.value || 'Metric' }
+			{ label: 'Summary metrics', itemLabel: (props: any) => props.fields.label.value || 'Metric' }
 		)
 	}
 })
@@ -89,9 +99,9 @@ export const projects = collection({
 	slugField: 'id',
 	path: 'src/data/projects/*',
 	schema: {
-		id: fields.slug({ name: { label: 'ID' } }),
-		name: fields.text({ label: 'Name', validation: { isRequired: true } }),
-		url: fields.url({ label: 'Live URL' }),
+		id: fields.slug({ name: { label: 'Project ID' } }),
+		name: fields.text({ label: 'Project name', validation: { isRequired: true } }),
+		url: fields.url({ label: 'Project URL' }),
 		status: fields.select({
 			label: 'Status',
 			options: [
@@ -101,36 +111,47 @@ export const projects = collection({
 			],
 			defaultValue: 'live'
 		}),
-		external: fields.checkbox({ label: 'External link', defaultValue: true }),
-		description: fields.text({ label: 'Description', validation: { isRequired: true }, multiline: true }),
-		shortDescription: fields.text({ label: 'Short Description' }),
+		external: fields.checkbox({
+			label: 'Open project URL in a new tab',
+			defaultValue: true,
+		}),
+		description: fields.text({
+			label: 'Full description',
+			description: 'Used in the drawer and as fallback copy on the home card.',
+			validation: { isRequired: true },
+			multiline: true,
+		}),
+		shortDescription: fields.text({
+			label: 'Home card description',
+			description: 'Shorter copy for the project tile on the dashboard.',
+		}),
 		image: fields.text({ label: 'Image path' }),
 		repo: fields.url({
 			label: 'GitHub repo URL',
-			description: 'Used to populate the project drawer with live repo stats and recent commits.'
+			description: 'Used for repo stats and recent commits in the project drawer.'
 		}),
-		analysis_url: fields.url({ label: 'Analysis URL' }),
+		analysis_url: fields.url({ label: 'Related analysis URL' }),
 		tags: fields.array(
-			fields.object({ name: fields.text({ label: 'Tag name' }) }),
+			fields.object({ name: fields.text({ label: 'Tag' }) }),
 			{ label: 'Tags', itemLabel: (props: any) => props.fields.name.value || 'Tag' }
 		),
 		related_writing: fields.array(
-			fields.text({ label: 'Slug' }),
-			{ label: 'Related writing slugs', itemLabel: (props: any) => props.value || 'Slug' }
+			fields.text({ label: 'Writing slug' }),
+			{ label: 'Related writing', itemLabel: (props: any) => props.value || 'Writing slug' }
 		),
 		overview: fields.text({
-			label: 'What is it?',
-			description: 'A paragraph or two describing the project.',
+			label: 'Drawer overview',
+			description: 'The “What is it?” section in the project drawer.',
 			multiline: true
 		}),
 		architecture: fields.text({
-			label: 'Architecture / Tech Stack',
-			description: 'How it is built and the main implementation decisions.',
+			label: 'How it is built',
+			description: 'Tech stack and the main implementation decisions.',
 			multiline: true
 		}),
 		nextActions: fields.text({
-			label: 'Next actions / Updates',
-			description: 'What is being worked on or planned next.',
+			label: 'What is next',
+			description: 'What you are shipping, testing, or exploring next.',
 			multiline: true
 		})
 	}
@@ -139,13 +160,13 @@ export const projects = collection({
 // ─── Singletons ─────────────────────────────────────────────────────────────
 
 export const sections = singleton({
-	label: 'Sections',
+	label: 'Homepage',
 	path: 'src/data/sections',
 	schema: {
 		sections: fields.array(
 			fields.conditional(
 				fields.select({
-					label: 'Type',
+					label: 'Block type',
 					options: [
 						{ label: 'Metrics Grid', value: 'metrics-grid' },
 						{ label: 'Results List', value: 'results-list' },
@@ -156,14 +177,14 @@ export const sections = singleton({
 				}),
 				{
 					'metrics-grid': fields.object({
-						title: fields.text({ label: 'Title' }),
+						title: fields.text({ label: 'Block title' }),
 						metrics: fields.array(
 							fields.object({
-								label: fields.text({ label: 'Label', validation: { isRequired: true } }),
-								value: fields.text({ label: 'Value', validation: { isRequired: true } }),
-								delta: fields.text({ label: 'Delta (e.g. +2.1%)' }),
+								label: fields.text({ label: 'Metric label', validation: { isRequired: true } }),
+								value: fields.text({ label: 'Metric value', validation: { isRequired: true } }),
+								delta: fields.text({ label: 'Change', description: 'For example +2.1%.' }),
 								delta_direction: fields.select({
-									label: 'Delta direction',
+									label: 'Change direction',
 									options: [
 										{ label: 'Up', value: 'up' },
 										{ label: 'Down', value: 'down' },
@@ -171,32 +192,36 @@ export const sections = singleton({
 									],
 									defaultValue: 'neutral'
 								}),
-								context: fields.text({ label: 'Context line below value' })
+								context: fields.text({ label: 'Context line' })
 							}),
 							{ label: 'Metrics', itemLabel: (props: any) => props.fields.label.value || 'Metric' }
 						)
 					}),
 					'results-list': fields.object({
-						title: fields.text({ label: 'Title' }),
+						title: fields.text({ label: 'Block title' }),
 						items: fields.array(
 							fields.object({
-								title: fields.text({ label: 'Title', validation: { isRequired: true } }),
+								title: fields.text({ label: 'Row title', validation: { isRequired: true } }),
 								href: fields.url({ label: 'Link URL' }),
-								meta: fields.text({ label: 'Meta subtitle' })
+								meta: fields.text({ label: 'Row subtitle' })
 							}),
-							{ label: 'Items', itemLabel: (props: any) => props.fields.title.value || 'Item' }
+							{ label: 'Rows', itemLabel: (props: any) => props.fields.title.value || 'Row' }
 						)
 					}),
 					notebook: fields.object({
-						title: fields.text({ label: 'Title' }),
-						notebookId: fields.text({ label: 'Notebook ID', validation: { isRequired: true } })
+						title: fields.text({ label: 'Block title' }),
+						notebookId: fields.text({
+							label: 'Notebook ID',
+							description: 'Must match a notebook entry.',
+							validation: { isRequired: true }
+						})
 					}),
 					'github-timeline': fields.object({
-						title: fields.text({ label: 'Title' })
+						title: fields.text({ label: 'Block title' })
 					})
 				}
 			),
-			{ label: 'Sections', itemLabel: (props: any) => props.value.discriminant }
+			{ label: 'Blocks', itemLabel: (props: any) => props.value.discriminant }
 		)
 	}
 })
@@ -208,19 +233,22 @@ export const concepts = singleton({
 		concepts: fields.array(
 			fields.object({
 				slug: fields.text({ label: 'Slug', validation: { isRequired: true } }),
-				name: fields.text({ label: 'Name', validation: { isRequired: true } }),
-				description: fields.text({ label: 'Description' }),
+				name: fields.text({ label: 'Concept name', validation: { isRequired: true } }),
+				description: fields.text({
+					label: 'Short description',
+					description: 'Shown in the Concepts pane.',
+				}),
 				projects: fields.array(
 					fields.relationship({ label: 'Project', collection: 'projects' }),
-					{ label: 'Projects', itemLabel: (props: any) => props.value || 'Project' }
+					{ label: 'Linked projects', itemLabel: (props: any) => props.value || 'Project' }
 				),
 				writing: fields.array(
-					fields.relationship({ label: 'Essay', collection: 'writing' }),
-					{ label: 'Writing', itemLabel: (props: any) => props.value || 'Essay' }
+					fields.relationship({ label: 'Post', collection: 'writing' }),
+					{ label: 'Linked writing', itemLabel: (props: any) => props.value || 'Post' }
 				),
 				notebooks: fields.array(
 					fields.relationship({ label: 'Notebook', collection: 'notebooks' }),
-					{ label: 'Notebooks', itemLabel: (props: any) => props.value || 'Notebook' }
+					{ label: 'Linked notebooks', itemLabel: (props: any) => props.value || 'Notebook' }
 				)
 			}),
 			{ label: 'Concepts', itemLabel: (props: any) => props.fields.name.value || 'Concept' }
@@ -229,18 +257,18 @@ export const concepts = singleton({
 })
 
 export const timeline = singleton({
-	label: 'Timeline',
+	label: 'Experience & education',
 	path: 'src/data/timeline',
 	schema: {
 		timeline: fields.array(
 			fields.object({
-				timespan: fields.text({ label: 'Timespan' }),
-				title: fields.text({ label: 'Title', validation: { isRequired: true } }),
-				company: fields.text({ label: 'Company' }),
+				timespan: fields.text({ label: 'Date range' }),
+				title: fields.text({ label: 'Role or degree', validation: { isRequired: true } }),
+				company: fields.text({ label: 'Organization' }),
 				description: fields.text({ label: 'Description', multiline: true }),
 				logo: fields.text({ label: 'Logo filename' }),
 				type: fields.select({
-					label: 'Type',
+					label: 'Section',
 					options: [
 						{ label: 'Work', value: 'work' },
 						{ label: 'Education', value: 'education' }
@@ -248,23 +276,27 @@ export const timeline = singleton({
 					defaultValue: 'work'
 				})
 			}),
-			{ label: 'Timeline entries', itemLabel: (props: any) => props.fields.title.value || 'Entry' }
+			{ label: 'Entries', itemLabel: (props: any) => props.fields.title.value || 'Entry' }
 		)
 	}
 })
 
 export const siteConfig = singleton({
-	label: 'Site Config',
+	label: 'Site',
 	path: 'src/data/site-config',
 	schema: {
 		city: fields.text({ label: 'City', defaultValue: 'Seattle' }),
 		country: fields.text({ label: 'Country (optional)', defaultValue: 'United States' }),
 		conceptsIntro: fields.text({
-			label: 'Concepts pane intro',
+			label: 'Concepts intro',
+			description: 'Shown at the top of the Concepts pane on the homepage.',
 			multiline: true,
 			defaultValue: 'I build data science apps with AI. Click a concept to filter the grid by topic.'
 		}),
-		githubHandle: fields.text({ label: 'GitHub handle (e.g. octocat)' })
+		githubHandle: fields.text({
+			label: 'GitHub handle',
+			description: 'Without the @ sign.',
+		})
 	}
 })
 
@@ -272,30 +304,40 @@ export const about = singleton({
 	label: 'About',
 	path: 'src/data/about',
 	schema: {
-		bio: fields.text({ label: 'Bio', multiline: true, validation: { isRequired: true } }),
-		thisSite: fields.text({ label: 'This Site', multiline: true, validation: { isRequired: true } })
+		bio: fields.text({
+			label: 'Top bio',
+			description: 'The intro at the top of the About page.',
+			multiline: true,
+			validation: { isRequired: true }
+		}),
+		thisSite: fields.text({
+			label: 'This site section',
+			description: 'The “This Site” section on the About page.',
+			multiline: true,
+			validation: { isRequired: true }
+		})
 	}
 })
 
 export const impact = singleton({
-	label: 'Impact',
+	label: 'Recognition & links',
 	path: 'src/data/impact',
 	schema: {
 		impact: fields.array(
 			fields.object({
-				title: fields.text({ label: 'Title', validation: { isRequired: true } }),
-				icon: fields.text({ label: 'Icon (e.g. lucide:award)' }),
-				visible: fields.checkbox({ label: 'Visible', defaultValue: true }),
+				title: fields.text({ label: 'Section title', validation: { isRequired: true } }),
+				icon: fields.text({ label: 'Icon (optional)' }),
+				visible: fields.checkbox({ label: 'Show this section', defaultValue: true }),
 				items: fields.array(
 					fields.object({
-						text: fields.text({ label: 'Text', validation: { isRequired: true } }),
-						meta: fields.text({ label: 'Meta (subtitle)' }),
-						link: fields.url({ label: 'Link' })
+						text: fields.text({ label: 'Label', validation: { isRequired: true } }),
+						meta: fields.text({ label: 'Subtext' }),
+						link: fields.url({ label: 'Link URL' })
 					}),
-					{ label: 'Items', itemLabel: (props: any) => props.fields.text.value || 'Item' }
+					{ label: 'Links', itemLabel: (props: any) => props.fields.text.value || 'Link' }
 				)
 			}),
-			{ label: 'Impact sections', itemLabel: (props: any) => props.fields.title.value || 'Section' }
+			{ label: 'Sections', itemLabel: (props: any) => props.fields.title.value || 'Section' }
 		)
 	}
 })
@@ -305,9 +347,9 @@ export const secrets = singleton({
 	path: 'src/data/secrets',
 	schema: {
 		githubToken: fields.text({
-			label: 'GitHub token (classic PAT with read:user + repo)',
+			label: 'GitHub token',
 			multiline: false,
-			description: 'Used by GitHubPane to fetch contribution data. Keep this in .env for real deployments — this field is for local-dev convenience only.'
+			description: 'Optional. Used to fetch GitHub activity while developing locally.'
 		})
 	}
 })
@@ -329,7 +371,7 @@ export const singletons = {
 export const keystaticConfig = config({
 	storage: { kind: 'local' },
 	ui: {
-		navigation: ['notebooks', 'projects', 'concepts', 'about', 'timeline', 'impact', 'siteConfig', 'sections', 'secrets']
+		navigation: ['siteConfig', 'projects', 'notebooks', 'concepts', 'about', 'timeline', 'impact', 'sections', 'secrets']
 	},
 	collections,
 	singletons

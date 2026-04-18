@@ -2,51 +2,52 @@ import { config, fields, singleton } from '@keystatic/core'
 import { secrets } from 'brewfolio/keystatic.config'
 
 const appConfig = singleton({
-	label: 'Config',
+	label: 'Site',
 	path: 'src/data/site-config',
 	schema: {
 		siteTitle: fields.text({
 			label: 'Site title',
+			description: 'Shown in the notch and page title.',
 			validation: { isRequired: true },
 		}),
 		githubHandle: fields.text({
 			label: 'GitHub handle',
-			description: 'Without the @ sign. Used by the GitHub timeline section.',
+			description: 'Without the @ sign. Used in the GitHub timeline block.',
 		}),
 	},
 })
 
 const appSections = singleton({
-	label: 'Sections',
+	label: 'Homepage',
 	path: 'src/data/sections',
 	schema: {
 		sections: fields.array(
 			fields.conditional(
 				fields.select({
-					label: 'Type',
+					label: 'Block type',
 					options: [
-						{ label: 'Metrics Grid', value: 'metrics-grid' },
-						{ label: 'Results List', value: 'results-list' },
-						{ label: 'GitHub Timeline', value: 'github-timeline' },
+						{ label: 'Metrics', value: 'metrics-grid' },
+						{ label: 'List', value: 'results-list' },
+						{ label: 'GitHub timeline', value: 'github-timeline' },
 					],
 					defaultValue: 'metrics-grid',
 				}),
 				{
 					'metrics-grid': fields.object({
-						title: fields.text({ label: 'Title' }),
+						title: fields.text({ label: 'Block title' }),
 						metrics: fields.array(
 							fields.object({
 								label: fields.text({
-									label: 'Label',
+									label: 'Metric label',
 									validation: { isRequired: true },
 								}),
 								value: fields.text({
-									label: 'Value',
+									label: 'Metric value',
 									validation: { isRequired: true },
 								}),
-								delta: fields.text({ label: 'Delta' }),
+								delta: fields.text({ label: 'Change' }),
 								delta_direction: fields.select({
-									label: 'Delta direction',
+									label: 'Change direction',
 									options: [
 										{ label: 'Up', value: 'up' },
 										{ label: 'Down', value: 'down' },
@@ -54,7 +55,7 @@ const appSections = singleton({
 									],
 									defaultValue: 'neutral',
 								}),
-								context: fields.text({ label: 'Context' }),
+								context: fields.text({ label: 'Context line' }),
 							}),
 							{
 								label: 'Metrics',
@@ -64,30 +65,30 @@ const appSections = singleton({
 						),
 					}),
 					'results-list': fields.object({
-						title: fields.text({ label: 'Title' }),
+						title: fields.text({ label: 'Block title' }),
 						items: fields.array(
 							fields.object({
 								title: fields.text({
-									label: 'Title',
+									label: 'Row title',
 									validation: { isRequired: true },
 								}),
 								href: fields.url({ label: 'Link URL' }),
-								meta: fields.text({ label: 'Meta subtitle' }),
+								meta: fields.text({ label: 'Row subtitle' }),
 							}),
 							{
-								label: 'Items',
+								label: 'Rows',
 								itemLabel: (props: any) =>
-									props.fields.title.value || 'Item',
+									props.fields.title.value || 'Row',
 							},
 						),
 					}),
 					'github-timeline': fields.object({
-						title: fields.text({ label: 'Title' }),
+						title: fields.text({ label: 'Block title' }),
 					}),
 				},
 			),
 			{
-				label: 'Sections',
+				label: 'Blocks',
 				itemLabel: (props: any) => props.value.discriminant,
 			},
 		),
@@ -97,7 +98,7 @@ const appSections = singleton({
 export default config({
 	storage: { kind: 'local' },
 	ui: {
-		navigation: ['sections', 'config', 'secrets'],
+		navigation: ['config', 'sections', 'secrets'],
 	},
 	singletons: {
 		sections: appSections,

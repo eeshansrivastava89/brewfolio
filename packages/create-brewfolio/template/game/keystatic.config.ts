@@ -1,42 +1,47 @@
 import { config, fields, singleton } from '@keystatic/core'
 
 const gameConfig = singleton({
-	label: 'Config',
+	label: 'Site',
 	path: 'src/data/site-config',
 	schema: {
 		siteTitle: fields.text({
 			label: 'Site title',
+			description: 'Shown in the notch and page title.',
 			validation: { isRequired: true },
 		}),
 	},
 })
 
 const gameHome = singleton({
-	label: 'Game home',
+	label: 'Homepage',
 	path: 'src/data/game-home',
 	schema: {
 		roundTitle: fields.text({
-			label: 'Round title',
+			label: 'Top heading',
 			validation: { isRequired: true },
 		}),
 		subtitle: fields.text({
 			label: 'Subtitle',
+			description: 'Shown under the top heading.',
 			multiline: true,
 		}),
 		scoreLabel: fields.text({
 			label: 'Score label',
+			description: 'For example “Your score”.',
 			validation: { isRequired: true },
 		}),
 		scoreValue: fields.text({
-			label: 'Score value',
+			label: 'Current score',
+			description: 'Digits only.',
 			validation: { isRequired: true },
 		}),
 		previousScoreValue: fields.text({
-			label: 'Previous score value',
+			label: 'Previous score',
+			description: 'Digits only. Used for the score change badge.',
 			validation: { isRequired: true },
 		}),
 		timerVariant: fields.select({
-			label: 'Timer variant',
+			label: 'Timer mode',
 			options: [
 				{ label: 'Countdown', value: 'countdown' },
 				{ label: 'Count up', value: 'countup' },
@@ -44,7 +49,8 @@ const gameHome = singleton({
 			defaultValue: 'countdown',
 		}),
 		timerTotalMs: fields.text({
-			label: 'Timer total milliseconds',
+			label: 'Timer length in milliseconds',
+			description: 'For example 30000 for 30 seconds.',
 			validation: { isRequired: true },
 		}),
 		questionTitle: fields.text({
@@ -52,7 +58,7 @@ const gameHome = singleton({
 			validation: { isRequired: true },
 		}),
 		questionPrompt: fields.text({
-			label: 'Question prompt',
+			label: 'Question text',
 			multiline: true,
 			validation: { isRequired: true },
 		}),
@@ -68,23 +74,28 @@ const gameHome = singleton({
 			fields.object({
 				rank: fields.text({
 					label: 'Rank',
+					description: 'Digits only.',
 					validation: { isRequired: true },
 				}),
 				name: fields.text({
-					label: 'Name',
+					label: 'Player name',
 					validation: { isRequired: true },
 				}),
 				score: fields.text({
 					label: 'Score',
+					description: 'Digits only.',
 					validation: { isRequired: true },
 				}),
-				delta: fields.text({ label: 'Delta' }),
+				delta: fields.text({
+					label: 'Score change',
+					description: 'Digits only. Use negative numbers for drops.',
+				}),
 				isCurrentUser: fields.checkbox({
-					label: 'Current user',
+					label: 'Highlight as the current player',
 					defaultValue: false,
 				}),
 				variant: fields.select({
-					label: 'Variant',
+					label: 'Medal style',
 					options: [
 						{ label: 'Default', value: 'default' },
 						{ label: 'Gold', value: 'gold' },
@@ -95,8 +106,8 @@ const gameHome = singleton({
 				}),
 			}),
 			{
-				label: 'Leaderboard entries',
-				itemLabel: (props: any) => props.fields.name.value || 'Entry',
+				label: 'Leaderboard rows',
+				itemLabel: (props: any) => props.fields.name.value || 'Player',
 			},
 		),
 	},
@@ -105,7 +116,7 @@ const gameHome = singleton({
 export default config({
 	storage: { kind: 'local' },
 	ui: {
-		navigation: ['gameHome', 'config'],
+		navigation: ['config', 'gameHome'],
 	},
 	singletons: {
 		gameHome,
