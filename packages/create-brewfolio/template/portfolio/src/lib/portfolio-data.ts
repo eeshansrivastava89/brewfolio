@@ -31,6 +31,16 @@ type HeaderLocation = {
 }
 
 const geocodeCache = new Map<string, Promise<HeaderLocation | null>>()
+const feedCache = new Map<string, Promise<FeedPost[]>>()
+
+type FeedPost = {
+	title: string
+	link: string
+	slug: string
+	pubDate: Date
+	description: string
+	content: string
+}
 
 export async function getPortfolioData() {
 	const [
@@ -79,15 +89,22 @@ export async function getPortfolioData() {
 		nextActions: entry.entry.nextActions || undefined,
 	}))
 
-	const writing = writingEntries
-		.map((entry) => ({
-			slug: entry.slug,
-			title: entry.entry.title,
-			pubDate: entry.entry.pubDate,
-			substack_url: entry.entry.substack_url || '',
-			description: entry.entry.description || '',
-		}))
-		.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime())
+	const writing = (
+		await Promise.all(
+			writingEntries.map(async (entry) => {
+				const url = entry.entry.substack_url || ''
+				const contentHtml = url ? await resolveArticleContent(url) : ''
+				return {
+					slug: entry.slug,
+					title: entry.entry.title,
+					pubDate: entry.entry.pubDate,
+					substack_url: url,
+					description: entry.entry.description || '',
+					contentHtml,
+				}
+			}),
+		)
+	).sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime())
 
 	const notebooks = (
 		await Promise.all(
@@ -189,10 +206,10 @@ async function buildNotebookEntry(id: string, entry: any): Promise<NotebookEntry
 			html = renderNotebook(ipynb)
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error)
-			html = `<p class="bf-empty-hint">Notebook failed to load from GitHub: ${escapeHtml(message)}</p>`
+			html = `<div class="nb-error-banner">Could not load notebook content from GitHub: ${escapeHtml(message)}. <a href="${escapeHtml(entry.github_url)}" target="_blank" rel="noopener noreferrer">View on GitHub →</a></div>`
 		}
 	} else {
-		html = '<p class="bf-empty-hint">Add a GitHub URL in Keystatic to render this notebook.</p>'
+		html = '<div class="nb-error-banner">Add a GitHub URL in Keystatic to render this notebook.</div>'
 	}
 
 	const metrics = (entry.summary_metrics ?? []).map((metric: any) => ({
@@ -276,6 +293,158 @@ export function renderProse(markdown: string | null | undefined): string {
 		.split(/\n\s*\n/)
 		.map((paragraph) => '<p>' + renderInlineMarkdown(paragraph.replace(/\n/g, '<br />')) + '</p>')
 		.join('')
+}
+
+function deriveFeedUrl(articleUrl: string): string | null {
+	try {
+		const url = new URL(articleUrl)
+		return `${url.origin}/feed`
+	} catch {
+		return null
+	}
+}
+
+function deriveSlug(url: string): string {
+	try {
+		const pathname = new URL(url).pathname
+		const match = pathname.match(/\/p\/(.+?)(?:\/|$)/)
+		return match ? match[1] : pathname.replace(/^\//, '').replace(/\/$/, '')
+	} catch {
+		return url.replace(/[^a-z0-9-]/gi, '-').toLowerCase()
+	}
+}
+
+function normalizeArticleUrl(url: string): string {
+	try {
+		const parsed = new URL(url)
+		return `${parsed.origin}${parsed.pathname.replace(/\/$/, '')}`
+	} catch {
+		return url
+	}
+}
+
+function stripHtml(html: string): string {
+	return html.replace(/<[^>]*>/g, '')
+}
+
+function decodeHtml(html: string): string {
+	const entities: Record<string, string> = {
+		'&amp;': '&',
+		'&lt;': '<',
+		'&gt;': '>',
+		'&quot;': '"',
+		'&#39;': "'",
+		'&apos;': "'",
+	}
+
+	return html.replace(/&[^;]+;/g, (entity) => {
+		if (entities[entity]) return entities[entity]
+		const numMatch = entity.match(/^&#(\d+);$/)
+		if (numMatch) return String.fromCodePoint(Number(numMatch[1]))
+		const hexMatch = entity.match(/^&#x([0-9a-fA-F]+);$/)
+		if (hexMatch) return String.fromCodePoint(parseInt(hexMatch[1], 16))
+		return entity
+	})
+}
+
+function extractTag(content: string, tag: string): string {
+	const regex = new RegExp(`<${tag}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${tag}>`, 'i')
+	const match = content.match(regex)
+	if (!match) return ''
+
+	let extracted = match[1].trim()
+	const cdataMatch = extracted.match(/<!\[CDATA\[([\s\S]*?)\]\]>/)
+	if (cdataMatch) extracted = cdataMatch[1]
+	return extracted
+}
+
+function extractContentEncoded(content: string): string {
+	const match = content.match(/<content:encoded[^>]*>([\s\S]*?)<\/content:encoded>/i)
+	if (!match) return ''
+
+	let extracted = match[1].trim()
+	const cdataMatch = extracted.match(/<!\[CDATA\[([\s\S]*?)\]\]>/)
+	if (cdataMatch) extracted = cdataMatch[1]
+	return extracted
+}
+
+async function fetchFeedPosts(feedUrl: string): Promise<FeedPost[]> {
+	const response = await fetch(feedUrl)
+	if (!response.ok) {
+		throw new Error(`Feed fetch failed: ${response.status}`)
+	}
+
+	const xmlText = await response.text()
+	const items: FeedPost[] = []
+	const itemRegex = /<item>([\s\S]*?)<\/item>/g
+	let match: RegExpExecArray | null
+
+	while ((match = itemRegex.exec(xmlText)) !== null) {
+		const itemContent = match[1]
+		const title = extractTag(itemContent, 'title')
+		const link = extractTag(itemContent, 'link')
+		const pubDateStr = extractTag(itemContent, 'pubDate')
+		const description = extractTag(itemContent, 'description')
+		const content = extractContentEncoded(itemContent)
+
+		if (!title || !link || !pubDateStr) continue
+
+		items.push({
+			title: decodeHtml(title),
+			link,
+			slug: deriveSlug(link),
+			pubDate: new Date(pubDateStr),
+			description: decodeHtml(stripHtml(description || '')),
+			content,
+		})
+	}
+
+	return items
+}
+
+async function fetchArticlePageContent(articleUrl: string): Promise<string> {
+	try {
+		const response = await fetch(articleUrl)
+		if (!response.ok) return ''
+		const html = await response.text()
+
+		const jsonBodyMatch = html.match(/"body_html":"([\s\S]*?)","cover_image"/)
+		if (jsonBodyMatch) {
+			try {
+				return JSON.parse(`"${jsonBodyMatch[1]}"`)
+			} catch {
+				// Fall through to DOM-like extraction.
+			}
+		}
+
+		const bodyStart = html.indexOf('class="available-content"><div dir="auto" class="body markup">')
+		if (bodyStart === -1) return ''
+		const start = html.indexOf('<div dir="auto" class="body markup">', bodyStart)
+		const end = html.indexOf('<div class="pencraft pc-display-flex pc-flexDirection-column pc-gap-32 pc-reset container"', start)
+		if (start === -1 || end === -1 || end <= start) return ''
+		return html
+			.slice(start, end)
+			.replace(/^<div dir="auto" class="body markup">/, '')
+			.replace(/<\/div>\s*$/, '')
+	} catch {
+		return ''
+	}
+}
+
+async function resolveArticleContent(articleUrl: string): Promise<string> {
+	const feedUrl = deriveFeedUrl(articleUrl)
+	if (feedUrl) {
+		if (!feedCache.has(feedUrl)) {
+			feedCache.set(feedUrl, fetchFeedPosts(feedUrl).catch(() => []))
+		}
+
+		const posts = await feedCache.get(feedUrl)!
+		const normalizedUrl = normalizeArticleUrl(articleUrl)
+		const match = posts.find((post) => normalizeArticleUrl(post.link) === normalizedUrl)
+		if (match?.content) return match.content
+	}
+
+	return fetchArticlePageContent(articleUrl)
 }
 
 export async function dashboardHeader(config: PortfolioConfig) {
