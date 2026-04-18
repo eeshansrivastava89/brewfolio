@@ -1,60 +1,53 @@
 # create-brewfolio
 
-Scaffold a new Astro project with `brewfolio` pre-configured.
+Interactive scaffolder for a new Astro + Keystatic site powered by [brewfolio](https://npmjs.com/package/brewfolio).
 
-## Usage
-
-```bash
-npx create-brewfolio my-site
-```
-
-This will:
-1. Scaffold a minimal Astro project in `my-site/`
-2. Install `brewfolio`, `@keystatic/core`, `@keystatic/astro`, `tailwindcss`, `react`, `react-dom`
-3. Copy the starter template (`keystatic.config.ts`, `astro.config.mjs`, `global.css`, `index.astro`)
-4. Print next steps
-
-## Options
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `-t, --template <name>` | Astro project template | `minimal` |
-| `-d, --dry-run` | Print what would be done without doing it | `false` |
-| `-l, --local-brewfolio <path>` | Path to local brewfolio tarball (for testing before npm publish) | npm registry |
-
-## Templates
-
-Any Astro project template is supported:
+## Quick start
 
 ```bash
-npx create-brewfolio my-site --template blog
-npx create-brewfolio my-site --template portfolio
+npx create-brewfolio
 ```
+
+Answer a couple of prompts — project name, which type of site — and you'll have a running Astro app with the full brewfolio design system and a Keystatic CMS admin wired up.
+
+## Site types
+
+| Type | Layout | For |
+|------|--------|-----|
+| `portfolio` | `DashboardLayout` — 5-pane grid | Personal site: concepts, projects, writing, analysis, GitHub activity |
+| `app` | `AppLayout` — CMS-configured sections | Dashboards, tools, landing pages driven by Keystatic's `sections` singleton |
+| `game` | `GameLayout` — main + leaderboard sidebar | Real-time games or live events |
+
+## Non-interactive (for scripts / CI)
+
+All prompts can be passed as flags:
+
+```bash
+npx create-brewfolio my-site --type portfolio --yes
+```
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--type <portfolio\|app\|game>` | Which site type to scaffold | prompted |
+| `--astro-template <name>` | Underlying Astro starter template | `minimal` |
+| `--yes` | Skip confirmation | `false` |
+| `--dry-run` | Print what would be done without doing it | `false` |
+| `--local-brewfolio <path>` | Install brewfolio from a local tarball instead of npm (dev only) | npm registry |
 
 ## What gets installed
 
 - `brewfolio` — the design system package
-- `@keystatic/core` — CMS core
-- `@keystatic/astro` — Astro integration
-- `tailwindcss` + `@tailwindcss/vite` — CSS framework
-- `react` + `react-dom` — required peer deps
+- `@keystatic/core` + `@keystatic/astro` — the CMS
+- `@astrojs/react` + `react` + `react-dom` — required by Keystatic
+- `tailwindcss` + `@tailwindcss/vite` — styling
 
-## Starter template files
+## Then what
 
-After scaffolding, your project will have:
-
-```
-my-site/
-├── src/
-│   ├── pages/
-│   │   └── index.astro     ← uses AppLayout + sections singleton
-│   └── styles/
-│       └── global.css       ← imports tokens.css + tailwind base
-├── keystatic.config.ts      ← re-exports brewfolio schema + sections singleton
-├── astro.config.mjs         ← includes @keystatic/astro + @tailwindcss/vite
-└── tailwind.config.js
+```bash
+cd my-site
+npm run dev
 ```
 
-## Customising
-
-Replace or extend any part of the `keystatic.config.ts` — the `sections` singleton from brewfolio is already wired up and ready to use.
+Then open:
+- <http://localhost:4321> — your site
+- <http://localhost:4321/keystatic> — the CMS admin

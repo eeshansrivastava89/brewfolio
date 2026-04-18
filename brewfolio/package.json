@@ -1,8 +1,29 @@
 {
 	"name": "brewfolio",
 	"version": "0.1.0",
-	"description": "CMS-driven design system for personal apps — tokens, components, layouts, and Keystatic schemas",
+	"description": "CMS-driven design system for Astro — tokens, components, layouts, and a Keystatic schema for portfolios, apps, and games.",
 	"type": "module",
+	"license": "MIT",
+	"author": "Eeshan Srivastava",
+	"homepage": "https://github.com/eeshansrivastava89/brewfolio#readme",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/eeshansrivastava89/brewfolio.git",
+		"directory": "brewfolio"
+	},
+	"bugs": {
+		"url": "https://github.com/eeshansrivastava89/brewfolio/issues"
+	},
+	"keywords": [
+		"astro",
+		"keystatic",
+		"cms",
+		"design-system",
+		"portfolio",
+		"dashboard",
+		"tailwind",
+		"components"
+	],
 	"exports": {
 		".": "./src/index.ts",
 		"./styles/tokens.css": "./src/styles/tokens.css",
@@ -12,7 +33,9 @@
 		"./lib/*": "./src/lib/*"
 	},
 	"files": [
-		"src/**/*"
+		"src/**/*",
+		"README.md",
+		"LICENSE"
 	],
 	"scripts": {
 		"typecheck": "tsc --noEmit"
@@ -24,5 +47,8 @@
 	},
 	"devDependencies": {
 		"typescript": "^5.7.0"
+	},
+	"publishConfig": {
+		"access": "public"
 	}
 }

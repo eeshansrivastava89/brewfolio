@@ -1,67 +1,149 @@
 #!/usr/bin/env node
 /**
- * create-brewfolio — scaffold a new Astro project with brewfolio pre-configured.
+ * create-brewfolio — interactive scaffolder for a brewfolio site.
  *
  * Usage:
- *   npx create-brewfolio my-site
- *   npx create-brewfolio my-site --type portfolio
- *   npx create-brewfolio my-site --type app
- *   npx create-brewfolio my-site --type game
+ *   npx create-brewfolio                  (interactive — pick everything)
+ *   npx create-brewfolio my-site          (project name given, prompt for type)
+ *   npx create-brewfolio my-site --type portfolio --yes  (fully non-interactive)
  */
 
 import { Command } from 'commander'
-import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
+import { fileURLToPath } from 'url'
 import fs from 'fs/promises'
-import ora from 'ora'
+import {
+  intro,
+  outro,
+  text,
+  select,
+  confirm,
+  isCancel,
+  cancel,
+  spinner,
+  note,
+  log,
+} from '@clack/prompts'
+import pc from 'picocolors'
 import { copyTemplateOverlay, runProcess } from './utils.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
-const VALID_TYPES = new Set(['portfolio', 'app', 'game'])
+const TYPES = [
+  {
+    value: 'portfolio',
+    label: 'Portfolio',
+    hint: 'DashboardLayout · 5-pane grid (concepts, projects, writing, analysis, github)',
+    blurb: 'Best for personal sites. Ships a dashboard home page pre-wired to the Keystatic collections (projects, writing, notebooks, concepts).',
+  },
+  {
+    value: 'app',
+    label: 'App',
+    hint: 'AppLayout · sections driven by the CMS',
+    blurb: 'Best for dashboards, tools, and landing pages where the home page is a CMS-editable sequence of sections (metrics, results, notebooks, github timeline).',
+  },
+  {
+    value: 'game',
+    label: 'Game',
+    hint: 'GameLayout · main column + leaderboard sidebar',
+    blurb: 'Best for real-time games or live events. Ships a demo home page with a Leaderboard, Timer, and ScoreDisplay.',
+  },
+]
+
+function fail(reason) {
+  cancel(reason)
+  process.exit(1)
+}
+
+function validateProjectName(name) {
+  if (!name || !name.trim()) return 'Project name is required'
+  if (!/^[a-z0-9][a-z0-9-_]*$/i.test(name)) return 'Use letters, numbers, dashes, or underscores (start with a letter or number)'
+  return undefined
+}
 
 const program = new Command()
 
 program
   .name('create-brewfolio')
-  .description('Scaffold a new Astro project with brewfolio pre-configured')
-  .argument('<project-name>', 'Name of the project to create')
-  .option('-t, --type <type>', 'Brewfolio site type: portfolio | app | game', 'portfolio')
-  .option('-d, --dry-run', 'Print what would be done without doing it')
-  .option('-l, --local-brewfolio <path>', 'Path to local brewfolio package (for testing before npm publish)')
+  .description('Interactive scaffolder for a new Astro + Keystatic site powered by brewfolio.')
+  .argument('[project-name]', 'Name of the project to create (optional; you will be prompted)')
+  .option('-t, --type <type>', 'Site type: portfolio | app | game')
+  .option('-y, --yes', 'Skip confirmation prompts and use defaults')
   .option('--astro-template <template>', 'Underlying Astro starter template', 'minimal')
-  .action(async (projectName, opts) => {
-    const type = opts.type
-    if (!VALID_TYPES.has(type)) {
-      console.error(`\n  Error: --type must be one of: ${[...VALID_TYPES].join(', ')}\n`)
-      process.exit(1)
+  .option('-d, --dry-run', 'Print what would be done without doing it')
+  .option('-l, --local-brewfolio <path>', 'Install brewfolio from a local tarball path (dev-only; skips npm registry)')
+  .action(async (argProjectName, opts) => {
+    console.clear()
+    intro(pc.inverse(pc.bold(' brewfolio ')) + ' ' + pc.dim('· scaffold a new site'))
+
+    // ─── Resolve project name ────────────────────────────────────────────────
+    let projectName = argProjectName
+    if (!projectName) {
+      const answer = await text({
+        message: 'What should your project be called?',
+        placeholder: 'my-brewfolio-site',
+        initialValue: '',
+        validate: validateProjectName,
+      })
+      if (isCancel(answer)) fail('Cancelled.')
+      projectName = String(answer).trim()
+    } else {
+      const v = validateProjectName(projectName)
+      if (v) fail(v)
     }
 
     const projectDir = join(process.cwd(), projectName)
 
-    console.log(`\n  brewfolio — scaffolding ${projectName} (type: ${type})\n`)
+    // Hard fail early if the dir exists
+    try {
+      await fs.access(projectDir)
+      fail(`Directory "./${projectName}" already exists — pick another name.`)
+    } catch {}
+
+    // ─── Resolve site type ───────────────────────────────────────────────────
+    let type = opts.type
+    const validTypes = TYPES.map((t) => t.value)
+    if (type && !validTypes.includes(type)) {
+      fail(`--type must be one of: ${validTypes.join(', ')}`)
+    }
+    if (!type) {
+      const answer = await select({
+        message: 'Which site type?',
+        options: TYPES.map((t) => ({ value: t.value, label: t.label, hint: t.hint })),
+        initialValue: 'portfolio',
+      })
+      if (isCancel(answer)) fail('Cancelled.')
+      type = String(answer)
+    }
+
+    const typeDef = TYPES.find((t) => t.value === type)
+    note(typeDef.blurb, `Why ${typeDef.label}?`)
+
+    // ─── Confirm ──────────────────────────────────────────────────────────────
+    const summary = [
+      `${pc.bold('Path:')}       ./${projectName}`,
+      `${pc.bold('Type:')}       ${typeDef.label} (${typeDef.hint})`,
+      `${pc.bold('Installs:')}  brewfolio, @keystatic/core, @keystatic/astro, @astrojs/react, react, tailwindcss`,
+    ].join('\n')
+    note(summary, 'Ready to scaffold')
+
+    if (!opts.yes && !opts.dryRun) {
+      const ok = await confirm({ message: 'Proceed?', initialValue: true })
+      if (isCancel(ok) || !ok) fail('Cancelled.')
+    }
 
     if (opts.dryRun) {
-      console.log(`  [dry-run] Would create project at: ${projectDir}`)
-      console.log(`  [dry-run] Would scaffold Astro starter: ${opts.astroTemplate}`)
-      console.log(`  [dry-run] Would copy template overlay: common + ${type}`)
-      console.log(`  [dry-run] Would install: brewfolio, @keystatic/core, @keystatic/astro, @astrojs/react, react, react-dom, tailwindcss`)
+      log.info('[dry-run] no files written, no packages installed.')
+      outro(pc.green('Dry run complete.'))
       return
     }
 
+    // ─── Scaffold ─────────────────────────────────────────────────────────────
     try {
-      // 1. Check target directory doesn't already exist
-      let spinner = ora('Checking target directory…').start()
-      try {
-        await fs.access(projectDir)
-        spinner.fail(`Directory "${projectName}" already exists. Choose a different name or remove it first.`)
-        process.exit(1)
-      } catch {}
-      spinner.succeed('Target directory is free')
-
-      // 2. Scaffold Astro project
-      spinner = ora(`Scaffolding Astro project (${opts.astroTemplate} template)…`).start()
-      spinner.stop()
+      const s = spinner()
+      s.start(`Scaffolding Astro project (${opts.astroTemplate} template)…`)
+      // create-astro itself is chatty; stop our spinner so its output is visible
+      s.stop(`Running create-astro…`)
       await runProcess('npx', [
         '--yes',
         'create-astro@latest',
@@ -72,19 +154,15 @@ program
         '--yes',
       ])
 
-      // 3. Copy template overlay: common + type-specific
-      spinner = ora('Applying brewfolio template overlay…').start()
+      const s2 = spinner()
+      s2.start('Applying brewfolio template overlay…')
       await copyTemplateOverlay(projectDir, type)
-      spinner.succeed(`Applied brewfolio template (common + ${type})`)
+      s2.stop('Applied brewfolio template (common + ' + type + ')')
 
-      // 4. Install brewfolio + peer deps
-      //    Use --legacy-peer-deps: @keystatic/astro hasn't updated its peer dep for Astro 6 yet
-      spinner = ora('Installing brewfolio + peer dependencies…').start()
-      spinner.stop()
-      const brewfolioPath = opts.localBrewfolio
-        ? opts.localBrewfolio
-        : 'brewfolio'
-
+      const s3 = spinner()
+      s3.start('Installing brewfolio + peer dependencies…')
+      s3.stop('Installing brewfolio + peer dependencies…')
+      const brewfolioPath = opts.localBrewfolio ? opts.localBrewfolio : 'brewfolio'
       const installArgs = [
         'install',
         brewfolioPath,
@@ -99,18 +177,21 @@ program
       ]
       await runProcess('npm', installArgs, { cwd: projectDir })
 
-      console.log('')
-      console.log(`  Done! Your ${type} is ready at ./${projectName}\n`)
-      console.log('  Next steps:')
-      console.log(`    cd ${projectName}`)
-      console.log('    npm run dev')
-      console.log('')
-      console.log('  Then visit:')
-      console.log('    http://localhost:4321         — the site')
-      console.log('    http://localhost:4321/keystatic — the CMS admin\n')
+      note(
+        [
+          `${pc.bold('cd ' + projectName)}`,
+          `${pc.bold('npm run dev')}`,
+          '',
+          'Then open:',
+          `  ${pc.cyan('http://localhost:4321')}             — the site`,
+          `  ${pc.cyan('http://localhost:4321/keystatic')}   — the CMS admin`,
+        ].join('\n'),
+        'Next steps',
+      )
+
+      outro(pc.green(`Done · your ${typeDef.label.toLowerCase()} is at ./${projectName}`))
     } catch (err) {
-      console.error(`\n  Scaffolding failed: ${err.message}\n`)
-      process.exit(1)
+      fail(`Scaffolding failed: ${err.message}`)
     }
   })
 

@@ -1,27 +1,51 @@
 {
 	"name": "create-brewfolio",
 	"version": "0.1.0",
-	"description": "Scaffold a new Astro project with brewfolio pre-configured",
+	"description": "Interactive scaffolder for a new Astro + Keystatic site powered by brewfolio — pick portfolio, app, or game and you're in.",
 	"type": "module",
+	"license": "MIT",
+	"author": "Eeshan Srivastava",
+	"homepage": "https://github.com/eeshansrivastava89/brewfolio/tree/main/packages/create-brewfolio#readme",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/eeshansrivastava89/brewfolio.git",
+		"directory": "packages/create-brewfolio"
+	},
+	"bugs": {
+		"url": "https://github.com/eeshansrivastava89/brewfolio/issues"
+	},
+	"keywords": [
+		"astro",
+		"keystatic",
+		"brewfolio",
+		"scaffold",
+		"cli",
+		"generator"
+	],
 	"bin": {
-		"create-brewfolio": "./src/index.js"
+		"create-brewfolio": "src/index.js"
 	},
 	"files": [
 		"src/**/*",
-		"template/**/*"
+		"template/**/*",
+		"README.md",
+		"LICENSE"
 	],
 	"scripts": {
-		"typecheck": "tsc --noEmit",
-		"lint": "eslint src --ext .js,.ts"
+		"typecheck": "tsc --noEmit"
 	},
 	"engines": {
 		"node": ">=18.0.0"
 	},
 	"dependencies": {
+		"@clack/prompts": "^0.7.0",
 		"commander": "^12.0.0",
-		"ora": "^8.0.0"
+		"picocolors": "^1.1.1"
 	},
 	"peerDependencies": {
 		"astro": "^5.0.0"
+	},
+	"publishConfig": {
+		"access": "public"
 	}
 }
