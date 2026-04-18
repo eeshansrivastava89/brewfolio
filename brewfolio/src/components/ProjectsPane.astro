@@ -366,6 +366,7 @@ function getStatusLabel(status: string): string {
 			var commits = githubData && githubData.recentCommits ? githubData.recentCommits : []
 			var pageSize = 8
 			var totalPages = Math.max(1, Math.ceil(commits.length / pageSize))
+			var currentPage = 0
 			var primaryOverview = project.overview || project.description || ''
 			var relatedWritingItems = Array.isArray(project.relatedWritingItems)
 				? project.relatedWritingItems
@@ -448,7 +449,8 @@ function getStatusLabel(status: string): string {
 				) +
 				'<div class="bf-pdr-card">' +
 				(githubData
-					? '<div class="bf-pdr-stats">' +
+					? '<div class="bf-pdr-github-shell">' +
+						'<div class="bf-pdr-stats">' +
 						'<div class="bf-pdr-stat"><div class="bf-pdr-stat-val">' +
 						githubData.openIssues +
 						'</div><div class="bf-pdr-stat-label">Issues</div></div>' +
@@ -459,7 +461,14 @@ function getStatusLabel(status: string): string {
 						esc(githubData.visibility) +
 						'">' +
 						esc(githubData.visibility.charAt(0).toUpperCase() + githubData.visibility.slice(1)) +
-						'</div><div class="bf-pdr-stat-label">Visibility</div></div>' +
+						'</div><div class="bf-pdr-stat-label">Visibility</div></div></div>' +
+						(githubData.ciStatus
+							? '<div class="bf-pdr-ci-row"><span class="bf-pdr-ci-pill ' +
+								esc(githubData.ciStatus) +
+								'">CI ' +
+								esc(githubData.ciStatus.charAt(0).toUpperCase() + githubData.ciStatus.slice(1)) +
+								'</span></div>'
+							: '') +
 						'</div>'
 					: '<div class="bf-pdr-info-msg">' +
 						(project.repo
@@ -496,7 +505,7 @@ function getStatusLabel(status: string): string {
 				'</div></section>' +
 				'<section class="bf-pdr-section">' +
 				sectionHeader('TIMELINE') +
-				'<div class="bf-pdr-card">' +
+				'<div class="bf-pdr-card" data-bf-pdr-timeline-section>' +
 				'<div class="bf-pdr-timeline" data-bf-pdr-timeline-body></div>' +
 				'<div class="bf-pdr-pagination" data-bf-pdr-timeline-pagination></div>' +
 				'</div></section>'
@@ -511,13 +520,15 @@ function getStatusLabel(status: string): string {
 				if (!pageBtn) return
 				var nextPage = Number(pageBtn.getAttribute('data-bf-pdr-page'))
 				if (!Number.isFinite(nextPage)) return
-				renderTimeline(nextPage)
+				renderTimeline(nextPage, { scroll: nextPage !== currentPage })
 			})
 
 			var timelineBody = root.querySelector('[data-bf-pdr-timeline-body]')
 			var timelinePagination = root.querySelector('[data-bf-pdr-timeline-pagination]')
+			var timelineSection = root.querySelector('[data-bf-pdr-timeline-section]')
 
-			function renderTimeline(page) {
+			function renderTimeline(page, options) {
+				options = options || {}
 				var safePage = Math.min(Math.max(page, 0), totalPages - 1)
 				if (timelineBody) {
 					timelineBody.innerHTML = timelineMarkup(commits, safePage, pageSize)
@@ -526,6 +537,10 @@ function getStatusLabel(status: string): string {
 					timelinePagination.innerHTML = timelinePaginationMarkup(totalPages, safePage)
 					timelinePagination.hidden = totalPages <= 1
 				}
+				if (options.scroll && timelineSection && typeof timelineSection.scrollIntoView === 'function') {
+					timelineSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+				}
+				currentPage = safePage
 			}
 
 			renderTimeline(0)
@@ -673,29 +688,43 @@ function getStatusLabel(status: string): string {
 		padding: 16px 18px;
 	}
 
+	.bf-pdr-github-shell {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
+
 	.bf-pdr-stats {
 		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-		gap: 10px;
+		grid-template-columns: repeat(3, minmax(180px, 1fr));
+		gap: 14px;
+		align-items: stretch;
 	}
 
 	.bf-pdr-stat {
-		padding: 12px 14px;
-		border-radius: 12px;
-		background: color-mix(in srgb, var(--card) 75%, transparent);
-		border: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
+		min-height: 118px;
+		padding: 18px 24px 16px;
+		border-radius: 22px;
+		background: color-mix(in srgb, var(--card) 94%, transparent);
+		border: 1px solid color-mix(in srgb, var(--border) 92%, transparent);
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		text-align: center;
 	}
 
 	.bf-pdr-stat-val {
 		font-family: var(--font-serif);
-		font-size: 22px;
-		line-height: 1.05;
+		font-size: clamp(25px, 2.7vw, 43px);
+		line-height: 0.95;
+		letter-spacing: -0.03em;
 		color: var(--foreground);
 	}
 
 	.bf-pdr-stat-badge {
-		font-size: 16px;
-		padding-top: 4px;
+		font-size: clamp(22px, 2.3vw, 34px);
+		padding-top: 0;
 	}
 
 	.bf-pdr-stat-label,
@@ -705,6 +734,50 @@ function getStatusLabel(status: string): string {
 		font-family: var(--font-mono);
 		font-size: 11px;
 		color: var(--muted);
+	}
+
+	.bf-pdr-stat-label {
+		margin-top: 8px;
+		font-size: 9.5px;
+		letter-spacing: 0.08em;
+	}
+
+	.bf-pdr-ci-row {
+		display: flex;
+		justify-content: center;
+	}
+
+	.bf-pdr-ci-pill {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 5px 11px;
+		border-radius: 999px;
+		border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+		background: color-mix(in srgb, var(--card) 84%, transparent);
+		font-family: var(--font-mono);
+		font-size: 10px;
+		line-height: 1;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: var(--muted-foreground);
+	}
+
+	.bf-pdr-ci-pill.success {
+		color: color-mix(in srgb, var(--green) 72%, var(--foreground));
+	}
+
+	.bf-pdr-ci-pill.failure,
+	.bf-pdr-ci-pill.error {
+		color: color-mix(in srgb, var(--destructive) 84%, var(--foreground));
+	}
+
+	.bf-pdr-ci-pill.pending {
+		color: color-mix(in srgb, var(--primary) 76%, var(--foreground));
+	}
+
+	.bf-pdr-card[data-bf-pdr-timeline-section] {
+		scroll-margin-top: 24px;
 	}
 
 	.bf-pdr-body {
@@ -749,7 +822,18 @@ function getStatusLabel(status: string): string {
 
 	.bf-pdr-commit-msg {
 		color: var(--foreground);
-		line-height: 1.5;
+		line-height: 1.45;
+		font-size: 13px;
+	}
+
+	.bf-pdr-commit-label {
+		font-size: 10px;
+		letter-spacing: 0.05em;
+	}
+
+	.bf-pdr-commit-date {
+		font-size: 10px;
+		white-space: nowrap;
 	}
 
 	.bf-pdr-related-links {
@@ -822,6 +906,11 @@ function getStatusLabel(status: string): string {
 		.bf-pdr-stats,
 		.bf-pdr-commit {
 			grid-template-columns: 1fr;
+		}
+
+		.bf-pdr-stat {
+			min-height: 96px;
+			padding: 16px 18px 14px;
 		}
 	}
 </style>
