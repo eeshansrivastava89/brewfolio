@@ -82,6 +82,8 @@ program
         brewfolioPath,
         '@keystatic/core@latest',
         '@keystatic/astro@latest',
+        'tailwindcss@^4.2.2',
+        '@tailwindcss/vite@^4.2.2',
         'react',
         'react-dom',
         '--legacy-peer-deps',

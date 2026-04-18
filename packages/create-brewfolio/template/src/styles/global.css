@@ -1,41 +1,30 @@
+@import 'tailwindcss';
+
 @import 'brewfolio/styles/tokens.css';
-@tailwind components;
-@tailwind utilities;
 
-@layer base {
-  html {
-    scroll-behavior: smooth;
-  }
+@theme {
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
 
-  body {
-    @apply bg-background text-foreground antialiased;
-    font-family: var(--font-sans);
-  }
-}
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
 
-@layer components {
-  .text-muted-foreground {
-    color: var(--muted-foreground);
-  }
-
-  .bg-card {
-    background-color: var(--card);
-    border-color: var(--border);
-  }
-
-  .border-border {
-    border-color: var(--border);
-  }
-
-  .text-primary {
-    color: var(--primary);
-  }
-
-  .bg-card-raised {
-    background-color: var(--card-raised);
-  }
-
-  .border-input {
-    border-color: var(--input);
-  }
+  --radius: var(--radius);
+  --radius-lg: var(--radius-lg);
+  --radius-sm: var(--radius-sm);
 }

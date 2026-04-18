@@ -1,6 +1,18 @@
 ---
 import AppLayout from 'brewfolio/layouts/AppLayout.astro'
-import { sections } from 'brewfolio/keystatic.config'
+import type { SectionConfig } from 'brewfolio/lib/types'
+
+const sections: SectionConfig[] = [
+  {
+    discriminant: 'metrics-grid',
+    value: {
+      title: 'Welcome',
+      metrics: [
+        { label: 'Projects', value: '0', delta: 'Add your projects in Keystatic', delta_direction: 'neutral' }
+      ]
+    }
+  }
+]
 ---
 
 <AppLayout

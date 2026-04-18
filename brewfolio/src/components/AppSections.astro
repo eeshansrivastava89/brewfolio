@@ -13,33 +13,6 @@ interface Props {
 	class?: string
 }
 
-interface ResultsItem {
-	title: string
-	href?: string
-	meta?: string
-}
-
-interface SectionEntry {
-	discriminant: 'metrics-grid' | 'results-list' | 'notebook' | 'github-timeline'
-	value: {
-		title?: string
-		metrics?: MetricItem[]
-		items?: ResultsItem[]
-		notebookId?: string
-	}
-}
-
-interface Props {
-	sections: SectionEntry[]
-	notebookEntries?: { id: string; title: string }[]
-	githubData?: unknown | null
-	githubProfileUrl?: string
-	githubProfileHandle?: string
-	analysisBasePath?: string
-	showHints?: boolean
-	class?: string
-}
-
 const {
 	sections = [],
 	notebookEntries = [],
