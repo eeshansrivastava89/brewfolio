@@ -34,7 +34,7 @@ test('app config edits reflect on the page', async ({ page }) => {
   await saveKeystatic(page)
 
   await page.goto(site.baseUrl, { waitUntil: 'networkidle' })
-  await expect(page.locator('.notch-name')).toHaveText('Ops Atlas')
+  await expect(page.locator('.header-title-text')).toHaveText('Ops Atlas')
 })
 
 test('app homepage block edits reflect on the page', async ({ page }) => {

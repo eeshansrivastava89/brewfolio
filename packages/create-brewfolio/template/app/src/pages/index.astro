@@ -1,7 +1,7 @@
 ---
 import '../styles/global.css'
 import AppLayout from 'brewfolio/layouts/AppLayout.astro'
-import { getGitHubData, type GitHubData } from 'brewfolio'
+import { getGitHubData, resolveHeaderConfig, type GitHubData } from 'brewfolio'
 import type { SectionConfig } from 'brewfolio/lib/types'
 import { reader } from '../lib/content'
 
@@ -27,11 +27,18 @@ if (githubHandle) {
     githubData = null
   }
 }
+
+const headerConfig = await resolveHeaderConfig({
+  siteName: siteTitle,
+  city: config?.city?.trim() || '',
+  country: config?.country?.trim() || '',
+})
 ---
 
 <AppLayout
   meta={{ title: siteTitle }}
   siteName={siteTitle}
+  header={headerConfig}
   sections={sections}
   githubData={githubData}
 />

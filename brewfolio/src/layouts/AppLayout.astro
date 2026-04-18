@@ -5,6 +5,7 @@ import Footer from '../components/Footer.astro'
 import ThemeProvider from '../components/ThemeProvider.astro'
 import AppSections from '../components/AppSections.astro'
 import type { SectionConfig, GitHubData } from '../lib/types'
+import type { HeaderConfig } from '../lib/header'
 
 interface Props {
 	meta?: {
@@ -16,6 +17,7 @@ interface Props {
 	}
 	showFooter?: boolean
 	siteName?: string
+	header?: HeaderConfig
 	headerNavItems?: { label: string; href: string }[]
 	sections?: SectionConfig[]
 	notebookEntries?: { id: string; title: string }[]
@@ -26,6 +28,7 @@ const {
 	meta = {},
 	showFooter = true,
 	siteName,
+	header,
 	headerNavItems,
 	sections,
 	notebookEntries = [],
@@ -49,10 +52,16 @@ const headerSiteName = siteName ?? meta.title ?? 'Portfolio'
 		<a href="#main-content" class="brewfolio-skip-link">Skip to content</a>
 		<ThemeProvider />
 		<div class="brewfolio-app-shell">
-			<Header navItems={headerNavItems} siteName={headerSiteName} showSearch={false}>
-				<slot name="header-left" slot="header-left" />
-				<slot name="settings-trigger" slot="settings-trigger" />
-			</Header>
+			<Header
+				navItems={headerNavItems}
+				siteName={header?.siteName ?? headerSiteName}
+				showSearch={false}
+				showClockWeather={header?.showClockWeather}
+				latitude={header?.latitude}
+				longitude={header?.longitude}
+				timezone={header?.timezone}
+				cityName={header?.cityName}
+			/>
 			<main class="brewfolio-app-main" id="main-content">
 				{sections !== undefined && sections.length > 0 ? (
 					<AppSections
@@ -125,12 +134,12 @@ const headerSiteName = siteName ?? meta.title ?? 'Portfolio'
 	.brewfolio-app-main {
 		flex: 1;
 		min-height: 0;
-		padding: 72px 12px 12px;
+		padding: 0 12px 12px;
 	}
 
 	@media (max-width: 768px) {
 		.brewfolio-app-main {
-			padding: 60px 12px 12px;
+			padding: 0 12px 12px;
 		}
 	}
 

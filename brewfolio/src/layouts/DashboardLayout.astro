@@ -3,9 +3,10 @@ import BaseHead from '../components/BaseHead.astro'
 import ContentModal from '../components/ContentModal.astro'
 import Drawer from '../components/Drawer.astro'
 import Footer from '../components/Footer.astro'
-import HomeHeader from '../components/HomeHeader.astro'
+import Header from '../components/Header.astro'
 import SearchOverlay from '../components/SearchOverlay.astro'
 import ThemeProvider from '../components/ThemeProvider.astro'
+import type { HeaderConfig } from '../lib/header'
 
 interface Props {
 	meta?: {
@@ -17,19 +18,15 @@ interface Props {
 		siteTitle?: string
 	}
 	showFooter?: boolean
-	header?: {
-		siteName?: string
-		showSearch?: boolean
-		showThemeToggle?: boolean
-		showClockWeather?: boolean
-		latitude?: number
-		longitude?: number
-		timezone?: string
-		cityName?: string
-	}
+	header?: HeaderConfig
 }
 
 const { meta = {}, showFooter = true, header = {} } = Astro.props
+const dashboardNavItems = [
+	{ label: 'Writing', href: '/writing' },
+	{ label: 'Analysis', href: '/analysis' },
+	{ label: 'About', href: '/about' },
+]
 ---
 
 <html lang="en" class="scroll-smooth">
@@ -47,10 +44,11 @@ const { meta = {}, showFooter = true, header = {} } = Astro.props
 		<a href="#main-content" class="skip-link">Skip to content</a>
 		<ThemeProvider />
 		<div class="dashboard-shell">
-			<HomeHeader
+			<Header
+				navItems={dashboardNavItems}
 				siteName={header.siteName}
-				showSearch={header.showSearch}
-				showThemeToggle={header.showThemeToggle}
+				showSearch={true}
+				showThemeToggle={true}
 				showClockWeather={header.showClockWeather}
 				latitude={header.latitude}
 				longitude={header.longitude}

@@ -10,39 +10,76 @@ interface Props {
 	showSearch?: boolean
 	showThemeToggle?: boolean
 	showEditorShortcut?: boolean
+	showClockWeather?: boolean
+	latitude?: number
+	longitude?: number
+	timezone?: string
+	cityName?: string
 }
-
-const hasHeaderLeft = Astro.slots.has('header-left')
 
 const {
 	navItems = [],
 	siteName = 'Portfolio',
 	showSearch = true,
 	showThemeToggle = true,
-	showEditorShortcut = import.meta.env.DEV
+	showEditorShortcut = import.meta.env.DEV,
+	showClockWeather,
+	latitude,
+	longitude,
+	timezone,
+	cityName = '',
 } = Astro.props
+
+const hasLocationConfig = (
+	typeof latitude === 'number' &&
+	Number.isFinite(latitude) &&
+	typeof longitude === 'number' &&
+	Number.isFinite(longitude) &&
+	typeof timezone === 'string' &&
+	timezone.length > 0 &&
+	typeof cityName === 'string' &&
+	cityName.length > 0
+)
+
+const shouldShowClockWeather = showClockWeather ?? hasLocationConfig
 ---
 
-<div class="fixed top-0 left-0 right-0 flex justify-center z-[65] pointer-events-none">
-	<div class="notch" id="notch">
-		<strong class="notch-name">{siteName}</strong>
-		<span class="notch-sep hidden">›</span>
-		<span class="notch-page hidden"></span>
-	</div>
-</div>
-
-<header class="h-[52px] flex items-center justify-between px-3 gap-2.5">
-	<span class="mobile-notch-label" aria-hidden="true">{siteName}</span>
-	{hasHeaderLeft && (
-		<div class="header-left">
-			<slot name="header-left" />
+<header class="brewfolio-header">
+	<div class="header-left-cluster">
+		{shouldShowClockWeather && (
+			<div class="header-clock-weather">
+				<div class="mini-clock-face" id="miniClockFace" aria-hidden="true">
+					<div class="tick-marks">
+						{Array.from({ length: 12 }, (_, i) => (
+							<div class:list={['tick', i % 3 === 0 && 'major']} style={`transform: rotate(${i * 30}deg)`}></div>
+						))}
+					</div>
+					<div class="clock-center"></div>
+					<div class="clock-hand hour" id="miniHourHand"></div>
+					<div class="clock-hand minute" id="miniMinuteHand"></div>
+					<div class="clock-hand second" id="miniSecondHand"></div>
+				</div>
+				<div class="digital-clock" id="miniDigitalClock">--:--</div>
+				<div class="clock-divider"></div>
+				<div class="weather" id="headerWeather">
+					<span class="weather-icon" id="weatherIcon">⛅</span>
+					<span class="weather-temp" id="weatherTemp">--°F</span>
+					<span class="weather-loc">{cityName}</span>
+				</div>
+			</div>
+		)}
+		<div class="header-title-box" aria-label={siteName}>
+			<strong class="header-title-text">{siteName}</strong>
 		</div>
-	)}
-	<div class="header-actions flex items-center gap-2">
+	</div>
+
+	<span class="mobile-title-label" aria-hidden="true">{siteName}</span>
+
+	<div class="header-actions">
 		{navItems.length > 0 && (
-			<nav class="flex gap-1.5" aria-label="Primary">
+			<nav class="nav-pills" aria-label="Primary">
 				{navItems.map((item) => (
-					<a href={item.href} class="nav-pill" data-route={item.href}>
+					<a href={item.href} class="nav-pill" data-modal-link data-route={item.href}>
 						{item.label}
 					</a>
 				))}
@@ -55,8 +92,8 @@ const {
 		)}
 		{showThemeToggle && (
 			<button class="theme-toggle" type="button" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode">
-				<svg class="theme-icon theme-icon-moon w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-				<svg class="theme-icon theme-icon-sun w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+				<svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+				<svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
 			</button>
 		)}
 		{showSearch && (
@@ -65,9 +102,101 @@ const {
 				<span class="search-hint-mobile">Search</span>
 			</button>
 		)}
-		<slot name="settings-trigger" />
 	</div>
 </header>
+
+<script is:inline define:vars={{ latitude, longitude, timezone }}>
+	(function () {
+		var hourHand = document.getElementById('miniHourHand')
+		var minuteHand = document.getElementById('miniMinuteHand')
+		var secondHand = document.getElementById('miniSecondHand')
+		var digitalClock = document.getElementById('miniDigitalClock')
+
+		if (!hourHand || !minuteHand || !secondHand || !digitalClock || !timezone) return
+
+		var partsFormatter = new Intl.DateTimeFormat('en-US', {
+			timeZone: timezone,
+			hour: 'numeric',
+			minute: 'numeric',
+			second: 'numeric',
+			hour12: false
+		})
+
+		function getSitePart(parts, type) {
+			var found = parts.find(function (p) { return p.type === type })
+			return found ? parseInt(found.value, 10) : 0
+		}
+
+		function updateClock() {
+			var now = new Date()
+			var parts = partsFormatter.formatToParts(now)
+			var h = getSitePart(parts, 'hour') % 12
+			var m = getSitePart(parts, 'minute')
+			var s = getSitePart(parts, 'second')
+			var ms = now.getMilliseconds()
+			var secondAngle = (s + ms / 1000) * 6
+			var minuteAngle = (m + s / 60) * 6
+			var hourAngle = (h + m / 60) * 30
+			hourHand.style.transform = 'rotate(' + hourAngle + 'deg)'
+			minuteHand.style.transform = 'rotate(' + minuteAngle + 'deg)'
+			secondHand.style.transform = 'rotate(' + secondAngle + 'deg)'
+
+			var hours24 = getSitePart(parts, 'hour')
+			var minutes = String(m).padStart(2, '0')
+			var ampm = hours24 >= 12 ? 'PM' : 'AM'
+			var h12 = hours24 % 12 || 12
+			digitalClock.textContent = h12 + ':' + minutes + ' ' + ampm
+		}
+
+		updateClock()
+		setInterval(updateClock, 1000)
+
+		var weatherIcon = document.getElementById('weatherIcon')
+		var weatherTemp = document.getElementById('weatherTemp')
+		var weatherLastFetch = 0
+		var hasCoordinates = (
+			typeof latitude === 'number' &&
+			Number.isFinite(latitude) &&
+			typeof longitude === 'number' &&
+			Number.isFinite(longitude) &&
+			typeof timezone === 'string' &&
+			timezone.length > 0
+		)
+
+		function weatherEmoji(code) {
+			if (code >= 0 && code <= 1) return '☀️'
+			if (code >= 2 && code <= 3) return '⛅'
+			if (code >= 45 && code <= 48) return '☁️'
+			if (code >= 51 && code <= 67) return '🌧️'
+			if (code >= 71 && code <= 77) return '❄️'
+			if (code >= 80 && code <= 82) return '🌧️'
+			if (code >= 95) return '⛈️'
+			return '⛅'
+		}
+
+		function fetchWeather() {
+			if (!hasCoordinates || !weatherIcon || !weatherTemp) return
+			var now = Date.now()
+			if (now - weatherLastFetch < 30 * 60 * 1000) return
+			weatherLastFetch = now
+			var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + latitude + '&longitude=' + longitude + '&current=temperature_2m,weather_code&temperature_unit=fahrenheit&timezone=' + encodeURIComponent(timezone)
+			fetch(url)
+				.then(function (response) { return response.json() })
+				.then(function (data) {
+					var current = data && data.current
+					if (!current) return
+					if (typeof current.temperature_2m === 'number') {
+						weatherTemp.textContent = Math.round(current.temperature_2m) + '\u00B0F'
+					}
+					weatherIcon.textContent = weatherEmoji(current.weather_code)
+				})
+				.catch(function () {})
+		}
+
+		fetchWeather()
+		setInterval(fetchWeather, 30 * 60 * 1000)
+	})()
+</script>
 
 <script is:inline>
 	document.getElementById('themeToggle')?.addEventListener('click', function () {
@@ -89,69 +218,178 @@ const {
 </script>
 
 <style>
-	/* Notch uses pseudo-elements + box-shadow to extend the card surface.
-	 * Tailwind can't express this — keep scoped. */
-	.notch {
-		position: relative;
-		pointer-events: auto;
-		padding: 10px 30px 4px;
-		font-size: 13px;
-		font-weight: 500;
-		letter-spacing: 0.03em;
-		color: var(--muted);
+	.brewfolio-header {
+		height: 52px;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0 12px;
+		gap: 10px;
+	}
+
+	.header-left-cluster {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		min-width: 0;
+	}
+
+	.header-clock-weather,
+	.header-title-box,
+	.nav-pill,
+	.theme-toggle,
+	.editor-shortcut,
+	.search-hint {
+		border-radius: 6px;
+		border: 1px solid var(--border);
 		background: var(--card);
-		border-left: 1px solid var(--border);
-		border-right: 1px solid var(--border);
-		border-bottom: 1px solid var(--border);
-		border-radius: 0 0 14px 14px;
 	}
 
-	.notch::before,
-	.notch::after {
-		content: '';
-		position: absolute;
-		top: 0;
-		width: 14px;
-		height: 14px;
-		background: transparent;
+	.header-clock-weather {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		padding: 3px 12px;
 	}
 
-	.notch::before {
-		left: -14px;
-		border-top-right-radius: 14px;
-		box-shadow: 5px 0 0 0 var(--card);
-		border-top: 1px solid var(--border);
-		border-right: 1px solid var(--border);
+	.header-title-box {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 7px 20px;
+		min-height: 38px;
+		min-width: 220px;
 	}
 
-	.notch::after {
-		right: -14px;
-		border-top-left-radius: 14px;
-		box-shadow: -5px 0 0 0 var(--card);
-		border-top: 1px solid var(--border);
-		border-left: 1px solid var(--border);
-	}
-
-	.notch-name {
+	.header-title-text {
 		color: var(--primary);
+		font-size: 14px;
 		font-weight: 600;
+		letter-spacing: 0.02em;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
-	.notch-sep {
-		color: var(--muted);
-		margin: 0 6px;
+	.mobile-title-label {
+		display: none;
 	}
 
-	.notch-page {
+	.mini-clock-face {
+		width: 28px;
+		height: 28px;
+		border-radius: 50%;
+		border: 1.5px solid var(--border);
+		background: var(--card);
+		position: relative;
+		flex-shrink: 0;
+	}
+
+	.tick-marks {
+		position: absolute;
+		inset: 0;
+	}
+
+	.tick {
+		position: absolute;
+		top: 2px;
+		left: 50%;
+		width: 1px;
+		height: 4px;
+		margin-left: -0.5px;
+		background: var(--muted);
+		transform-origin: 50% 12px;
+		opacity: 0.7;
+	}
+
+	.tick.major {
+		height: 5px;
+		background: var(--foreground);
+		opacity: 0.9;
+	}
+
+	.clock-center {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		width: 3px;
+		height: 3px;
+		background: var(--foreground);
+		border-radius: 50%;
+		transform: translate(-50%, -50%);
+		z-index: 4;
+	}
+
+	.clock-hand {
+		position: absolute;
+		bottom: 50%;
+		left: 50%;
+		transform-origin: 50% 100%;
+		border-radius: 1px;
+	}
+
+	.clock-hand.hour {
+		width: 2px;
+		height: 8px;
+		background: var(--foreground);
+		margin-left: -1px;
+		z-index: 3;
+	}
+
+	.clock-hand.minute {
+		width: 1.5px;
+		height: 10px;
+		background: var(--foreground);
+		margin-left: -0.75px;
+		z-index: 2;
+	}
+
+	.clock-hand.second {
+		width: 1px;
+		height: 11px;
+		background: var(--primary);
+		margin-left: -0.5px;
+		z-index: 1;
+	}
+
+	.digital-clock,
+	.weather-temp {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		font-weight: 600;
 		color: var(--foreground);
-		font-weight: 500;
+		white-space: nowrap;
+	}
+
+	.clock-divider {
+		width: 1px;
+		height: 18px;
+		background: var(--border);
+	}
+
+	.weather {
+		display: flex;
+		align-items: center;
+		gap: 5px;
+	}
+
+	.weather-icon {
+		font-size: 14px;
+		line-height: 1;
+	}
+
+	.weather-loc {
+		font-size: 10px;
+		color: var(--muted);
+	}
+
+	.nav-pills {
+		display: flex;
+		gap: 6px;
 	}
 
 	.nav-pill {
 		padding: 7px 16px;
-		border-radius: 6px;
-		border: 1px solid var(--border);
-		background: var(--card);
 		color: var(--foreground);
 		font-family: var(--font-sans);
 		font-size: 14px;
@@ -181,13 +419,17 @@ const {
 		outline-offset: 2px;
 	}
 
+	.header-actions {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-left: auto;
+	}
+
 	.theme-toggle,
 	.editor-shortcut,
 	.search-hint {
 		padding: 5px 12px;
-		border-radius: 6px;
-		border: 1px solid var(--border);
-		background: var(--card);
 		color: var(--muted-foreground);
 		font-family: var(--font-sans);
 		font-size: 14px;
@@ -205,6 +447,8 @@ const {
 	}
 
 	.theme-icon {
+		width: 16px;
+		height: 16px;
 		display: block;
 	}
 
@@ -227,34 +471,39 @@ const {
 		color: var(--primary);
 	}
 
-	.mobile-notch-label {
-		display: none;
-	}
-
-	.header-left {
-		display: flex;
-		align-items: center;
-		min-width: 0;
-		flex: 1 1 auto;
-	}
-
 	.search-hint-mobile {
 		display: none;
 	}
 
 	@media (max-width: 768px) {
-		.fixed {
-			display: none;
-		}
-
-		header {
+		.brewfolio-header {
 			height: auto;
 			flex-wrap: wrap;
 			padding: 8px 12px;
 			gap: 8px;
 		}
 
-		.mobile-notch-label {
+		.header-left-cluster {
+			order: 1;
+			flex: 1 1 100%;
+			justify-content: space-between;
+		}
+
+		.header-clock-weather {
+			font-size: 12px;
+			padding: 2px 8px;
+			gap: 6px;
+		}
+
+		.mini-clock-face {
+			display: none;
+		}
+
+		.header-title-box {
+			display: none;
+		}
+
+		.mobile-title-label {
 			display: inline-block;
 			order: 1;
 			font-family: var(--font-sans);
@@ -268,14 +517,11 @@ const {
 			order: 2;
 			width: 100%;
 			gap: 8px;
+			justify-content: flex-end;
+			flex-wrap: wrap;
 		}
 
-		.header-left {
-			order: 2;
-			width: 100%;
-		}
-
-		nav {
+		.nav-pills {
 			flex: 1;
 			min-width: 0;
 			overflow-x: auto;
@@ -285,7 +531,7 @@ const {
 			scrollbar-width: none;
 		}
 
-		nav::-webkit-scrollbar {
+		.nav-pills::-webkit-scrollbar {
 			display: none;
 		}
 

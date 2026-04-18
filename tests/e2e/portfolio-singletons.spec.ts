@@ -66,7 +66,7 @@ test('site, github, and writing settings edits reflect on the dashboard', async 
   await saveKeystatic(page)
 
   await page.goto(site.baseUrl, { waitUntil: 'networkidle' })
-  await expect(page.locator('.notch-name')).toHaveText('Signal Desk')
+  await expect(page.locator('.header-title-text')).toHaveText('Signal Desk')
   await expect(page.getByText('@octocat')).toBeVisible()
   await expect(page.locator('[data-pane=\"concepts\"]').getByText(/A testing-focused portfolio/i)).toBeVisible()
   await expect(page.getByRole('heading', { name: /Writing/i })).toContainText('Signal Notes')

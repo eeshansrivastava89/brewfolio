@@ -1,4 +1,5 @@
 export * from './github'
+export * from './header'
 export * from './notebook-loader'
 export * from './notebook-renderer'
 export * from './projects'

@@ -5,6 +5,7 @@ import {
 	getGitHubData,
 	getProjectGitHubData,
 	renderNotebook,
+	resolveHeaderConfig,
 	type NotebookEntry,
 	type NotebookSummary,
 } from 'brewfolio'
@@ -25,14 +26,6 @@ type PortfolioConfig = {
 	country?: string
 } | null
 
-type HeaderLocation = {
-	cityName: string
-	latitude: number
-	longitude: number
-	timezone: string
-}
-
-const geocodeCache = new Map<string, Promise<HeaderLocation | null>>()
 const feedCache = new Map<string, Promise<FeedPost[]>>()
 
 type FeedPost = {
@@ -731,82 +724,11 @@ function normalizeArticleHtml(html: string): string {
 }
 
 export async function dashboardHeader(config: PortfolioConfig) {
-	const siteName = config?.siteTitle || ''
-	const city = config?.city?.trim()
-
-	if (!city) {
-		return {
-			siteName,
-			showClockWeather: false,
-			cityName: '',
-			timezone: undefined,
-			latitude: undefined,
-			longitude: undefined,
-		}
-	}
-
-	const country = config?.country?.trim() || ''
-	const cacheKey = `${city.toLowerCase()}::${country.toLowerCase()}`
-
-	if (!geocodeCache.has(cacheKey)) {
-		geocodeCache.set(cacheKey, resolveHeaderLocation(city, country))
-	}
-
-	const location = await geocodeCache.get(cacheKey)!
-
-	if (!location) {
-		return {
-			siteName,
-			showClockWeather: false,
-			cityName: city,
-			timezone: undefined,
-			latitude: undefined,
-			longitude: undefined,
-		}
-	}
-
-	return {
-		siteName,
-		showClockWeather: true,
-		cityName: location.cityName,
-		timezone: location.timezone,
-		latitude: location.latitude,
-		longitude: location.longitude,
-	}
-}
-
-async function resolveHeaderLocation(
-	city: string,
-	country: string,
-): Promise<HeaderLocation | null> {
-	try {
-		const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=5&language=en&format=json`
-		const response = await fetch(url)
-		if (!response.ok) throw new Error(`Geocoding failed: ${response.status}`)
-		const data = await response.json()
-		const results = Array.isArray(data?.results) ? data.results : []
-		const match = country
-			? results.find((entry: any) => String(entry?.country || '').toLowerCase() === country.toLowerCase()) || results[0]
-			: results[0]
-
-		if (!match) throw new Error(`No geocoding match for "${city}"`)
-
-		const latitude = Number(match.latitude)
-		const longitude = Number(match.longitude)
-		const timezone = String(match.timezone || '')
-		if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !timezone) {
-			return null
-		}
-
-		return {
-			cityName: String(match.name || city),
-			latitude,
-			longitude,
-			timezone,
-		}
-	} catch {
-		return null
-	}
+	return resolveHeaderConfig({
+		siteName: config?.siteTitle || '',
+		city: config?.city?.trim() || '',
+		country: config?.country?.trim() || '',
+	})
 }
 
 function renderInlineMarkdown(value: string): string {

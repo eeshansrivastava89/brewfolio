@@ -36,7 +36,7 @@ test('game homepage edits reflect on the page', async ({ page }) => {
   await saveKeystatic(page)
 
   await page.goto(site.baseUrl, { waitUntil: 'networkidle' })
-  await expect(page.locator('.notch-name')).toHaveText('Playground Arena')
+  await expect(page.locator('.header-title-text')).toHaveText('Playground Arena')
   await expect(page.getByRole('heading', { name: 'Lightning Round' })).toBeVisible()
   await expect(page.getByText('A quick test of the editable game shell.')).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Best test runner?' })).toBeVisible()

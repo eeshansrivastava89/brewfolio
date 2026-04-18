@@ -3,6 +3,7 @@ import BaseHead from '../components/BaseHead.astro'
 import Header from '../components/Header.astro'
 import Footer from '../components/Footer.astro'
 import ThemeProvider from '../components/ThemeProvider.astro'
+import type { HeaderConfig } from '../lib/header'
 
 interface Props {
 	meta?: {
@@ -15,14 +16,16 @@ interface Props {
 	showFooter?: boolean
 	showLeaderboard?: boolean
 	siteName?: string
+	header?: HeaderConfig
 	headerNavItems?: { label: string; href: string }[]
 }
 
 const {
 	meta = {},
-	showFooter = false,
+	showFooter = true,
 	showLeaderboard = true,
 	siteName,
+	header,
 	headerNavItems,
 } = Astro.props
 
@@ -43,10 +46,16 @@ const headerSiteName = siteName ?? meta.title ?? 'Portfolio'
 		<a href="#main-content" class="skip-link">Skip to content</a>
 		<ThemeProvider />
 		<div class="game-shell">
-			<Header navItems={headerNavItems} siteName={headerSiteName} showSearch={false}>
-				<slot name="header-left" slot="header-left" />
-				<slot name="settings-trigger" slot="settings-trigger" />
-			</Header>
+			<Header
+				navItems={headerNavItems}
+				siteName={header?.siteName ?? headerSiteName}
+				showSearch={false}
+				showClockWeather={header?.showClockWeather}
+				latitude={header?.latitude}
+				longitude={header?.longitude}
+				timezone={header?.timezone}
+				cityName={header?.cityName}
+			/>
 			<div class="game-content">
 				<main class="game-main" id="main-content">
 					<slot />
@@ -114,7 +123,7 @@ const headerSiteName = siteName ?? meta.title ?? 'Portfolio'
 		flex: 1;
 		display: flex;
 		gap: 12px;
-		padding: 72px 12px 12px;
+		padding: 0 12px 12px;
 		min-height: 0;
 	}
 
@@ -131,7 +140,7 @@ const headerSiteName = siteName ?? meta.title ?? 'Portfolio'
 	@media (max-width: 768px) {
 		.game-content {
 			flex-direction: column;
-			padding: 60px 12px 12px;
+			padding: 0 12px 12px;
 		}
 
 		.game-sidebar {

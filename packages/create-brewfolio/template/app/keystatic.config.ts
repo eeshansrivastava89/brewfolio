@@ -7,8 +7,16 @@ const appConfig = singleton({
 	schema: {
 		siteTitle: fields.text({
 			label: 'Site title',
-			description: 'Start here. Shown in the notch and page title.',
+			description: 'Start here. Shown in the header title box and page title.',
 			validation: { isRequired: true },
+		}),
+		city: fields.text({
+			label: 'City',
+			description: 'Shown in the shared header weather widget. Leave blank to hide the weather and clock.',
+		}),
+		country: fields.text({
+			label: 'Country (optional)',
+			description: 'Helps disambiguate the city during geocoding.',
 		}),
 		githubHandle: fields.text({
 			label: 'GitHub handle',
@@ -101,7 +109,7 @@ const appSections = singleton({
 export default config({
 	storage: { kind: 'local' },
 	ui: {
-		navigation: ['config', 'sections', 'secrets'],
+		navigation: ['config', 'secrets', 'sections'],
 	},
 	singletons: {
 		sections: appSections,
