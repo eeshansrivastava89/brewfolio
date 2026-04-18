@@ -82,7 +82,15 @@ const pageSizeNum = Math.max(1, parseInt(String(pageSize)) || 10)
 					))}
 				</tr>
 			</thead>
-			<tbody></tbody>
+			<tbody>
+				{data.map((row) => (
+					<tr>
+						{columns.map((col) => (
+							<td style={`text-align: ${col.align || 'left'}`}>{String(row[col.key] ?? '')}</td>
+						))}
+					</tr>
+				))}
+			</tbody>
 		</table>
 	</div>
 

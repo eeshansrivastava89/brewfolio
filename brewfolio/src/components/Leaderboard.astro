@@ -62,8 +62,9 @@ const podium = ['gold', 'silver', 'bronze']
 
 	<ol class="leaderboard-list list-none m-0 p-0" aria-label={title}>
 		{entries.map((entry) => {
-			const medal = showRank && entry.rank <= 3 ? podium[entry.rank - 1] : null
-			const displayRank = entry.rank <= 3 ? '' : entry.rank
+			const isTopThree = entry.rank < 4
+			const medal = showRank && isTopThree ? podium[entry.rank - 1] : null
+			const displayRank = isTopThree ? '' : entry.rank
 
 			return (
 				<li class={`leaderboard-entry flex items-center gap-2.5 px-4 py-2.5

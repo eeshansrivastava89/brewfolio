@@ -55,7 +55,7 @@ const {
 			<span class="text-[13px] font-semibold text-foreground">{title}</span>
 		</div>
 		<div class="flex gap-1">
-			<button class="exec-btn" aria-label="Reconnect">
+			<button class="exec-btn inline-flex items-center justify-center w-7 h-7 border border-border rounded-lg bg-transparent text-muted-foreground cursor-pointer transition-all duration-150 hover:border-primary hover:text-primary" aria-label="Reconnect">
 				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 					stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 					<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
@@ -64,7 +64,7 @@ const {
 					<path d="M3 21v-5h5"/>
 				</svg>
 			</button>
-			<button class="exec-btn" aria-label="Clear log">
+			<button class="exec-btn inline-flex items-center justify-center w-7 h-7 border border-border rounded-lg bg-transparent text-muted-foreground cursor-pointer transition-all duration-150 hover:border-primary hover:text-primary" aria-label="Clear log">
 				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 					stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 					<path d="M3 6h18"/>
@@ -248,14 +248,7 @@ const {
 	.exec-dot.completed { background: var(--green); opacity: 1; animation: none; }
 	.exec-dot.failed { background: var(--red); opacity: 1; animation: none; }
 
-	.exec-btn {
-		display: inline-flex; align-items: center; justify-content: center;
-		w-7 h-7 border border-border rounded-lg bg-transparent text-muted-foreground
-		cursor-pointer transition-all duration-150;
-	}
-	.exec-btn:hover {
-		border-color var(--primary) text-primary bg-[rgba(var(--primary-rgb),0.04)];
-	}
+	.exec-btn:hover { background: rgba(var(--primary-rgb), 0.04); }
 
 	.exec-progress-bar { background: var(--primary); }
 
