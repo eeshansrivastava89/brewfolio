@@ -263,9 +263,11 @@ const shouldShowClockWeather = showClockWeather ?? hasLocationConfig
 
 	.header-title-text {
 		color: var(--primary);
-		font-size: 14px;
-		font-weight: 600;
-		letter-spacing: 0.02em;
+		font-family: var(--font-serif);
+		font-size: 1rem;
+		font-weight: 700;
+		letter-spacing: -0.02em;
+		line-height: 1;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -478,21 +480,26 @@ const shouldShowClockWeather = showClockWeather ?? hasLocationConfig
 	@media (max-width: 768px) {
 		.brewfolio-header {
 			height: auto;
-			flex-wrap: wrap;
 			padding: 8px 12px;
 			gap: 8px;
+			flex-direction: column;
+			align-items: stretch;
 		}
 
 		.header-left-cluster {
-			order: 1;
-			flex: 1 1 100%;
+			order: 0;
+			width: 100%;
 			justify-content: space-between;
+			align-items: center;
+			gap: 10px;
 		}
 
 		.header-clock-weather {
 			font-size: 12px;
 			padding: 2px 8px;
 			gap: 6px;
+			flex: 0 1 auto;
+			min-width: 0;
 		}
 
 		.mini-clock-face {
@@ -500,29 +507,33 @@ const shouldShowClockWeather = showClockWeather ?? hasLocationConfig
 		}
 
 		.header-title-box {
-			display: none;
+			display: inline-flex;
+			min-width: 0;
+			max-width: min(48vw, 220px);
+			padding: 6px 14px;
+			flex: 0 1 auto;
 		}
 
 		.mobile-title-label {
-			display: inline-block;
-			order: 1;
-			font-family: var(--font-sans);
-			font-size: 13px;
-			font-weight: 600;
-			color: var(--primary);
-			letter-spacing: 0.02em;
+			display: none;
+		}
+
+		.header-title-text {
+			font-size: 0.95rem;
 		}
 
 		.header-actions {
-			order: 2;
 			width: 100%;
 			gap: 8px;
-			justify-content: flex-end;
-			flex-wrap: wrap;
+			justify-content: stretch;
+			flex-wrap: nowrap;
+			display: grid;
+			grid-template-columns: minmax(0, 1fr) auto auto auto;
+			align-items: center;
 		}
 
 		.nav-pills {
-			flex: 1;
+			grid-column: 1;
 			min-width: 0;
 			overflow-x: auto;
 			flex-wrap: nowrap;
@@ -538,18 +549,19 @@ const shouldShowClockWeather = showClockWeather ?? hasLocationConfig
 		.nav-pill {
 			white-space: nowrap;
 			flex-shrink: 0;
-			padding: 6px 12px;
+			padding: 6px 11px;
 			font-size: 13px;
 		}
 
 		.theme-toggle,
 		.editor-shortcut {
-			padding: 4px 10px;
+			padding: 4px 9px;
 		}
 
 		.search-hint {
 			display: inline-flex;
-			padding: 4px 10px;
+			padding: 4px 8px;
+			white-space: nowrap;
 		}
 
 		.search-hint-desktop {
