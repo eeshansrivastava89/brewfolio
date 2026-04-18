@@ -17,7 +17,7 @@ const leftHtml = modalBreadcrumb('Writing archive', '/writing')
 const bylineName = publicationName || 'Writing'
 const bylineInitial = bylineName.trim().charAt(0).toUpperCase() || 'W'
 const articleCtaLabel = publicationName ? `Read on ${publicationName}` : 'Read article'
-const headerConfig = dashboardHeader(config)
+const headerConfig = await dashboardHeader(config)
 ---
 
 <DashboardLayout meta={{ title: post?.title || 'Writing', siteTitle }} header={headerConfig}>

@@ -22,7 +22,7 @@ const subscribeUrl = writingSettings?.subscribeUrl || ''
 const centerHtml = substackTitlebar(publicationName)
 const rightHtml = subscribeButton('Subscribe', subscribeUrl)
 const bottomCtaLabel = publicationName ? `Subscribe to ${publicationName}` : 'Subscribe on Substack'
-const headerConfig = dashboardHeader(config)
+const headerConfig = await dashboardHeader(config)
 ---
 
 <DashboardLayout meta={{ title: 'Writing', siteTitle }} header={headerConfig}>

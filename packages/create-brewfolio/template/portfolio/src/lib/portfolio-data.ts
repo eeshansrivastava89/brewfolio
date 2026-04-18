@@ -12,10 +12,24 @@ type PortfolioConfig = {
 	siteTitle?: string
 	conceptsIntro?: string
 	city?: string
-	timezone?: string
-	latitude?: number
-	longitude?: number
+	country?: string
 } | null
+
+type HeaderLocation = {
+	cityName: string
+	latitude: number
+	longitude: number
+	timezone: string
+}
+
+const DEFAULT_HEADER_LOCATION: HeaderLocation = {
+	cityName: 'Seattle',
+	latitude: 47.6062,
+	longitude: -122.3321,
+	timezone: 'America/Los_Angeles',
+}
+
+const geocodeCache = new Map<string, Promise<HeaderLocation>>()
 
 export async function getPortfolioData() {
 	const [projectEntries, writingEntries, notebookEntries, conceptsData, config, github, writingSettings, aboutData, timelineData, impactData] = await Promise.all([
@@ -169,19 +183,64 @@ export function renderProse(markdown: string | null | undefined): string {
 		.join('')
 }
 
-export function dashboardHeader(config: PortfolioConfig) {
+export async function dashboardHeader(config: PortfolioConfig) {
+	const siteName = config?.siteTitle || 'Portfolio'
+	const city = config?.city?.trim()
+
+	if (!city) {
+		return {
+			siteName,
+			showClockWeather: false,
+			cityName: '',
+			timezone: undefined,
+			latitude: undefined,
+			longitude: undefined,
+		}
+	}
+
+	const country = config?.country?.trim() || ''
+	const cacheKey = `${city.toLowerCase()}::${country.toLowerCase()}`
+
+	if (!geocodeCache.has(cacheKey)) {
+		geocodeCache.set(cacheKey, resolveHeaderLocation(city, country))
+	}
+
+	const location = await geocodeCache.get(cacheKey)!
+
 	return {
-		siteName: config?.siteTitle || 'Portfolio',
-		showClockWeather: Boolean(
-			config?.city &&
-			config?.timezone &&
-			typeof config?.latitude === 'number' &&
-			typeof config?.longitude === 'number'
-		),
-		cityName: config?.city || '',
-		timezone: config?.timezone || undefined,
-		latitude: typeof config?.latitude === 'number' ? config.latitude : undefined,
-		longitude: typeof config?.longitude === 'number' ? config.longitude : undefined,
+		siteName,
+		showClockWeather: true,
+		cityName: location.cityName,
+		timezone: location.timezone,
+		latitude: location.latitude,
+		longitude: location.longitude,
+	}
+}
+
+async function resolveHeaderLocation(city: string, country: string): Promise<HeaderLocation> {
+	try {
+		const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=5&language=en&format=json`
+		const response = await fetch(url)
+		if (!response.ok) throw new Error(`Geocoding failed: ${response.status}`)
+		const data = await response.json()
+		const results = Array.isArray(data?.results) ? data.results : []
+		const match = country
+			? results.find((entry: any) => String(entry?.country || '').toLowerCase() === country.toLowerCase()) || results[0]
+			: results[0]
+
+		if (!match) throw new Error(`No geocoding match for "${city}"`)
+
+		return {
+			cityName: String(match.name || city),
+			latitude: Number(match.latitude),
+			longitude: Number(match.longitude),
+			timezone: String(match.timezone || DEFAULT_HEADER_LOCATION.timezone),
+		}
+	} catch {
+		return {
+			...DEFAULT_HEADER_LOCATION,
+			cityName: city || DEFAULT_HEADER_LOCATION.cityName,
+		}
 	}
 }
 

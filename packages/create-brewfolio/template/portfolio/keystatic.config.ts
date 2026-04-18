@@ -22,18 +22,12 @@ const portfolioConfig = singleton({
 			multiline: true,
 		}),
 		city: fields.text({
-			label: 'City label',
-			description: 'Shown in the header weather widget.',
+			label: 'City',
+			description: 'Shown in the header weather widget. Coordinates and timezone are auto-resolved in code.',
 		}),
-		timezone: fields.text({
-			label: 'Timezone',
-			description: 'Example: America/Los_Angeles',
-		}),
-		latitude: fields.number({
-			label: 'Latitude',
-		}),
-		longitude: fields.number({
-			label: 'Longitude',
+		country: fields.text({
+			label: 'Country (optional)',
+			description: 'Helps disambiguate cities with the same name.',
 		}),
 	},
 })

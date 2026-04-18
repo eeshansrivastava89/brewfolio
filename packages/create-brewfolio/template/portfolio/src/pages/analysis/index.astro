@@ -9,7 +9,7 @@ import { dashboardHeader, getPortfolioData } from '../../lib/portfolio-data'
 const { notebooks, projects, config, searchData } = await getPortfolioData()
 const projectById = new Map(projects.map((project) => [project.id, project]))
 const siteTitle = config?.siteTitle || 'Portfolio'
-const headerConfig = dashboardHeader(config)
+const headerConfig = await dashboardHeader(config)
 ---
 
 <DashboardLayout meta={{ title: 'Analysis', siteTitle }} header={headerConfig}>

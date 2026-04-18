@@ -11,7 +11,7 @@ const notebook = notebooks.find((entry) => entry.id === Astro.params.id)
 const project = notebook ? projects.find((entry) => entry.id === notebook.project) : null
 const leftHtml = modalBreadcrumb('Published analyses', '/analysis')
 const siteTitle = config?.siteTitle || 'Portfolio'
-const headerConfig = dashboardHeader(config)
+const headerConfig = await dashboardHeader(config)
 ---
 
 <DashboardLayout meta={{ title: notebook?.title || 'Analysis', siteTitle }} header={headerConfig}>

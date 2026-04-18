@@ -28,7 +28,7 @@ const writingWithLabels = writing.map((post) => ({
 }))
 
 const siteTitle = config?.siteTitle || 'Portfolio'
-const headerConfig = dashboardHeader(config)
+const headerConfig = await dashboardHeader(config)
 ---
 
 <DashboardLayout meta={{ title: siteTitle, siteTitle }} header={headerConfig}>

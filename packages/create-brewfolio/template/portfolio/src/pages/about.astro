@@ -22,7 +22,7 @@ const currentRole = work[0]
 const bioHtml = renderProse(aboutData?.bio)
 const thisSiteHtml = renderProse(aboutData?.thisSite)
 const siteTitle = config?.siteTitle || 'About'
-const headerConfig = dashboardHeader(config)
+const headerConfig = await dashboardHeader(config)
 const tocHeadings = [
 	{ id: 'this-site', text: 'This Site', level: 2 as const },
 	...(impactSections.length > 0 ? [{ id: 'impact', text: 'Recognition & Leadership', level: 2 as const }] : []),
