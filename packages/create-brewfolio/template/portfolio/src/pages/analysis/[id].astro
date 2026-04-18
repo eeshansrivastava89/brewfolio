@@ -4,15 +4,17 @@ import DashboardLayout from 'brewfolio/layouts/DashboardLayout.astro'
 import Dashboard from 'brewfolio/components/Dashboard.astro'
 import ModalSource from 'brewfolio/components/ModalSource.astro'
 import SearchData from 'brewfolio/components/SearchData.astro'
-import { getPortfolioData, modalBreadcrumb } from '../../lib/portfolio-data'
+import { dashboardHeader, getPortfolioData, modalBreadcrumb } from '../../lib/portfolio-data'
 
-const { notebooks, projects, searchData } = await getPortfolioData()
+const { notebooks, projects, config, searchData } = await getPortfolioData()
 const notebook = notebooks.find((entry) => entry.id === Astro.params.id)
 const project = notebook ? projects.find((entry) => entry.id === notebook.project) : null
 const leftHtml = modalBreadcrumb('Published analyses', '/analysis')
+const siteTitle = config?.siteTitle || 'Portfolio'
+const headerConfig = dashboardHeader(config)
 ---
 
-<DashboardLayout meta={{ title: notebook?.title || 'Analysis' }}>
+<DashboardLayout meta={{ title: notebook?.title || 'Analysis', siteTitle }} header={headerConfig}>
 	<Dashboard />
 
 	<ModalSource
@@ -67,15 +69,6 @@ const leftHtml = modalBreadcrumb('Published analyses', '/analysis')
 </DashboardLayout>
 
 <style>
-	.modal-eyebrow {
-		margin-bottom: 10px;
-		font-family: var(--font-mono);
-		font-size: 11px;
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
-		color: var(--muted);
-	}
-
 	.notebook-subtitle {
 		margin: 14px 0 0;
 		font-size: 1.08rem;
@@ -122,39 +115,4 @@ const leftHtml = modalBreadcrumb('Published analyses', '/analysis')
 		color: var(--muted-foreground);
 	}
 
-	.modal-cta-row {
-		display: flex;
-		gap: 10px;
-		margin-top: 24px;
-		flex-wrap: wrap;
-	}
-
-	.modal-cta {
-		display: inline-flex;
-		align-items: center;
-		gap: 6px;
-		padding: 10px 22px;
-		border-radius: 24px;
-		font-size: 14px;
-		font-weight: 600;
-		text-decoration: none;
-	}
-
-	.modal-cta-primary {
-		background: var(--primary);
-		color: var(--card);
-		border: 1px solid var(--primary);
-	}
-
-	.modal-cta-primary:hover {
-		color: var(--card);
-		opacity: 0.92;
-		text-decoration: none;
-	}
-
-	.modal-cta-secondary {
-		background: transparent;
-		color: var(--primary);
-		border: 1px solid var(--border);
-	}
 </style>

@@ -1,0 +1,95 @@
+import { config, fields, singleton } from '@keystatic/core'
+import {
+	about,
+	concepts,
+	impact,
+	notebooks,
+	projects,
+	timeline,
+	writing,
+} from 'brewfolio/keystatic.config'
+
+const portfolioConfig = singleton({
+	label: 'Config',
+	path: 'src/data/site-config',
+	schema: {
+		siteTitle: fields.text({
+			label: 'Site title',
+			validation: { isRequired: true },
+		}),
+		conceptsIntro: fields.text({
+			label: 'Concepts intro',
+			multiline: true,
+		}),
+		city: fields.text({
+			label: 'City label',
+			description: 'Shown in the header weather widget.',
+		}),
+		timezone: fields.text({
+			label: 'Timezone',
+			description: 'Example: America/Los_Angeles',
+		}),
+		latitude: fields.number({
+			label: 'Latitude',
+		}),
+		longitude: fields.number({
+			label: 'Longitude',
+		}),
+	},
+})
+
+const github = singleton({
+	label: 'GitHub',
+	path: 'src/data/github',
+	schema: {
+		handle: fields.text({
+			label: 'GitHub handle',
+			description: 'Without the @ sign.',
+		}),
+	},
+})
+
+const writingSettings = singleton({
+	label: 'Writing / Substack',
+	path: 'src/data/writing-config',
+	schema: {
+		publicationName: fields.text({
+			label: 'Publication name',
+		}),
+		subscribeUrl: fields.url({
+			label: 'Subscribe URL',
+		}),
+	},
+})
+
+export default config({
+	storage: { kind: 'local' },
+	ui: {
+		navigation: [
+			'concepts',
+			'github',
+			'projects',
+			'writingSettings',
+			'writing',
+			'notebooks',
+			'about',
+			'timeline',
+			'impact',
+			'config',
+		],
+	},
+	collections: {
+		projects,
+		writing,
+		notebooks,
+	},
+	singletons: {
+		concepts,
+		github,
+		about,
+		timeline,
+		impact,
+		writingSettings,
+		config: portfolioConfig,
+	},
+})

@@ -13,11 +13,22 @@ interface Props {
 		ogImage?: string
 		articleDate?: string
 		canonicalUrl?: string
+		siteTitle?: string
 	}
 	showFooter?: boolean
+	header?: {
+		siteName?: string
+		showSearch?: boolean
+		showThemeToggle?: boolean
+		showClockWeather?: boolean
+		latitude?: number
+		longitude?: number
+		timezone?: string
+		cityName?: string
+	}
 }
 
-const { meta = {}, showFooter = true } = Astro.props
+const { meta = {}, showFooter = true, header = {} } = Astro.props
 ---
 
 <html lang="en" class="scroll-smooth">
@@ -28,13 +39,23 @@ const { meta = {}, showFooter = true } = Astro.props
 			ogImage={meta.ogImage}
 			articleDate={meta.articleDate}
 			canonicalUrl={meta.canonicalUrl}
+			siteTitle={meta.siteTitle}
 		/>
 	</head>
 	<body>
 		<a href="#main-content" class="skip-link">Skip to content</a>
 		<ThemeProvider />
 		<div class="dashboard-shell">
-			<HomeHeader />
+			<HomeHeader
+				siteName={header.siteName}
+				showSearch={header.showSearch}
+				showThemeToggle={header.showThemeToggle}
+				showClockWeather={header.showClockWeather}
+				latitude={header.latitude}
+				longitude={header.longitude}
+				timezone={header.timezone}
+				cityName={header.cityName}
+			/>
 			<main class="dashboard-main" id="main-content">
 				<slot />
 			</main>

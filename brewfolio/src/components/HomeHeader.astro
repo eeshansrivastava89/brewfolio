@@ -22,15 +22,28 @@ const {
 		{ label: 'Analysis', href: '/analysis' },
 		{ label: 'About', href: '/about' }
 	],
-	siteName = 'Eeshan S.',
+	siteName = 'Portfolio',
 	showSearch = true,
 	showThemeToggle = true,
-	showClockWeather = true,
-	latitude = 47.6062,
-	longitude = -122.3321,
-	timezone = 'America/Los_Angeles',
-	cityName = 'Seattle'
+	showClockWeather,
+	latitude,
+	longitude,
+	timezone,
+	cityName = ''
 } = Astro.props
+
+const hasLocationConfig = (
+	typeof latitude === 'number' &&
+	Number.isFinite(latitude) &&
+	typeof longitude === 'number' &&
+	Number.isFinite(longitude) &&
+	typeof timezone === 'string' &&
+	timezone.length > 0 &&
+	typeof cityName === 'string' &&
+	cityName.length > 0
+)
+
+const shouldShowClockWeather = showClockWeather ?? hasLocationConfig
 ---
 
 <div class="notch-bar">
@@ -42,7 +55,7 @@ const {
 </div>
 
 <header class="brewfolio-home-header">
-	{showClockWeather && (
+	{shouldShowClockWeather && (
 		<div class="header-left">
 			<div class="header-clock-weather">
 				<div class="mini-clock-face" id="miniClockFace" aria-hidden="true">
@@ -139,6 +152,14 @@ const {
 		var weatherIcon = document.getElementById('weatherIcon')
 		var weatherTemp = document.getElementById('weatherTemp')
 		var weatherLastFetch = 0
+		var hasCoordinates = (
+			typeof latitude === 'number' &&
+			Number.isFinite(latitude) &&
+			typeof longitude === 'number' &&
+			Number.isFinite(longitude) &&
+			typeof timezone === 'string' &&
+			timezone.length > 0
+		)
 
 		function weatherEmoji(code) {
 			if (code >= 0 && code <= 1) return '☀️'
@@ -152,6 +173,7 @@ const {
 		}
 
 		function fetchWeather() {
+			if (!hasCoordinates || !weatherIcon || !weatherTemp) return
 			var now = Date.now()
 			if (now - weatherLastFetch < 30 * 60 * 1000) return
 			weatherLastFetch = now

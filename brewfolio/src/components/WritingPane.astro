@@ -12,21 +12,31 @@ interface Props {
 	substackUrl?: string
 }
 
-const { posts = [], substackName = 'The Asymptotic', substackUrl = 'https://theasymptotic.substack.com/subscribe' } = Astro.props
-
+const { posts = [], substackName = '', substackUrl = '' } = Astro.props
+const hasPublicationName = typeof substackName === 'string' && substackName.trim().length > 0
+const hasSubscribeUrl = typeof substackUrl === 'string' && substackUrl.trim().length > 0
 const recentPosts = posts.slice(0, 10)
 ---
 
 <section class="pane pane-writing" data-pane="writing" aria-label="Writing">
 	<div class="writing-pane-header">
 		<a href="/writing" class="writing-pane-header-link" data-modal-link data-route="/writing">
-			<h2>Writing <span class="writing-sep">|</span> <strong>{substackName}</strong></h2>
+			<h2>
+				Writing
+				{hasPublicationName && (
+					<>
+						<span class="writing-sep">|</span> <strong>{substackName}</strong>
+					</>
+				)}
+			</h2>
 		</a>
 		<div class="pane-header-right">
-			<a href={substackUrl} target="_blank" rel="noopener noreferrer" class="subscribe-btn">
-				<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="11" height="11"><path d="M22.539 8.242H1.46V5.406h21.08v2.836zM1.46 10.812V24L12 18.11 22.54 24V10.812H1.46zM22.54 0H1.46v2.836h21.08V0z"/></svg>
-				Subscribe
-			</a>
+			{hasSubscribeUrl && (
+				<a href={substackUrl} target="_blank" rel="noopener noreferrer" class="subscribe-btn">
+					<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="11" height="11"><path d="M22.539 8.242H1.46V5.406h21.08v2.836zM1.46 10.812V24L12 18.11 22.54 24V10.812H1.46zM22.54 0H1.46v2.836h21.08V0z"/></svg>
+					Subscribe
+				</a>
+			)}
 		</div>
 	</div>
 	<div class="pane-body">
@@ -73,20 +83,19 @@ const recentPosts = posts.slice(0, 10)
 		gap: 5px;
 		padding: 5px 11px;
 		border-radius: 6px;
-		border: 1px solid #c44e00;
-		background: #c44e00;
+		border: 1px solid var(--substack, var(--primary));
+		background: var(--substack, var(--primary));
 		color: #fff;
 		font-size: 11px;
 		font-weight: 700;
 		cursor: pointer;
-		transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+		transition: opacity 0.15s ease;
 		text-decoration: none;
 		flex-shrink: 0;
 	}
 
 	.subscribe-btn:hover {
-		background: #9e3d00;
-		border-color: #9e3d00;
+		opacity: 0.9;
 		text-decoration: none;
 		color: #fff;
 	}

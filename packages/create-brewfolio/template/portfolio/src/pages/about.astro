@@ -5,9 +5,10 @@ import ArticleTOC from 'brewfolio/components/ArticleTOC.astro'
 import Dashboard from 'brewfolio/components/Dashboard.astro'
 import ModalSource from 'brewfolio/components/ModalSource.astro'
 import SearchData from 'brewfolio/components/SearchData.astro'
-import { getPortfolioData, renderProse } from '../lib/portfolio-data'
+import { dashboardHeader, getPortfolioData, renderProse } from '../lib/portfolio-data'
 
 const {
+	config,
 	aboutData,
 	timelineData,
 	impactData,
@@ -20,6 +21,8 @@ const impactSections = (impactData?.impact ?? []).filter((section: any) => secti
 const currentRole = work[0]
 const bioHtml = renderProse(aboutData?.bio)
 const thisSiteHtml = renderProse(aboutData?.thisSite)
+const siteTitle = config?.siteTitle || 'About'
+const headerConfig = dashboardHeader(config)
 const tocHeadings = [
 	{ id: 'this-site', text: 'This Site', level: 2 as const },
 	...(impactSections.length > 0 ? [{ id: 'impact', text: 'Recognition & Leadership', level: 2 as const }] : []),
@@ -28,14 +31,14 @@ const tocHeadings = [
 ]
 ---
 
-<DashboardLayout meta={{ title: 'About' }}>
+<DashboardLayout meta={{ title: 'About', siteTitle }} header={headerConfig}>
 	<Dashboard />
 
 	<ModalSource slot="modal-source" path="/about" size="medium">
 		<section class="about-masthead">
 			<div class="about-masthead-copy">
 				<div class="modal-eyebrow">About</div>
-				<h1 class="modal-page-title">About</h1>
+				<h1 class="modal-page-title">{siteTitle}</h1>
 				{currentRole && (
 					<p class="about-role">{currentRole.title}{currentRole.company ? ` · ${currentRole.company}` : ''}</p>
 				)}
@@ -129,7 +132,7 @@ const tocHeadings = [
 			)}
 		</section>
 
-		<ArticleTOC headings={tocHeadings} topLabel="About" />
+		<ArticleTOC headings={tocHeadings} topLabel={siteTitle} />
 	</ModalSource>
 
 	<SearchData slot="search-data" data={searchData} />

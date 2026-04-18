@@ -8,7 +8,7 @@ import WritingPane from 'brewfolio/components/WritingPane.astro'
 import AnalysisPane from 'brewfolio/components/AnalysisPane.astro'
 import GitHubPane from 'brewfolio/components/GitHubPane.astro'
 import SearchData from 'brewfolio/components/SearchData.astro'
-import { getPortfolioData } from '../lib/portfolio-data'
+import { dashboardHeader, getPortfolioData } from '../lib/portfolio-data'
 
 const {
 	projects,
@@ -16,7 +16,9 @@ const {
 	notebooks,
 	concepts,
 	conceptLabelsBySlug,
-	siteConfig,
+	config,
+	github,
+	writingSettings,
 	searchData,
 } = await getPortfolioData()
 
@@ -25,16 +27,21 @@ const writingWithLabels = writing.map((post) => ({
 	conceptLabels: conceptLabelsBySlug.get(post.slug) ?? [],
 }))
 
-const title = 'My Portfolio'
+const siteTitle = config?.siteTitle || 'Portfolio'
+const headerConfig = dashboardHeader(config)
 ---
 
-<DashboardLayout meta={{ title }}>
+<DashboardLayout meta={{ title: siteTitle, siteTitle }} header={headerConfig}>
 	<Dashboard>
-		<ConceptsPane conceptsIntro={siteConfig?.conceptsIntro} concepts={concepts} />
+		<ConceptsPane conceptsIntro={config?.conceptsIntro} concepts={concepts} />
 		<ProjectsPane projects={projects} />
-		<WritingPane posts={writingWithLabels} />
+		<WritingPane
+			posts={writingWithLabels}
+			substackName={writingSettings?.publicationName || ''}
+			substackUrl={writingSettings?.subscribeUrl || ''}
+		/>
 		<AnalysisPane notebooks={notebooks} />
-		<GitHubPane data={{}} />
+		<GitHubPane data={{}} username={github?.handle || ''} />
 	</Dashboard>
 	<SearchData slot="search-data" data={searchData} />
 </DashboardLayout>

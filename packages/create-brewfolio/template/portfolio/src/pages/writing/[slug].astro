@@ -4,17 +4,23 @@ import DashboardLayout from 'brewfolio/layouts/DashboardLayout.astro'
 import Dashboard from 'brewfolio/components/Dashboard.astro'
 import ModalSource from 'brewfolio/components/ModalSource.astro'
 import SearchData from 'brewfolio/components/SearchData.astro'
-import { getPortfolioData, modalBreadcrumb, substackTitlebar, subscribeButton } from '../../lib/portfolio-data'
+import { dashboardHeader, getPortfolioData, modalBreadcrumb, substackTitlebar, subscribeButton } from '../../lib/portfolio-data'
 
-const { writing, conceptLabelsBySlug, searchData } = await getPortfolioData()
+const { writing, conceptLabelsBySlug, config, writingSettings, searchData } = await getPortfolioData()
 const post = writing.find((entry) => entry.slug === Astro.params.slug)
-
-const centerHtml = substackTitlebar('The Asymptotic')
-const rightHtml = subscribeButton('Subscribe', 'https://theasymptotic.substack.com/subscribe')
+const siteTitle = config?.siteTitle || 'Portfolio'
+const publicationName = writingSettings?.publicationName || ''
+const subscribeUrl = writingSettings?.subscribeUrl || ''
+const centerHtml = substackTitlebar(publicationName)
+const rightHtml = subscribeButton('Subscribe', subscribeUrl)
 const leftHtml = modalBreadcrumb('Writing archive', '/writing')
+const bylineName = publicationName || 'Writing'
+const bylineInitial = bylineName.trim().charAt(0).toUpperCase() || 'W'
+const articleCtaLabel = publicationName ? `Read on ${publicationName}` : 'Read article'
+const headerConfig = dashboardHeader(config)
 ---
 
-<DashboardLayout meta={{ title: post?.title || 'Writing' }}>
+<DashboardLayout meta={{ title: post?.title || 'Writing', siteTitle }} header={headerConfig}>
 	<Dashboard />
 
 	<ModalSource
@@ -40,9 +46,9 @@ const leftHtml = modalBreadcrumb('Writing archive', '/writing')
 			<h1 class="modal-article-title">{post.title}</h1>
 
 			<div class="modal-byline">
-				<div class="modal-byline-avatar">W</div>
+				<div class="modal-byline-avatar">{bylineInitial}</div>
 				<div class="modal-byline-meta">
-					<div class="modal-byline-name">The Asymptotic</div>
+					<div class="modal-byline-name">{bylineName}</div>
 					<div class="modal-byline-date">{new Date(post.pubDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
 				</div>
 			</div>
@@ -64,7 +70,7 @@ const leftHtml = modalBreadcrumb('Writing archive', '/writing')
 
 			<div class="modal-cta-row">
 				{post.substack_url ? (
-					<a href={post.substack_url} target="_blank" rel="noopener noreferrer" class="modal-cta modal-cta-primary">Read on The Asymptotic</a>
+					<a href={post.substack_url} target="_blank" rel="noopener noreferrer" class="modal-cta modal-cta-primary">{articleCtaLabel}</a>
 				) : (
 					<span class="modal-cta modal-cta-secondary">Add a Substack URL in Keystatic to link this article out</span>
 				)}
@@ -76,136 +82,3 @@ const leftHtml = modalBreadcrumb('Writing archive', '/writing')
 
 	<SearchData slot="search-data" data={searchData} />
 </DashboardLayout>
-
-<style>
-	.modal-eyebrow {
-		margin-bottom: 10px;
-		font-family: var(--font-mono);
-		font-size: 11px;
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
-		color: var(--muted);
-	}
-
-	.modal-article-title {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: clamp(2.25rem, 5vw, 3.5rem);
-		line-height: 1.02;
-		letter-spacing: -0.04em;
-		text-wrap: balance;
-	}
-
-	.modal-byline {
-		display: flex;
-		align-items: center;
-		gap: 12px;
-		margin: 20px 0 24px;
-	}
-
-	.modal-byline-avatar {
-		width: 42px;
-		height: 42px;
-		border-radius: 50%;
-		background: var(--primary);
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		color: var(--card);
-		font-family: var(--font-serif);
-		font-weight: 700;
-		font-size: 15px;
-		flex-shrink: 0;
-	}
-
-	.modal-byline-meta {
-		display: flex;
-		flex-direction: column;
-		gap: 1px;
-	}
-
-	.modal-byline-name {
-		font-size: 14px;
-		font-weight: 600;
-		color: var(--foreground);
-	}
-
-	.modal-byline-date {
-		font-family: var(--font-mono);
-		font-size: 12px;
-		color: var(--muted);
-	}
-
-	.modal-prose {
-		font-family: var(--font-serif);
-		font-size: 17px;
-		line-height: 1.7;
-		color: var(--foreground);
-	}
-
-	.modal-section {
-		margin-top: 28px;
-	}
-
-	.modal-section-label {
-		font-family: var(--font-sans);
-		font-size: 11px;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.1em;
-		color: var(--muted);
-		margin-bottom: 10px;
-	}
-
-	.modal-tags {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 6px;
-	}
-
-	.modal-tag {
-		font-family: var(--font-mono);
-		font-size: 11px;
-		background: var(--accent);
-		color: var(--primary);
-		padding: 3px 11px;
-		border-radius: 20px;
-		font-weight: 500;
-	}
-
-	.modal-cta-row {
-		display: flex;
-		gap: 10px;
-		margin-top: 24px;
-		flex-wrap: wrap;
-	}
-
-	.modal-cta {
-		display: inline-flex;
-		align-items: center;
-		gap: 6px;
-		padding: 10px 22px;
-		border-radius: 24px;
-		font-size: 14px;
-		font-weight: 600;
-		text-decoration: none;
-	}
-
-	.modal-cta-primary {
-		background: var(--primary);
-		color: var(--card);
-		border: 1px solid var(--primary);
-	}
-
-	.modal-cta-primary:hover {
-		color: var(--card);
-		opacity: 0.92;
-		text-decoration: none;
-	}
-
-	.modal-cta-secondary {
-		background: transparent;
-		color: var(--primary);
-		border: 1px solid var(--border);
-	}
-</style>

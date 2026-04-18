@@ -4,9 +4,9 @@ import DashboardLayout from 'brewfolio/layouts/DashboardLayout.astro'
 import Dashboard from 'brewfolio/components/Dashboard.astro'
 import ModalSource from 'brewfolio/components/ModalSource.astro'
 import SearchData from 'brewfolio/components/SearchData.astro'
-import { getPortfolioData, substackTitlebar, subscribeButton } from '../../lib/portfolio-data'
+import { dashboardHeader, getPortfolioData, substackTitlebar, subscribeButton } from '../../lib/portfolio-data'
 
-const { writing, conceptLabelsBySlug, searchData } = await getPortfolioData()
+const { writing, conceptLabelsBySlug, config, writingSettings, searchData } = await getPortfolioData()
 
 const postsByYear = new Map<number, typeof writing>()
 for (const post of writing) {
@@ -16,11 +16,16 @@ for (const post of writing) {
 }
 const years = [...postsByYear.keys()].sort((a, b) => b - a)
 const latestPost = writing[0]
-const centerHtml = substackTitlebar('The Asymptotic')
-const rightHtml = subscribeButton('Subscribe', 'https://theasymptotic.substack.com/subscribe')
+const siteTitle = config?.siteTitle || 'Portfolio'
+const publicationName = writingSettings?.publicationName || ''
+const subscribeUrl = writingSettings?.subscribeUrl || ''
+const centerHtml = substackTitlebar(publicationName)
+const rightHtml = subscribeButton('Subscribe', subscribeUrl)
+const bottomCtaLabel = publicationName ? `Subscribe to ${publicationName}` : 'Subscribe on Substack'
+const headerConfig = dashboardHeader(config)
 ---
 
-<DashboardLayout meta={{ title: 'Writing' }}>
+<DashboardLayout meta={{ title: 'Writing', siteTitle }} header={headerConfig}>
 	<Dashboard />
 
 	<ModalSource
@@ -78,9 +83,11 @@ const rightHtml = subscribeButton('Subscribe', 'https://theasymptotic.substack.c
 				))}
 			</div>
 
-			<div class="writing-modal-cta">
-				<a href="https://theasymptotic.substack.com/subscribe" target="_blank" rel="noopener noreferrer" class="modal-cta modal-cta-primary">Subscribe on Substack</a>
-			</div>
+			{subscribeUrl && (
+				<div class="writing-modal-cta">
+					<a href={subscribeUrl} target="_blank" rel="noopener noreferrer" class="modal-cta modal-cta-primary">{bottomCtaLabel}</a>
+				</div>
+			)}
 		</section>
 	</ModalSource>
 

@@ -397,6 +397,25 @@ const { size = 'default' } = Astro.props
 		margin: 0 0 20px;
 	}
 
+	.modal-article-title {
+		font-family: var(--font-serif, 'Fraunces', Georgia, serif);
+		font-weight: 700;
+		font-size: 36px;
+		letter-spacing: -0.025em;
+		line-height: 1.15;
+		color: var(--foreground);
+		margin-bottom: 14px;
+	}
+
+	.modal-article-subtitle {
+		font-family: var(--font-serif, 'Fraunces', Georgia, serif);
+		font-size: 19px;
+		line-height: 1.45;
+		color: var(--muted-foreground);
+		margin-bottom: 22px;
+		font-weight: 400;
+	}
+
 	.modal-eyebrow {
 		font-family: var(--font-sans, 'DM Sans', system-ui, sans-serif);
 		font-size: 11px;
@@ -411,27 +430,167 @@ const { size = 'default' } = Astro.props
 		color: var(--muted);
 	}
 
+	.modal-byline {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		margin-bottom: 28px;
+		padding-bottom: 20px;
+		border-bottom: 1px solid var(--input);
+	}
+
+	.modal-byline-avatar {
+		width: 36px;
+		height: 36px;
+		border-radius: 50%;
+		background: linear-gradient(135deg, var(--primary), var(--accent));
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: var(--card);
+		font-family: var(--font-serif, 'Fraunces', Georgia, serif);
+		font-weight: 700;
+		font-size: 15px;
+		flex-shrink: 0;
+	}
+
+	.modal-byline-meta {
+		display: flex;
+		flex-direction: column;
+		gap: 1px;
+	}
+
+	.modal-byline-name {
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--foreground);
+	}
+
+	.modal-byline-date {
+		font-family: var(--font-mono, 'JetBrains Mono', monospace);
+		font-size: 12px;
+		color: var(--muted);
+	}
+
+	.modal-prose {
+		font-family: var(--font-serif, 'Fraunces', Georgia, serif);
+		font-size: 17px;
+		line-height: 1.65;
+		color: var(--foreground);
+	}
+
+	.modal-prose p {
+		margin-bottom: 18px;
+	}
+
+	.modal-prose a {
+		color: var(--primary);
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+
+	.modal-prose h2,
+	.modal-prose h3,
+	.modal-prose h4 {
+		font-family: var(--font-serif, 'Fraunces', Georgia, serif);
+		font-weight: 700;
+		color: var(--foreground);
+		line-height: 1.25;
+		text-wrap: balance;
+	}
+
+	.modal-prose h2 {
+		font-size: 26px;
+		letter-spacing: -0.01em;
+		margin: 44px 0 16px;
+	}
+
+	.modal-prose h3 {
+		font-size: 21px;
+		margin: 36px 0 12px;
+	}
+
+	.modal-prose h4 {
+		font-size: 18px;
+		margin: 28px 0 10px;
+	}
+
+	.modal-prose > h2:first-child,
+	.modal-prose > h3:first-child,
+	.modal-prose > h4:first-child {
+		margin-top: 0;
+	}
+
+	.modal-prose hr {
+		border: 0;
+		border-top: 1px solid var(--input);
+		margin: 36px 0;
+	}
+
+	.modal-prose strong,
+	.modal-prose b {
+		font-weight: 700;
+		color: var(--foreground);
+	}
+
+	.modal-section {
+		margin-bottom: 28px;
+	}
+
+	.modal-section-label {
+		font-family: var(--font-sans, 'DM Sans', system-ui, sans-serif);
+		font-size: 11px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--muted);
+		margin-bottom: 10px;
+	}
+
+	.modal-section p {
+		font-family: var(--font-serif, 'Fraunces', Georgia, serif);
+		font-size: 16px;
+		line-height: 1.65;
+		color: var(--foreground);
+		margin-bottom: 14px;
+	}
+
+	.modal-tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+	}
+
+	.modal-tag {
+		font-family: var(--font-mono, 'JetBrains Mono', monospace);
+		font-size: 11px;
+		background: var(--accent);
+		color: var(--primary);
+		padding: 3px 11px;
+		border-radius: 20px;
+		font-weight: 500;
+	}
+
 	.subscribe-btn {
 		display: inline-flex;
 		align-items: center;
 		gap: 5px;
 		padding: 5px 11px;
 		border-radius: 6px;
-		border: 1px solid #c44e00;
-		background: #c44e00;
+		border: 1px solid var(--substack, var(--primary));
+		background: var(--substack, var(--primary));
 		color: #fff;
 		font-family: var(--font-sans, 'DM Sans', system-ui, sans-serif);
 		font-size: 11px;
 		font-weight: 700;
 		cursor: pointer;
-		transition: border-color 0.15s ease, background-color 0.15s ease, opacity 0.15s ease;
+		transition: opacity 0.15s ease;
 		text-decoration: none;
 		flex-shrink: 0;
 	}
 
 	.subscribe-btn:hover {
-		background: #9e3d00;
-		border-color: #9e3d00;
+		opacity: 0.9;
 		text-decoration: none;
 		color: #fff;
 	}
@@ -440,6 +599,51 @@ const { size = 'default' } = Astro.props
 		width: 11px;
 		height: 11px;
 		flex-shrink: 0;
+	}
+
+	.modal-cta-row {
+		display: flex;
+		gap: 10px;
+		margin-top: 24px;
+		flex-wrap: wrap;
+	}
+
+	.modal-cta {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		padding: 10px 22px;
+		border-radius: 24px;
+		font-family: var(--font-sans, 'DM Sans', system-ui, sans-serif);
+		font-size: 14px;
+		font-weight: 600;
+		cursor: pointer;
+		transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+		text-decoration: none;
+	}
+
+	.modal-cta-primary {
+		background: var(--primary);
+		color: var(--card);
+		border: 1px solid var(--primary);
+	}
+
+	.modal-cta-primary:hover {
+		opacity: 0.9;
+		text-decoration: none;
+		color: var(--card);
+	}
+
+	.modal-cta-secondary {
+		background: transparent;
+		color: var(--primary);
+		border: 1px solid var(--border);
+	}
+
+	.modal-cta-secondary:hover {
+		border-color: var(--primary);
+		background: var(--accent);
+		text-decoration: none;
 	}
 
 	@media (max-width: 768px) {
@@ -468,6 +672,10 @@ const { size = 'default' } = Astro.props
 		}
 
 		.modal-page-title {
+			font-size: 28px;
+		}
+
+		.modal-article-title {
 			font-size: 28px;
 		}
 	}

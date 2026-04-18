@@ -4,13 +4,15 @@ import DashboardLayout from 'brewfolio/layouts/DashboardLayout.astro'
 import Dashboard from 'brewfolio/components/Dashboard.astro'
 import ModalSource from 'brewfolio/components/ModalSource.astro'
 import SearchData from 'brewfolio/components/SearchData.astro'
-import { getPortfolioData } from '../../lib/portfolio-data'
+import { dashboardHeader, getPortfolioData } from '../../lib/portfolio-data'
 
-const { notebooks, projects, searchData } = await getPortfolioData()
+const { notebooks, projects, config, searchData } = await getPortfolioData()
 const projectById = new Map(projects.map((project) => [project.id, project]))
+const siteTitle = config?.siteTitle || 'Portfolio'
+const headerConfig = dashboardHeader(config)
 ---
 
-<DashboardLayout meta={{ title: 'Analysis' }}>
+<DashboardLayout meta={{ title: 'Analysis', siteTitle }} header={headerConfig}>
 	<Dashboard />
 
 	<ModalSource slot="modal-source" path="/analysis" size="medium">
