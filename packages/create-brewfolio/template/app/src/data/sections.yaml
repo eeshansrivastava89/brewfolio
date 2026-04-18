@@ -34,9 +34,12 @@ sections:
         - title: Ship examples as editable data files
           href: https://github.com/eeshansrivastava89/brewfolio
           meta: No sample copy lives in the page component.
-  - discriminant: github-timeline
+  - discriminant: content-area
     value:
-      title: Shipping log
+      title: App workspace
+      tagline: Use this block as the main interactive surface for the app. Replace the starter copy or leave it empty while you wire in your own UI.
+      body: ''
+      minHeight: 260px
   - discriminant: results-list
     value:
       title: Launch notes

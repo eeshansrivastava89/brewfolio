@@ -258,7 +258,9 @@ const shouldShowClockWeather = showClockWeather ?? hasLocationConfig
 		justify-content: center;
 		padding: 7px 20px;
 		min-height: 38px;
-		min-width: 220px;
+		min-width: 0;
+		max-width: min(42vw, 28rem);
+		flex: 0 1 auto;
 	}
 
 	.header-title-text {
@@ -489,7 +491,9 @@ const shouldShowClockWeather = showClockWeather ?? hasLocationConfig
 		.header-left-cluster {
 			order: 0;
 			width: 100%;
-			justify-content: space-between;
+			display: grid;
+			grid-template-columns: minmax(0, max-content) minmax(0, 1fr);
+			justify-content: stretch;
 			align-items: center;
 			gap: 10px;
 		}
@@ -509,9 +513,11 @@ const shouldShowClockWeather = showClockWeather ?? hasLocationConfig
 		.header-title-box {
 			display: inline-flex;
 			min-width: 0;
-			max-width: min(48vw, 220px);
+			width: fit-content;
+			max-width: min(46vw, 16rem);
 			padding: 6px 14px;
-			flex: 0 1 auto;
+			margin-left: auto;
+			justify-self: end;
 		}
 
 		.mobile-title-label {

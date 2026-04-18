@@ -138,6 +138,29 @@ const basePath = analysisBasePath.endsWith('/') ? analysisBasePath.slice(0, -1) 
 			)
 		}
 
+		if (section.discriminant === 'content-area') {
+			return (
+				<section class="appsection">
+					{section.value.title && (
+						<header class="appsection-header">
+							<h2 class="appsection-title">{section.value.title}</h2>
+						</header>
+					)}
+					<div
+						class="content-area-card"
+						style={section.value.minHeight?.trim() ? `min-height:${section.value.minHeight.trim()}` : undefined}
+					>
+						{section.value.tagline && <p class="content-area-tagline">{section.value.tagline}</p>}
+						{section.value.body?.trim() ? (
+							<div class="content-area-body">{section.value.body}</div>
+						) : (
+							<div class="content-area-empty">Use this block as the main surface for app-specific interactions or embedded content.</div>
+						)}
+					</div>
+				</section>
+			)
+		}
+
 		if (section.discriminant === 'github-timeline') {
 			return (
 				<section class="appsection">
@@ -286,6 +309,46 @@ const basePath = analysisBasePath.endsWith('/') ? analysisBasePath.slice(0, -1) 
 		font-family: var(--font-mono, monospace);
 		font-size: 11px;
 		color: var(--muted-foreground);
+	}
+
+	.content-area-card {
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
+		padding: 20px 22px;
+		background: var(--card);
+		border: 1px solid var(--border);
+		border-radius: var(--radius-lg);
+		min-height: 240px;
+	}
+
+	.content-area-tagline {
+		margin: 0;
+		font-size: 14px;
+		line-height: 1.6;
+		color: var(--muted-foreground);
+		max-width: 68ch;
+	}
+
+	.content-area-body {
+		font-size: 14px;
+		line-height: 1.7;
+		color: var(--foreground);
+		white-space: pre-wrap;
+	}
+
+	.content-area-empty {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border: 1px dashed var(--input);
+		border-radius: calc(var(--radius-lg) - 4px);
+		padding: 24px;
+		font-size: 13px;
+		line-height: 1.6;
+		color: var(--muted-foreground);
+		text-align: center;
 	}
 
 	/* Notebook link */

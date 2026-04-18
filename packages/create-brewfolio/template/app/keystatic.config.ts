@@ -37,6 +37,7 @@ const appSections = singleton({
 					options: [
 						{ label: 'Metrics', value: 'metrics-grid' },
 						{ label: 'List', value: 'results-list' },
+						{ label: 'Content area', value: 'content-area' },
 						{ label: 'GitHub timeline', value: 'github-timeline' },
 					],
 					defaultValue: 'metrics-grid',
@@ -91,6 +92,23 @@ const appSections = singleton({
 							},
 						),
 					}),
+					'content-area': fields.object({
+						title: fields.text({ label: 'Block title' }),
+						tagline: fields.text({
+							label: 'Tagline',
+							description: 'Short guidance line shown above the main content area.',
+							multiline: true,
+						}),
+						body: fields.text({
+							label: 'Body copy',
+							description: 'Optional supporting copy. Leave blank if you want the block to stay visually open.',
+							multiline: true,
+						}),
+						minHeight: fields.text({
+							label: 'Minimum height',
+							description: 'Optional CSS size like 240px or 18rem.',
+						}),
+					}),
 					'github-timeline': fields.object({
 						title: fields.text({ label: 'Block title' }),
 					}),
@@ -99,7 +117,7 @@ const appSections = singleton({
 			{
 				label: 'Blocks',
 				description:
-					'Build the homepage from top to bottom. Start with a metrics or list block, then add supporting blocks like the GitHub timeline.',
+					'Build the homepage from top to bottom. Use metrics and lists for structured content, and a content area for the main app surface.',
 				itemLabel: (props: any) => props.value.discriminant,
 			},
 		),

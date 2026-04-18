@@ -127,7 +127,7 @@ export interface GitHubData {
 
 // ─── Section config ─────────────────────────────────────────────────────────
 
-export type SectionType = 'metrics-grid' | 'notebook' | 'github-timeline' | 'results-list'
+export type SectionType = 'metrics-grid' | 'notebook' | 'github-timeline' | 'results-list' | 'content-area'
 
 export interface MetricItem {
 	label: string
@@ -153,3 +153,4 @@ export type SectionConfig =
 	| { discriminant: 'metrics-grid';    value: { title?: string; metrics: MetricItem[] } }
 	| { discriminant: 'github-timeline'; value: { title?: string } }
 	| { discriminant: 'results-list';    value: { title?: string; items: ResultItem[] } }
+	| { discriminant: 'content-area';    value: { title?: string; tagline?: string; body?: string; minHeight?: string } }

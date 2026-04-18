@@ -134,11 +134,16 @@ const headerSiteName = siteName ?? meta.title ?? 'Portfolio'
 	.brewfolio-app-main {
 		flex: 1;
 		min-height: 0;
+		width: min(100%, 82vw);
+		max-width: 1400px;
+		margin: 0 auto;
 		padding: 0 12px 12px;
 	}
 
 	@media (max-width: 768px) {
 		.brewfolio-app-main {
+			width: 100%;
+			max-width: none;
 			padding: 0 12px 12px;
 		}
 	}
