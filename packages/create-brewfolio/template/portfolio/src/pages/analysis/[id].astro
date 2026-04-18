@@ -3,8 +3,17 @@ import '../../styles/global.css'
 import DashboardLayout from 'brewfolio/layouts/DashboardLayout.astro'
 import Dashboard from 'brewfolio/components/Dashboard.astro'
 import ModalSource from 'brewfolio/components/ModalSource.astro'
+import NotebookSummaryCard from 'brewfolio/components/NotebookSummaryCard.astro'
 import SearchData from 'brewfolio/components/SearchData.astro'
 import { dashboardHeader, getPortfolioData, modalBreadcrumb } from '../../lib/portfolio-data'
+
+export async function getStaticPaths() {
+	const { notebooks } = await getPortfolioData()
+
+	return notebooks.map((notebook) => ({
+		params: { id: notebook.id },
+	}))
+}
 
 const { notebooks, projects, config, searchData } = await getPortfolioData()
 const notebook = notebooks.find((entry) => entry.id === Astro.params.id)
@@ -22,7 +31,7 @@ const headerConfig = await dashboardHeader(config)
 		path={`/analysis/${Astro.params.id || ''}`}
 		leftHtml={leftHtml}
 		size="medium"
-	>
+		>
 		<article class="analysis-detail-shell">
 			{!notebook ? (
 				<>
@@ -34,32 +43,31 @@ const headerConfig = await dashboardHeader(config)
 				</>
 			) : (
 				<>
-			<div class="modal-eyebrow">{project?.name || notebook.project || 'Analysis'}</div>
-			<h1 class="modal-page-title">{notebook.title}</h1>
-			{notebook.description && <p class="notebook-subtitle">{notebook.description}</p>}
+					<div class="modal-eyebrow">{project?.name || notebook.project || 'Analysis'}</div>
+					<h1 class="modal-page-title">{notebook.title}</h1>
+					{notebook.description && <p class="notebook-subtitle">{notebook.description}</p>}
 
-			<div class="notebook-byline">
-				<span class="notebook-byline-date">{new Date(notebook.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
-				{notebook.github_url && (
-					<a href={notebook.github_url} target="_blank" rel="noopener noreferrer" class="notebook-github-link">Open source notebook</a>
-				)}
-			</div>
+					<div class="notebook-byline">
+						<span class="notebook-byline-date">{notebook.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+						{notebook.github_url && (
+							<a href={notebook.github_url} target="_blank" rel="noopener noreferrer" class="notebook-github-link">Open source notebook</a>
+						)}
+					</div>
 
-			<div class="analysis-detail-card">
-				<h2>Notebook summary</h2>
-				<p>{notebook.description || 'Add a description in Keystatic to summarize the notebook here before sending readers to the source.'}</p>
-			</div>
+					<NotebookSummaryCard summary={notebook.summary} />
 
-			<div class="modal-cta-row">
-				{notebook.github_url ? (
-					<a href={notebook.github_url} target="_blank" rel="noopener noreferrer" class="modal-cta modal-cta-primary">Open notebook source</a>
-				) : (
-					<span class="modal-cta modal-cta-secondary">Add a GitHub URL in Keystatic to link this notebook out</span>
-				)}
-				{project?.url && (
-					<a href={project.url} target="_blank" rel="noopener noreferrer" class="modal-cta modal-cta-secondary">Open project</a>
-				)}
-			</div>
+					<div class="modal-cta-row">
+						{notebook.github_url ? (
+							<a href={notebook.github_url} target="_blank" rel="noopener noreferrer" class="modal-cta modal-cta-primary">Open notebook source</a>
+						) : (
+							<span class="modal-cta modal-cta-secondary">Add a GitHub URL in Keystatic to link this notebook out</span>
+						)}
+						{project?.url && (
+							<a href={project.url} target="_blank" rel="noopener noreferrer" class="modal-cta modal-cta-secondary">Open project</a>
+						)}
+					</div>
+
+					<div class="notebook-content" set:html={notebook.html}></div>
 				</>
 			)}
 		</article>
@@ -96,23 +104,99 @@ const headerConfig = await dashboardHeader(config)
 		text-decoration: none;
 	}
 
-	.analysis-detail-card {
-		padding: 22px;
-		border: 1px solid var(--border);
-		border-radius: 18px;
-		background: var(--card-raised);
+	.notebook-content .notebook {
+		display: flex;
+		flex-direction: column;
+		gap: 24px;
 	}
 
-	.analysis-detail-card h2 {
-		margin: 0 0 10px;
-		font-family: var(--font-serif);
-		font-size: 1.25rem;
+	.notebook-content .nb-cell {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
 	}
 
-	.analysis-detail-card p {
-		margin: 0;
+	.notebook-content .nb-markdown {
+		color: var(--foreground);
 		line-height: 1.7;
+	}
+
+	.notebook-content :global(h1),
+	.notebook-content :global(h2),
+	.notebook-content :global(h3),
+	.notebook-content :global(h4) {
+		font-family: var(--font-serif);
+		color: var(--foreground);
+		margin: 24px 0 10px;
+		text-wrap: balance;
+	}
+
+	.notebook-content :global(h1) {
+		font-size: 26px;
+	}
+
+	.notebook-content :global(h2) {
+		font-size: 22px;
+	}
+
+	.notebook-content :global(h3) {
+		font-size: 18px;
+	}
+
+	.notebook-content :global(p),
+	.notebook-content :global(ul),
+	.notebook-content :global(ol) {
+		margin: 0 0 16px;
+	}
+
+	.notebook-content :global(a) {
+		color: var(--primary);
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+
+	.notebook-content :global(code) {
+		font-family: var(--font-mono);
+		font-size: 0.92em;
+		background: var(--card-raised);
+		padding: 0.15em 0.35em;
+		border-radius: 6px;
+	}
+
+	.notebook-content .nb-input,
+	.notebook-content .nb-output {
+		margin: 0;
+		padding: 16px;
+		border: 1px solid var(--border);
+		border-radius: 14px;
+		background: var(--card-raised);
+		overflow-x: auto;
+		font-family: var(--font-mono);
+		font-size: 13px;
+		line-height: 1.6;
+	}
+
+	.notebook-content .nb-outputs {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		margin-top: 12px;
+	}
+
+	.notebook-content .nb-error {
+		border-color: color-mix(in oklab, var(--red) 35%, var(--border));
+	}
+
+	.notebook-content .nb-stream,
+	.notebook-content .nb-text,
+	.notebook-content .nb-html {
 		color: var(--muted-foreground);
+	}
+
+	.notebook-content .nb-image img {
+		max-width: 100%;
+		height: auto;
+		border-radius: 10px;
 	}
 
 </style>

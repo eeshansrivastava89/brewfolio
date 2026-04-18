@@ -1,0 +1,229 @@
+<div
+	class="bf-drawer-backdrop"
+	id="bf-drawer-backdrop"
+	aria-hidden="true"
+></div>
+
+<div
+	class="bf-drawer"
+	id="bf-drawer"
+	role="dialog"
+	aria-modal="true"
+	aria-labelledby="bf-drawer-title"
+	aria-hidden="true"
+	tabindex="-1"
+>
+	<div class="bf-drawer-header">
+		<h2 class="bf-drawer-title" id="bf-drawer-title"></h2>
+		<button
+			class="bf-drawer-close"
+			id="bf-drawer-close"
+			type="button"
+			aria-label="Close drawer"
+		>
+			<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<path d="M18 6 6 18"></path>
+				<path d="m6 6 12 12"></path>
+			</svg>
+		</button>
+	</div>
+	<div class="bf-drawer-body" id="bf-drawer-body"></div>
+</div>
+
+<script is:inline>
+	(function () {
+		var backdrop = document.getElementById('bf-drawer-backdrop')
+		var drawer = document.getElementById('bf-drawer')
+		var titleEl = document.getElementById('bf-drawer-title')
+		var bodyEl = document.getElementById('bf-drawer-body')
+		var closeBtn = document.getElementById('bf-drawer-close')
+		var lastFocused = null
+		var isOpen = false
+
+		function getFocusable() {
+			return Array.from(
+				drawer.querySelectorAll(
+					'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])',
+				),
+			)
+		}
+
+		function trapFocus(e) {
+			var focusable = getFocusable()
+			if (!focusable.length) return
+			var first = focusable[0]
+			var last = focusable[focusable.length - 1]
+			if (e.shiftKey) {
+				if (document.activeElement === first) {
+					e.preventDefault()
+					last.focus()
+				}
+			} else if (document.activeElement === last) {
+				e.preventDefault()
+				first.focus()
+			}
+		}
+
+		function handleKeyDown(e) {
+			if (e.key === 'Escape') {
+				window.__bfCloseDrawer()
+			} else if (e.key === 'Tab') {
+				trapFocus(e)
+			}
+		}
+
+		window.__bfOpenDrawer = function (title, content) {
+			lastFocused = document.activeElement
+			titleEl.textContent = title || ''
+
+			bodyEl.innerHTML = ''
+			if (typeof content === 'string') {
+				bodyEl.innerHTML = content
+			} else if (content instanceof HTMLElement) {
+				bodyEl.appendChild(content)
+			}
+
+			bodyEl.scrollTop = 0
+			backdrop.removeAttribute('aria-hidden')
+			drawer.removeAttribute('aria-hidden')
+			document.body.style.overflow = 'hidden'
+			isOpen = true
+			void drawer.getBoundingClientRect()
+			backdrop.classList.add('bf-open')
+			drawer.classList.add('bf-open')
+			requestAnimationFrame(function () {
+				bodyEl.scrollTop = 0
+			})
+			setTimeout(function () {
+				closeBtn.focus()
+			}, 50)
+			document.addEventListener('keydown', handleKeyDown)
+		}
+
+		window.__bfCloseDrawer = function () {
+			if (!isOpen) return
+			backdrop.classList.remove('bf-open')
+			drawer.classList.remove('bf-open')
+			backdrop.setAttribute('aria-hidden', 'true')
+			drawer.setAttribute('aria-hidden', 'true')
+			document.body.style.overflow = ''
+			isOpen = false
+			document.removeEventListener('keydown', handleKeyDown)
+			if (lastFocused && typeof lastFocused.focus === 'function') {
+				lastFocused.focus()
+			}
+		}
+
+		backdrop.addEventListener('click', function () {
+			window.__bfCloseDrawer()
+		})
+		closeBtn.addEventListener('click', function () {
+			window.__bfCloseDrawer()
+		})
+	})()
+</script>
+
+<style>
+	.bf-drawer-backdrop {
+		position: fixed;
+		inset: 0;
+		z-index: 220;
+		background: var(--overlay);
+		opacity: 0;
+		pointer-events: none;
+		transition: opacity 300ms ease;
+	}
+
+	.bf-drawer-backdrop.bf-open {
+		opacity: 1;
+		pointer-events: auto;
+	}
+
+	.bf-drawer {
+		position: fixed;
+		top: 0;
+		right: 0;
+		z-index: 230;
+		height: 100%;
+		width: min(720px, 90vw);
+		min-width: 320px;
+		background: var(--background);
+		border-left: 1px solid var(--border);
+		box-shadow: var(--shadow-hover);
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+		transform: translateX(100%);
+		transition: transform 300ms ease;
+	}
+
+	.bf-drawer.bf-open {
+		transform: translateX(0);
+	}
+
+	.bf-drawer-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		padding: 16px 20px;
+		border-bottom: 1px solid var(--border);
+		flex-shrink: 0;
+	}
+
+	.bf-drawer-title {
+		font-family: var(--font-serif);
+		font-size: 18px;
+		font-weight: 600;
+		color: var(--foreground);
+		margin: 0;
+		flex: 1;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.bf-drawer-close {
+		flex-shrink: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 32px;
+		height: 32px;
+		border-radius: 6px;
+		border: 1px solid var(--border);
+		background: var(--card);
+		color: var(--muted-foreground);
+		cursor: pointer;
+		transition:
+			background-color 0.15s ease,
+			color 0.15s ease,
+			border-color 0.15s ease;
+	}
+
+	.bf-drawer-close:hover {
+		background: var(--accent);
+		border-color: var(--primary);
+		color: var(--primary);
+	}
+
+	.bf-drawer-close:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
+	}
+
+	.bf-drawer-body {
+		flex: 1;
+		overflow-y: auto;
+		padding: 20px;
+	}
+
+	@media (max-width: 640px) {
+		.bf-drawer {
+			width: 100%;
+			min-width: 0;
+			max-width: 100vw;
+		}
+	}
+</style>

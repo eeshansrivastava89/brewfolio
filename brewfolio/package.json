@@ -45,6 +45,10 @@
 		"@keystatic/astro": ">=5.0.0",
 		"astro": ">=5.0.0"
 	},
+	"dependencies": {
+		"marked": "^16.4.1",
+		"prismjs": "^1.30.0"
+	},
 	"devDependencies": {
 		"typescript": "^5.7.0"
 	},

@@ -12,12 +12,14 @@ import { dashboardHeader, getPortfolioData } from '../lib/portfolio-data'
 
 const {
 	projects,
+	projectGitHubData,
 	writing,
 	notebooks,
 	concepts,
 	conceptLabelsBySlug,
 	config,
 	github,
+	githubData,
 	writingSettings,
 	searchData,
 } = await getPortfolioData()
@@ -34,14 +36,14 @@ const headerConfig = await dashboardHeader(config)
 <DashboardLayout meta={{ title: siteTitle, siteTitle }} header={headerConfig}>
 	<Dashboard>
 		<ConceptsPane conceptsIntro={config?.conceptsIntro} concepts={concepts} />
-		<ProjectsPane projects={projects} />
+		<ProjectsPane projects={projects} projectGitHubData={projectGitHubData} />
 		<WritingPane
 			posts={writingWithLabels}
 			substackName={writingSettings?.publicationName || ''}
 			substackUrl={writingSettings?.subscribeUrl || ''}
 		/>
 		<AnalysisPane notebooks={notebooks} />
-		<GitHubPane data={{}} username={github?.handle || ''} />
+		<GitHubPane data={githubData ?? {}} username={github?.handle || ''} />
 	</Dashboard>
 	<SearchData slot="search-data" data={searchData} />
 </DashboardLayout>

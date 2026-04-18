@@ -6,6 +6,14 @@ import ModalSource from 'brewfolio/components/ModalSource.astro'
 import SearchData from 'brewfolio/components/SearchData.astro'
 import { dashboardHeader, getPortfolioData, modalBreadcrumb, substackTitlebar, subscribeButton } from '../../lib/portfolio-data'
 
+export async function getStaticPaths() {
+	const { writing } = await getPortfolioData()
+
+	return writing.map((post) => ({
+		params: { slug: post.slug },
+	}))
+}
+
 const { writing, conceptLabelsBySlug, config, writingSettings, searchData } = await getPortfolioData()
 const post = writing.find((entry) => entry.slug === Astro.params.slug)
 const siteTitle = config?.siteTitle || 'Portfolio'

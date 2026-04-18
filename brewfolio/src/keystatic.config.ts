@@ -27,9 +27,60 @@ export const notebooks = collection({
 			collection: 'projects',
 			validation: { isRequired: true }
 		}),
-		github_url: fields.url({ label: 'GitHub URL' }),
-		description: fields.text({ label: 'Description', multiline: true }),
-		date: fields.date({ label: 'Date', defaultValue: { kind: 'today' } })
+		github_url: fields.url({
+			label: 'GitHub URL',
+			description: 'Blob, raw, or raw.githubusercontent URL for the .ipynb file.'
+		}),
+		description: fields.text({
+			label: 'Description',
+			description: 'Shown on the catalog card and notebook header.',
+			multiline: true
+		}),
+		date: fields.date({ label: 'Date', defaultValue: { kind: 'today' } }),
+		summary_status: fields.select({
+			label: 'Experiment status',
+			description: 'Set to anything other than "None" to show the summary card.',
+			options: [
+				{ label: 'None', value: 'none' },
+				{ label: 'Significant', value: 'significant' },
+				{ label: 'Not significant', value: 'not_significant' },
+				{ label: 'Inconclusive', value: 'inconclusive' },
+				{ label: 'Error', value: 'error' }
+			],
+			defaultValue: 'none'
+		}),
+		summary_decision: fields.text({
+			label: 'Decision',
+			description: 'Key finding or recommendation shown prominently in the summary card.',
+			multiline: true
+		}),
+		summary_methodology: fields.text({
+			label: 'Methodology',
+			description: 'Brief description of the methods used.',
+			multiline: true
+		}),
+		summary_warnings: fields.array(
+			fields.text({ label: 'Warning' }),
+			{ label: 'Warnings', itemLabel: (props) => props.value || 'Warning' }
+		),
+		summary_metrics: fields.array(
+			fields.object({
+				label: fields.text({ label: 'Metric name', validation: { isRequired: true } }),
+				value: fields.text({ label: 'Value', validation: { isRequired: true } }),
+				delta: fields.text({ label: 'Delta', description: 'For example +12% or -5%.' }),
+				delta_direction: fields.select({
+					label: 'Direction',
+					options: [
+						{ label: 'Up', value: 'up' },
+						{ label: 'Down', value: 'down' },
+						{ label: 'Neutral', value: 'neutral' }
+					],
+					defaultValue: 'neutral'
+				}),
+				context: fields.text({ label: 'Context', description: 'For example vs baseline.' })
+			}),
+			{ label: 'Metrics', itemLabel: (props) => props.fields.label.value || 'Metric' }
+		)
 	}
 })
 
@@ -54,7 +105,10 @@ export const projects = collection({
 		description: fields.text({ label: 'Description', validation: { isRequired: true }, multiline: true }),
 		shortDescription: fields.text({ label: 'Short Description' }),
 		image: fields.text({ label: 'Image path' }),
-		repo: fields.url({ label: 'GitHub repo URL' }),
+		repo: fields.url({
+			label: 'GitHub repo URL',
+			description: 'Used to populate the project drawer with live repo stats and recent commits.'
+		}),
 		analysis_url: fields.url({ label: 'Analysis URL' }),
 		tags: fields.array(
 			fields.object({ name: fields.text({ label: 'Tag name' }) }),
@@ -63,7 +117,22 @@ export const projects = collection({
 		related_writing: fields.array(
 			fields.text({ label: 'Slug' }),
 			{ label: 'Related writing slugs', itemLabel: (props) => props.value || 'Slug' }
-		)
+		),
+		overview: fields.text({
+			label: 'What is it?',
+			description: 'A paragraph or two describing the project.',
+			multiline: true
+		}),
+		architecture: fields.text({
+			label: 'Architecture / Tech Stack',
+			description: 'How it is built and the main implementation decisions.',
+			multiline: true
+		}),
+		nextActions: fields.text({
+			label: 'Next actions / Updates',
+			description: 'What is being worked on or planned next.',
+			multiline: true
+		})
 	}
 })
 

@@ -1,20 +1,21 @@
 ---
-import type { Project } from '../lib/types'
+import type { Project, ProjectGitHubData } from '../lib/types'
 
 interface Props {
 	projects: Project[]
+	projectGitHubData?: Map<string, ProjectGitHubData | null>
 }
 
-const { projects } = Astro.props
+const { projects, projectGitHubData } = Astro.props
 
 function getStatusDot(status: string): string {
-	if (status === 'live') return 'live'
-	return 'dev'
+	return status === 'live' ? 'live' : 'dev'
 }
 
 function getStatusLabel(status: string): string {
 	if (status === 'live') return 'Live'
 	if (status === 'in-progress') return 'In Dev'
+	if (status === 'coming-soon') return 'Coming Soon'
 	return status
 }
 ---
@@ -24,16 +25,24 @@ function getStatusLabel(status: string): string {
 		<h2>Projects</h2>
 	</div>
 	<div class="pane-body">
+		{projects.length === 0 && (
+			<p class="bf-empty-hint" style="padding: 16px 14px;">
+				Add projects in <strong>Keystatic → Projects</strong>. Each project gets a tile
+				here plus a drawer with extra context when detail fields are filled in.
+			</p>
+		)}
 		<div class="project-tiles">
 			{projects.map((project) => (
-				<article class="project-tile" data-project-id={project.id}>
-					<div class="project-tile-header">
-						<div class="project-tile-name">{project.name}</div>
-						<span class="project-tile-status">
-							<span class={`status-dot ${getStatusDot(project.status)}`}></span>
-							{getStatusLabel(project.status)}
-						</span>
-					</div>
+				<article
+					class="project-tile"
+					data-project-id={project.id}
+					data-project-json={JSON.stringify(project)}
+					data-github-json={JSON.stringify(projectGitHubData?.get(project.id) ?? null)}
+					role="button"
+					tabindex="0"
+					aria-label={`Open ${project.name} details`}
+				>
+					<div class="project-tile-name">{project.name}</div>
 					<div class="project-tile-desc">{project.shortDescription || project.description}</div>
 					{project.tags && project.tags.length > 0 && (
 						<div class="project-tile-tags">
@@ -42,19 +51,25 @@ function getStatusLabel(status: string): string {
 							))}
 						</div>
 					)}
-					<div class="project-tile-actions">
-						{project.url && (
-							<a href={project.url} target="_blank" rel="noopener noreferrer" class="project-cta">
-								Try it
-								<svg class="project-cta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-							</a>
-						)}
-						{project.repo && (
-							<a href={project.repo} target="_blank" rel="noopener noreferrer" class="project-cta-secondary">
-								<svg class="project-cta-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
-								Source
-							</a>
-						)}
+					<div class="project-tile-footer">
+						<span class="project-tile-status">
+							<span class={`status-dot ${getStatusDot(project.status)}`}></span>
+							{getStatusLabel(project.status)}
+						</span>
+						<div class="project-tile-actions">
+							{project.url && (
+								<a href={project.url} target="_blank" rel="noopener noreferrer" class="project-cta">
+									Try it
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="project-cta-icon" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+								</a>
+							)}
+							{project.repo && (
+								<a href={project.repo} target="_blank" rel="noopener noreferrer" class="project-cta-secondary">
+									<svg viewBox="0 0 24 24" fill="currentColor" class="project-cta-icon" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path></svg>
+									Source
+								</a>
+							)}
+						</div>
 					</div>
 				</article>
 			))}
@@ -75,11 +90,22 @@ function getStatusLabel(status: string): string {
 		border: 1px solid var(--input);
 		border-radius: var(--radius-sm);
 		padding: 14px;
-		transition: border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.3s ease, background-color 0.2s ease;
 		display: flex;
 		flex-direction: column;
 		gap: 6px;
+		position: relative;
 		min-height: 184px;
+		cursor: pointer;
+		transition:
+			border-color 0.2s ease,
+			box-shadow 0.2s ease,
+			opacity 0.3s ease,
+			background-color 0.2s ease;
+	}
+
+	.project-tile:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
 	}
 
 	.project-tile:hover {
@@ -96,19 +122,32 @@ function getStatusLabel(status: string): string {
 		opacity: 0.25;
 	}
 
-	.project-tile-header {
-		display: flex;
-		align-items: flex-start;
-		justify-content: space-between;
-		gap: 8px;
-	}
-
 	.project-tile-name {
 		font-family: var(--font-serif);
 		font-weight: 700;
 		font-size: 17px;
 		letter-spacing: -0.02em;
 		color: var(--foreground);
+		margin-bottom: 2px;
+	}
+
+	.project-tile-desc {
+		font-size: 13px;
+		color: var(--muted-foreground);
+		line-height: 1.45;
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+		margin-bottom: 6px;
+	}
+
+	.project-tile-footer {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		margin-top: auto;
 	}
 
 	.project-tile-status {
@@ -118,7 +157,6 @@ function getStatusLabel(status: string): string {
 		font-family: var(--font-mono);
 		font-size: 11px;
 		color: var(--muted-foreground);
-		flex-shrink: 0;
 	}
 
 	.status-dot {
@@ -140,37 +178,10 @@ function getStatusLabel(status: string): string {
 		background: #fbbf24;
 	}
 
-	.project-tile-desc {
-		font-size: 13px;
-		color: var(--muted-foreground);
-		line-height: 1.45;
-		display: -webkit-box;
-		-webkit-line-clamp: 2;
-		-webkit-box-orient: vertical;
-		overflow: hidden;
-	}
-
-	.project-tile-tags {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 4px;
-	}
-
-	.tech-tag {
-		font-family: var(--font-mono);
-		font-size: 10px;
-		background: rgba(var(--primary-rgb), 0.08);
-		color: var(--primary);
-		padding: 2px 8px;
-		border-radius: 20px;
-		font-weight: 500;
-	}
-
 	.project-tile-actions {
 		display: flex;
 		gap: 6px;
 		align-items: center;
-		margin-top: auto;
 	}
 
 	.project-cta,
@@ -178,11 +189,16 @@ function getStatusLabel(status: string): string {
 		display: inline-flex;
 		align-items: center;
 		gap: 5px;
+		font-family: var(--font-sans);
 		font-size: 12px;
 		text-decoration: none;
 		padding: 5px 12px;
 		border-radius: 999px;
-		transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+		line-height: 1.2;
+		transition:
+			border-color 0.15s ease,
+			background-color 0.15s ease,
+			color 0.15s ease;
 	}
 
 	.project-cta-icon {
@@ -217,8 +233,410 @@ function getStatusLabel(status: string): string {
 		text-decoration: none;
 	}
 
+	.project-tile-tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px;
+		margin-top: 2px;
+	}
+
+	.tech-tag {
+		font-family: var(--font-mono);
+		font-size: 10px;
+		background: rgba(var(--primary-rgb), 0.08);
+		color: var(--primary);
+		padding: 2px 8px;
+		border-radius: 20px;
+		font-weight: 500;
+	}
+
 	@media (max-width: 768px) {
 		.project-tiles {
+			grid-template-columns: 1fr;
+		}
+	}
+</style>
+
+<script is:inline>
+	(function () {
+		function esc(value) {
+			return value
+				? String(value)
+						.replace(/&/g, '&amp;')
+						.replace(/</g, '&lt;')
+						.replace(/>/g, '&gt;')
+						.replace(/"/g, '&quot;')
+				: ''
+		}
+
+		function statusLabel(status) {
+			return status === 'live'
+				? 'Live'
+				: status === 'in-progress'
+					? 'In Dev'
+					: status === 'coming-soon'
+						? 'Coming Soon'
+						: status
+		}
+
+		function statusColor(status) {
+			return status === 'live' ? 'var(--green)' : '#eab308'
+		}
+
+		function fmtDate(iso) {
+			if (!iso) return ''
+			var date = new Date(iso)
+			var now = new Date()
+			var time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+			if (date.toDateString() === now.toDateString()) return 'today ' + time
+			return (
+				date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
+				' ' +
+				time
+			)
+		}
+
+		var ghIcon =
+			'<svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path></svg>'
+		var extIcon =
+			'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="11" height="11"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>'
+
+		function sectionHeader(label, right) {
+			return (
+				'<div class="bf-pdr-section-header"><span>' +
+				label +
+				'</span>' +
+				(right || '') +
+				'</div>'
+			)
+		}
+
+		function buildDrawerContent(project, githubData) {
+			var output = []
+			output.push(
+				'<div class="bf-pdr-meta"><span class="bf-pdr-status"><span class="bf-pdr-dot" style="background:' +
+					statusColor(project.status) +
+					'"></span>' +
+					esc(statusLabel(project.status)) +
+					'</span>',
+			)
+			if (project.tags) {
+				project.tags.forEach(function (tag) {
+					output.push('<span class="bf-pdr-tag">' + esc(tag.name) + '</span>')
+				})
+			}
+			output.push('</div>')
+
+			if (project.url || project.repo) {
+				output.push('<div class="bf-pdr-links">')
+				if (project.url) {
+					output.push(
+						'<a href="' +
+							esc(project.url) +
+							'" target="_blank" rel="noopener noreferrer" class="bf-pdr-cta">Try it ' +
+							extIcon +
+							'</a>',
+					)
+				}
+				if (project.repo) {
+					output.push(
+						'<a href="' +
+							esc(project.repo) +
+							'" target="_blank" rel="noopener noreferrer" class="bf-pdr-cta-sec">' +
+							ghIcon +
+							' GitHub</a>',
+					)
+				}
+				output.push('</div>')
+			}
+
+			output.push(
+				sectionHeader(
+					'GITHUB',
+					githubData
+						? '<span class="bf-pdr-sync">Synced ' + fmtDate(githubData.syncedAt) + '</span>'
+						: '',
+				),
+			)
+			output.push('<div class="bf-pdr-card">')
+			if (githubData) {
+				output.push(
+					'<div class="bf-pdr-stats">' +
+						'<div class="bf-pdr-stat"><div class="bf-pdr-stat-val">' +
+						githubData.openIssues +
+						'</div><div class="bf-pdr-stat-label">Issues</div></div>' +
+						'<div class="bf-pdr-stat"><div class="bf-pdr-stat-val">' +
+						githubData.openPRs +
+						'</div><div class="bf-pdr-stat-label">PRs</div></div>' +
+						'<div class="bf-pdr-stat"><div class="bf-pdr-stat-val bf-pdr-stat-badge ' +
+						esc(githubData.visibility) +
+						'">' +
+						esc(githubData.visibility.charAt(0).toUpperCase() + githubData.visibility.slice(1)) +
+						'</div><div class="bf-pdr-stat-label">Visibility</div></div>' +
+						'</div>',
+				)
+			} else {
+				output.push(
+					'<div class="bf-pdr-info-msg">' +
+						(project.repo
+							? 'Could not load GitHub data.'
+							: 'No GitHub repository configured for this project.') +
+						'</div>',
+				)
+			}
+			output.push('</div>')
+
+			output.push(sectionHeader('PROJECT OVERVIEW'))
+			output.push('<div class="bf-pdr-card">')
+			if (project.overview || project.architecture || project.nextActions) {
+				if (project.overview) {
+					output.push(
+						'<div class="bf-pdr-subsection-label">What is it?</div><p class="bf-pdr-body">' +
+							esc(project.overview) +
+							'</p>',
+					)
+				}
+				if (project.architecture) {
+					output.push(
+						'<div class="bf-pdr-subsection-label">Architecture / Tech Stack</div><p class="bf-pdr-body">' +
+							esc(project.architecture) +
+							'</p>',
+					)
+				}
+				if (project.nextActions) {
+					output.push(
+						'<div class="bf-pdr-subsection-label">Next actions / Updates</div><p class="bf-pdr-body">' +
+							esc(project.nextActions) +
+							'</p>',
+					)
+				}
+			} else {
+				output.push(
+					'<div class="bf-pdr-info-msg">No drawer copy configured yet. Fill in the overview fields in Keystatic.</div>',
+				)
+			}
+			output.push('</div>')
+
+			if (githubData && githubData.recentCommits && githubData.recentCommits.length) {
+				output.push(sectionHeader('TIMELINE'))
+				output.push('<div class="bf-pdr-card bf-pdr-timeline">')
+				githubData.recentCommits.forEach(function (commit) {
+					output.push(
+						'<a href="' +
+							esc(commit.url) +
+							'" target="_blank" rel="noopener noreferrer" class="bf-pdr-commit"><span class="bf-pdr-commit-label">git</span><span class="bf-pdr-commit-msg">' +
+							esc(commit.message) +
+							'</span><span class="bf-pdr-commit-date">' +
+							fmtDate(commit.date) +
+							'</span></a>',
+					)
+				})
+				output.push('</div>')
+			}
+
+			return output.join('')
+		}
+
+		function initTiles() {
+			document.querySelectorAll('[data-project-json]').forEach(function (tile) {
+				function open(event) {
+					if (event && event.target && event.target.closest('a')) return
+					var project
+					var githubData
+					try {
+						project = JSON.parse(tile.getAttribute('data-project-json'))
+					} catch {
+						return
+					}
+					try {
+						githubData = JSON.parse(tile.getAttribute('data-github-json'))
+					} catch {
+						githubData = null
+					}
+					if (window.__bfOpenDrawer) {
+						window.__bfOpenDrawer(project.name, buildDrawerContent(project, githubData))
+					}
+				}
+
+				if (tile.dataset.drawerBound === 'true') return
+				tile.dataset.drawerBound = 'true'
+				tile.addEventListener('click', open)
+				tile.addEventListener('keydown', function (event) {
+					if (event.key === 'Enter' || event.key === ' ') {
+						event.preventDefault()
+						open(null)
+					}
+				})
+			})
+		}
+
+		if (document.readyState === 'loading') {
+			document.addEventListener('DOMContentLoaded', initTiles)
+		} else {
+			initTiles()
+		}
+		document.addEventListener('astro:page-load', initTiles)
+	})()
+</script>
+
+<style is:global>
+	.bf-pdr-meta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 6px;
+		margin-bottom: 14px;
+	}
+
+	.bf-pdr-status {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		font-family: var(--font-mono);
+		font-size: 11px;
+		color: var(--muted-foreground);
+		padding: 3px 10px;
+		border-radius: 20px;
+		border: 1px solid var(--border);
+		background: var(--card);
+	}
+
+	.bf-pdr-dot {
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		display: inline-block;
+		flex-shrink: 0;
+	}
+
+	.bf-pdr-tag {
+		font-family: var(--font-mono);
+		font-size: 10px;
+		font-weight: 500;
+		background: rgba(var(--primary-rgb), 0.08);
+		color: var(--primary);
+		padding: 2px 8px;
+		border-radius: 20px;
+	}
+
+	.bf-pdr-links {
+		display: flex;
+		gap: 8px;
+		flex-wrap: wrap;
+		margin-bottom: 20px;
+	}
+
+	.bf-pdr-cta,
+	.bf-pdr-cta-sec {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		text-decoration: none;
+		border-radius: 999px;
+		padding: 7px 14px;
+		font-size: 13px;
+	}
+
+	.bf-pdr-cta {
+		background: var(--primary);
+		color: var(--card);
+		font-weight: 600;
+	}
+
+	.bf-pdr-cta-sec {
+		border: 1px solid var(--border);
+		color: var(--foreground);
+	}
+
+	.bf-pdr-section-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		font-family: var(--font-mono);
+		font-size: 11px;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: var(--muted);
+		margin: 22px 0 8px;
+	}
+
+	.bf-pdr-sync {
+		text-transform: none;
+		letter-spacing: 0;
+	}
+
+	.bf-pdr-card {
+		border: 1px solid var(--border);
+		border-radius: 14px;
+		background: var(--card-raised);
+		padding: 16px;
+	}
+
+	.bf-pdr-stats {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 12px;
+	}
+
+	.bf-pdr-stat-val {
+		font-family: var(--font-serif);
+		font-size: 26px;
+		line-height: 1;
+	}
+
+	.bf-pdr-stat-badge {
+		font-size: 15px;
+		padding-top: 8px;
+	}
+
+	.bf-pdr-stat-label,
+	.bf-pdr-subsection-label,
+	.bf-pdr-commit-label,
+	.bf-pdr-commit-date {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		color: var(--muted);
+	}
+
+	.bf-pdr-body {
+		margin: 8px 0 0;
+		color: var(--muted-foreground);
+		line-height: 1.65;
+	}
+
+	.bf-pdr-info-msg {
+		color: var(--muted-foreground);
+		line-height: 1.6;
+	}
+
+	.bf-pdr-subsection-label:not(:first-child) {
+		margin-top: 14px;
+	}
+
+	.bf-pdr-timeline {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+
+	.bf-pdr-commit {
+		display: grid;
+		grid-template-columns: auto 1fr auto;
+		gap: 12px;
+		align-items: start;
+		text-decoration: none;
+		color: inherit;
+	}
+
+	.bf-pdr-commit-msg {
+		color: var(--foreground);
+		line-height: 1.5;
+	}
+
+	@media (max-width: 640px) {
+		.bf-pdr-stats,
+		.bf-pdr-commit {
 			grid-template-columns: 1fr;
 		}
 	}

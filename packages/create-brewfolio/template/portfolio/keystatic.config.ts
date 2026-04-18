@@ -5,6 +5,7 @@ import {
 	impact,
 	notebooks,
 	projects,
+	secrets,
 	timeline,
 	writing,
 } from 'brewfolio/keystatic.config'
@@ -69,6 +70,7 @@ export default config({
 			'about',
 			'timeline',
 			'impact',
+			'secrets',
 			'config',
 		],
 	},
@@ -84,6 +86,7 @@ export default config({
 		timeline,
 		impact,
 		writingSettings,
+		secrets,
 		config: portfolioConfig,
 	},
 })

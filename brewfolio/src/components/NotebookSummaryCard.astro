@@ -1,95 +1,265 @@
 ---
-/**
- * Notebook Summary Card - Card for notebook catalog
- */
-
-interface Notebook {
-  id: string
-  title: string
-  description?: string
-  github_url?: string
-  date: string
-}
-
-interface Project {
-  name: string
-}
+import type { NotebookSummary } from '../lib/notebook-renderer'
 
 interface Props {
-  notebook: Notebook
-  project: Project
+	summary: NotebookSummary | null
 }
 
-const { notebook, project } = Astro.props
+const { summary } = Astro.props
 
-function formatDate(iso: string): string {
-  const d = new Date(iso)
-  if (isNaN(d.getTime())) return iso
-  return d.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
+const STATUS_LABELS: Record<NotebookSummary['status'], string> = {
+	significant: 'Significant',
+	not_significant: 'Not significant',
+	inconclusive: 'Inconclusive',
+	error: 'Error',
 }
+
+function formatTimestamp(iso: string): string {
+	const date = new Date(iso)
+	if (isNaN(date.getTime())) return iso
+	return date.toLocaleString('en-US', {
+		year: 'numeric',
+		month: 'short',
+		day: 'numeric',
+		hour: '2-digit',
+		minute: '2-digit',
+	})
+}
+
+const statusLabel = summary ? STATUS_LABELS[summary.status] : ''
+const warningCount = summary?.warnings?.length ?? 0
 ---
 
-<article class="notebook-card group">
-  <div class="flex items-start justify-between gap-4">
-    <div class="flex-1 min-w-0">
-      <div class="text-xs font-mono text-muted-foreground/70 mb-1.5">
-        {project.name}
-      </div>
-      <h3 class="text-base font-semibold text-foreground group-hover:text-primary transition-colors">
-        {notebook.title}
-      </h3>
-      {notebook.description && (
-        <p class="mt-1.5 text-sm text-muted-foreground line-clamp-2">
-          {notebook.description}
-        </p>
-      )}
-    </div>
-    {notebook.github_url && (
-      <a
-        href={notebook.github_url}
-        target="_blank"
-        rel="noopener noreferrer"
-        class="shrink-0 p-2 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-        aria-label="View on GitHub"
-      >
-        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            fill-rule="evenodd"
-            clip-rule="evenodd"
-            d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"
-          />
-        </svg>
-      </a>
-    )}
-  </div>
-  <div class="mt-3 pt-3 border-t border-border/50">
-    <time class="text-xs font-mono text-muted-foreground/70" datetime={notebook.date}>
-      {formatDate(notebook.date)}
-    </time>
-  </div>
-</article>
+{summary && (
+	<aside class={`nb-summary-card nb-summary-${summary.status}`} aria-label="Experiment summary">
+		<header class="nb-summary-header">
+			<span class="nb-summary-status">{statusLabel}</span>
+			{warningCount > 0 && (
+				<span class="nb-summary-warnings-count">
+					{warningCount} warning{warningCount > 1 ? 's' : ''}
+				</span>
+			)}
+			{summary.generated_at && (
+				<span class="nb-summary-updated">Updated {formatTimestamp(summary.generated_at)}</span>
+			)}
+		</header>
+
+		<p class="nb-summary-decision">{summary.decision}</p>
+
+		{summary.metrics.length > 0 && (
+			<div class="nb-summary-metrics">
+				{summary.metrics.map((metric) => (
+					<div class="nb-summary-metric">
+						<div class="nb-summary-metric-label">{metric.label}</div>
+						<div class="nb-summary-metric-value-row">
+							<span class="nb-summary-metric-value">{metric.value}</span>
+							{metric.delta && (
+								<span
+									class={`nb-summary-metric-delta nb-summary-metric-delta-${
+										metric.delta_direction ?? 'neutral'
+									}`}
+								>
+									{metric.delta_direction === 'up'
+										? '↑'
+										: metric.delta_direction === 'down'
+											? '↓'
+											: ''}
+									{metric.delta}
+								</span>
+							)}
+						</div>
+						{metric.context && (
+							<div class="nb-summary-metric-context">{metric.context}</div>
+						)}
+					</div>
+				))}
+			</div>
+		)}
+
+		{warningCount > 0 && summary.warnings && (
+			<ul class="nb-summary-warnings">
+				{summary.warnings.map((warning) => (
+					<li>{warning}</li>
+				))}
+			</ul>
+		)}
+
+		{summary.methodology && (
+			<footer class="nb-summary-footer">
+				<span class="nb-summary-footer-label">Methodology:</span> {summary.methodology}
+			</footer>
+		)}
+	</aside>
+)}
 
 <style>
-  .notebook-card {
-    padding: 16px 18px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    background: var(--card);
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-  }
+	.nb-summary-card {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		padding: 20px 22px;
+		border: 1px solid var(--input);
+		border-radius: 12px;
+		background: var(--card-raised);
+		margin-bottom: 28px;
+	}
 
-  .notebook-card:hover {
-    border-color: var(--primary/30);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  }
+	.nb-summary-header {
+		display: flex;
+		align-items: baseline;
+		gap: 12px;
+		flex-wrap: wrap;
+		font-family: var(--font-mono);
+		font-size: 12px;
+	}
 
-  @media (prefers-color-scheme: dark) {
-    .notebook-card:hover {
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    }
-  }
+	.nb-summary-status {
+		padding: 3px 10px;
+		border-radius: 999px;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		font-size: 11px;
+		background: var(--input);
+		color: var(--foreground);
+	}
+
+	.nb-summary-significant .nb-summary-status {
+		background: color-mix(in oklab, var(--green) 18%, transparent);
+		color: var(--green);
+	}
+
+	.nb-summary-not_significant .nb-summary-status {
+		background: color-mix(in oklab, var(--muted) 18%, transparent);
+		color: var(--muted-foreground);
+	}
+
+	.nb-summary-inconclusive .nb-summary-status {
+		background: color-mix(in oklab, var(--primary) 18%, transparent);
+		color: var(--primary);
+	}
+
+	.nb-summary-error .nb-summary-status {
+		background: color-mix(in oklab, var(--red) 18%, transparent);
+		color: var(--red);
+	}
+
+	.nb-summary-warnings-count {
+		color: var(--primary);
+		font-weight: 600;
+	}
+
+	.nb-summary-updated {
+		margin-left: auto;
+		color: var(--muted);
+	}
+
+	.nb-summary-decision {
+		font-family: var(--font-serif);
+		font-size: 18px;
+		line-height: 1.4;
+		color: var(--foreground);
+		margin: 0;
+		text-wrap: balance;
+	}
+
+	.nb-summary-metrics {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 16px 24px;
+	}
+
+	@media (min-width: 640px) {
+		.nb-summary-metrics {
+			grid-template-columns: repeat(4, 1fr);
+		}
+	}
+
+	.nb-summary-metric {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	.nb-summary-metric-label {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: var(--muted);
+	}
+
+	.nb-summary-metric-value-row {
+		display: flex;
+		align-items: baseline;
+		gap: 6px;
+	}
+
+	.nb-summary-metric-value {
+		font-family: var(--font-sans);
+		font-size: 22px;
+		font-weight: 600;
+		color: var(--foreground);
+	}
+
+	.nb-summary-metric-delta {
+		font-family: var(--font-mono);
+		font-size: 12px;
+		font-weight: 600;
+	}
+
+	.nb-summary-metric-delta-up {
+		color: var(--green);
+	}
+
+	.nb-summary-metric-delta-down {
+		color: var(--red);
+	}
+
+	.nb-summary-metric-delta-neutral {
+		color: var(--muted);
+	}
+
+	.nb-summary-metric-context {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		color: var(--muted);
+		line-height: 1.4;
+	}
+
+	.nb-summary-warnings {
+		list-style: none;
+		margin: 0;
+		padding: 12px 14px;
+		border: 1px solid var(--input);
+		border-radius: 8px;
+		font-family: var(--font-sans);
+		font-size: 13px;
+		line-height: 1.5;
+		color: var(--muted-foreground);
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+
+	.nb-summary-warnings li::before {
+		content: '!';
+		color: var(--primary);
+		font-weight: 700;
+		margin-right: 6px;
+	}
+
+	.nb-summary-footer {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		color: var(--muted);
+		padding-top: 12px;
+		border-top: 1px solid var(--input);
+		line-height: 1.5;
+	}
+
+	.nb-summary-footer-label {
+		font-weight: 600;
+		color: var(--muted-foreground);
+	}
 </style>

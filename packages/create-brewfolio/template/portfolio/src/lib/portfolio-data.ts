@@ -1,3 +1,11 @@
+import {
+	fetchIpynb,
+	getGitHubData,
+	getProjectGitHubData,
+	renderNotebook,
+	type NotebookEntry,
+	type NotebookSummary,
+} from 'brewfolio'
 import { reader } from './content'
 
 type SearchEntry = {
@@ -32,7 +40,19 @@ const DEFAULT_HEADER_LOCATION: HeaderLocation = {
 const geocodeCache = new Map<string, Promise<HeaderLocation>>()
 
 export async function getPortfolioData() {
-	const [projectEntries, writingEntries, notebookEntries, conceptsData, config, github, writingSettings, aboutData, timelineData, impactData] = await Promise.all([
+	const [
+		projectEntries,
+		writingEntries,
+		notebookEntries,
+		conceptsData,
+		config,
+		github,
+		writingSettings,
+		aboutData,
+		timelineData,
+		impactData,
+		secrets,
+	] = await Promise.all([
 		reader.collections.projects.all(),
 		reader.collections.writing.all(),
 		reader.collections.notebooks.all(),
@@ -43,7 +63,10 @@ export async function getPortfolioData() {
 		reader.singletons.about.read(),
 		reader.singletons.timeline.read(),
 		reader.singletons.impact.read(),
+		reader.singletons.secrets?.read?.() ?? Promise.resolve(null),
 	])
+
+	const token = secrets?.githubToken?.trim() || undefined
 
 	const projects = projectEntries.map((entry) => ({
 		id: entry.slug,
@@ -58,24 +81,26 @@ export async function getPortfolioData() {
 		analysis_url: entry.entry.analysis_url || undefined,
 		tags: entry.entry.tags?.map((tag: any) => ({ name: tag.name })) ?? [],
 		related_writing: entry.entry.related_writing ?? [],
+		overview: entry.entry.overview || undefined,
+		architecture: entry.entry.architecture || undefined,
+		nextActions: entry.entry.nextActions || undefined,
 	}))
 
-	const writing = writingEntries.map((entry) => ({
-		slug: entry.slug,
-		title: entry.entry.title,
-		pubDate: entry.entry.pubDate,
-		substack_url: entry.entry.substack_url || '',
-		description: entry.entry.description || '',
-	})).sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime())
+	const writing = writingEntries
+		.map((entry) => ({
+			slug: entry.slug,
+			title: entry.entry.title,
+			pubDate: entry.entry.pubDate,
+			substack_url: entry.entry.substack_url || '',
+			description: entry.entry.description || '',
+		}))
+		.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime())
 
-	const notebooks = notebookEntries.map((entry) => ({
-		id: entry.slug,
-		title: entry.entry.title,
-		project: typeof entry.entry.project === 'string' ? entry.entry.project : entry.entry.project?.slug || '',
-		github_url: entry.entry.github_url || '',
-		description: entry.entry.description || '',
-		date: entry.entry.date,
-	})).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+	const notebooks = (
+		await Promise.all(
+			notebookEntries.map(async (entry) => buildNotebookEntry(entry.slug, entry.entry)),
+		)
+	).sort((a, b) => b.date.getTime() - a.date.getTime())
 
 	const concepts = (conceptsData?.concepts ?? []).map((concept: any) => ({
 		slug: concept.slug,
@@ -95,6 +120,26 @@ export async function getPortfolioData() {
 			} else {
 				conceptLabelsBySlug.set(writingSlug, [concept.name])
 			}
+		}
+	}
+
+	const projectGitHubPairs = await Promise.all(
+		projects.map(async (project) => [
+			project.id,
+			project.repo ? await getProjectGitHubData(project.repo, token) : null,
+		] as const),
+	)
+	const projectGitHubData = new Map(projectGitHubPairs)
+
+	let githubData = null
+	if (github?.handle?.trim()) {
+		try {
+			githubData = await getGitHubData({
+				username: github.handle.trim(),
+				token,
+			})
+		} catch {
+			githubData = null
 		}
 	}
 
@@ -127,12 +172,14 @@ export async function getPortfolioData() {
 
 	return {
 		projects,
+		projectGitHubData,
 		writing,
 		notebooks,
 		concepts,
 		conceptLabelsBySlug,
 		config,
 		github,
+		githubData,
 		writingSettings,
 		aboutData,
 		timelineData,
@@ -141,13 +188,68 @@ export async function getPortfolioData() {
 	}
 }
 
+async function buildNotebookEntry(id: string, entry: any): Promise<NotebookEntry> {
+	let html = ''
+	if (entry.github_url) {
+		try {
+			const ipynb = await fetchIpynb(entry.github_url)
+			html = renderNotebook(ipynb)
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error)
+			html = `<p class="bf-empty-hint">Notebook failed to load from GitHub: ${escapeHtml(message)}</p>`
+		}
+	} else {
+		html = '<p class="bf-empty-hint">Add a GitHub URL in Keystatic to render this notebook.</p>'
+	}
+
+	const metrics = (entry.summary_metrics ?? []).map((metric: any) => ({
+		label: metric.label,
+		value: metric.value,
+		delta: metric.delta || undefined,
+		delta_direction:
+			metric.delta_direction === 'up' ||
+			metric.delta_direction === 'down' ||
+			metric.delta_direction === 'neutral'
+				? metric.delta_direction
+				: undefined,
+		context: metric.context || undefined,
+	}))
+
+	const summary: NotebookSummary | null =
+		entry.summary_status && entry.summary_status !== 'none'
+			? {
+					status: entry.summary_status,
+					decision: entry.summary_decision ?? '',
+					metrics,
+					warnings: entry.summary_warnings ?? [],
+					methodology: entry.summary_methodology || undefined,
+				}
+			: null
+
+	return {
+		id,
+		title: entry.title,
+		project:
+			typeof entry.project === 'string'
+				? entry.project
+				: entry.project?.slug || '',
+		github_url: entry.github_url || '',
+		description: entry.description || '',
+		date: entry.date ? new Date(entry.date) : new Date(0),
+		html,
+		summary,
+	}
+}
+
 function normalizeRelationships(values: any): string[] {
 	if (!Array.isArray(values)) return []
-	return values.map((value) => {
-		if (typeof value === 'string') return value
-		if (value && typeof value.slug === 'string') return value.slug
-		return ''
-	}).filter(Boolean)
+	return values
+		.map((value) => {
+			if (typeof value === 'string') return value
+			if (value && typeof value.slug === 'string') return value.slug
+			return ''
+		})
+		.filter(Boolean)
 }
 
 export function escapeHtml(value: string): string {
