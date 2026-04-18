@@ -127,6 +127,10 @@ packages/create-brewfolio/         ← scaffold CLI
 - [x] Bug fixed: added `react` + `react-dom` as required peer deps
 - [x] Screenshots captured: homepage and Keystatic admin UI both load
 - [x] Test report documented at `internal/docs/brewfolio-phase6-test-report.md`
+- [x] Tailwind CSS v4 added to CLI (`tailwindcss@^4.2.2`, `@tailwindcss/vite@^4.2.2`) with `@theme` token mapping in template global.css
+- [x] Removed duplicate `Props` interface in `AppSections.astro`
+- [x] Updated template files (`astro.config.mjs`, `global.css`, `index.astro`, `tailwind.config.js`)
+- [x] Thorough test report with 10+ screenshots at `internal/docs/brewfolio-phase6-thorough-test-report.md`
 
 ---
 
