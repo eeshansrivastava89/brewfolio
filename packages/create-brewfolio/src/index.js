@@ -9,8 +9,7 @@
  */
 
 import { Command } from 'commander'
-import { dirname, join } from 'path'
-import { fileURLToPath } from 'url'
+import { join } from 'path'
 import fs from 'fs/promises'
 import {
   intro,
@@ -26,8 +25,6 @@ import {
 } from '@clack/prompts'
 import pc from 'picocolors'
 import { copyTemplateOverlay, runProcess } from './utils.js'
-
-const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const TYPES = [
   {
