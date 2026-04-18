@@ -15,3 +15,6 @@ internal/
 .claude/
 .codex/
 .pi/
+coverage/
+playwright-report/
+test-results/

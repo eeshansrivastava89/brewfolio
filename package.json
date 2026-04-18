@@ -1,0 +1,25 @@
+{
+  "name": "brewfolio-monorepo",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "brewfolio",
+    "packages/create-brewfolio"
+  ],
+  "scripts": {
+    "test": "npm run test:unit",
+    "test:unit": "vitest run --coverage",
+    "test:unit:watch": "vitest",
+    "test:e2e": "rm -rf playwright-report test-results && playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:list": "playwright test --list --reporter=list",
+    "test:e2e:report": "playwright show-report playwright-report",
+    "test:full": "npm run test:unit && npm run test:e2e"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@vitest/coverage-v8": "^3.2.4",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}
