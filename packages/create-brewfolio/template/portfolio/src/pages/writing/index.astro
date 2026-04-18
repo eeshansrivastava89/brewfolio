@@ -156,11 +156,24 @@ const headerConfig = await dashboardHeader(config)
 	.writing-feature-meta,
 	.writing-modal-meta {
 		display: flex;
+		align-items: center;
 		flex-wrap: wrap;
 		gap: 8px;
 		margin-top: 14px;
 		font-size: 0.92rem;
 		color: var(--muted);
+	}
+
+	.writing-modal-meta {
+		margin-top: 2px;
+		flex: 0 0 auto;
+		justify-content: flex-end;
+	}
+
+	.writing-modal-date,
+	.writing-modal-tag {
+		font-family: var(--font-mono);
+		font-size: 12px;
 	}
 
 	.writing-feature-cta {
@@ -220,11 +233,9 @@ const headerConfig = await dashboardHeader(config)
 	}
 
 	.writing-modal-tag {
-		font-family: var(--font-mono);
-		font-size: 11px;
 		background: rgba(var(--primary-rgb), 0.08);
 		color: var(--primary);
-		padding: 2px 8px;
+		padding: 1px 7px;
 		border-radius: 999px;
 	}
 

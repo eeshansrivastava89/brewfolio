@@ -12,3 +12,6 @@ node_modules/
 
 # Internal design docs, plans, test reports — kept locally, not published
 internal/
+.claude/
+.codex/
+.pi/
