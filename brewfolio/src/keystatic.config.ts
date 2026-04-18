@@ -61,7 +61,7 @@ export const notebooks = collection({
 		}),
 		summary_warnings: fields.array(
 			fields.text({ label: 'Warning' }),
-			{ label: 'Warnings', itemLabel: (props) => props.value || 'Warning' }
+			{ label: 'Warnings', itemLabel: (props: any) => props.value || 'Warning' }
 		),
 		summary_metrics: fields.array(
 			fields.object({
@@ -79,7 +79,7 @@ export const notebooks = collection({
 				}),
 				context: fields.text({ label: 'Context', description: 'For example vs baseline.' })
 			}),
-			{ label: 'Metrics', itemLabel: (props) => props.fields.label.value || 'Metric' }
+			{ label: 'Metrics', itemLabel: (props: any) => props.fields.label.value || 'Metric' }
 		)
 	}
 })
@@ -112,11 +112,11 @@ export const projects = collection({
 		analysis_url: fields.url({ label: 'Analysis URL' }),
 		tags: fields.array(
 			fields.object({ name: fields.text({ label: 'Tag name' }) }),
-			{ label: 'Tags', itemLabel: (props) => props.fields.name.value || 'Tag' }
+			{ label: 'Tags', itemLabel: (props: any) => props.fields.name.value || 'Tag' }
 		),
 		related_writing: fields.array(
 			fields.text({ label: 'Slug' }),
-			{ label: 'Related writing slugs', itemLabel: (props) => props.value || 'Slug' }
+			{ label: 'Related writing slugs', itemLabel: (props: any) => props.value || 'Slug' }
 		),
 		overview: fields.text({
 			label: 'What is it?',
@@ -173,7 +173,7 @@ export const sections = singleton({
 								}),
 								context: fields.text({ label: 'Context line below value' })
 							}),
-							{ label: 'Metrics', itemLabel: (props) => props.fields.label.value || 'Metric' }
+							{ label: 'Metrics', itemLabel: (props: any) => props.fields.label.value || 'Metric' }
 						)
 					}),
 					'results-list': fields.object({
@@ -184,7 +184,7 @@ export const sections = singleton({
 								href: fields.url({ label: 'Link URL' }),
 								meta: fields.text({ label: 'Meta subtitle' })
 							}),
-							{ label: 'Items', itemLabel: (props) => props.fields.title.value || 'Item' }
+							{ label: 'Items', itemLabel: (props: any) => props.fields.title.value || 'Item' }
 						)
 					}),
 					notebook: fields.object({
@@ -196,7 +196,7 @@ export const sections = singleton({
 					})
 				}
 			),
-			{ label: 'Sections', itemLabel: (props) => props.value.discriminant }
+			{ label: 'Sections', itemLabel: (props: any) => props.value.discriminant }
 		)
 	}
 })
@@ -212,18 +212,18 @@ export const concepts = singleton({
 				description: fields.text({ label: 'Description' }),
 				projects: fields.array(
 					fields.relationship({ label: 'Project', collection: 'projects' }),
-					{ label: 'Projects', itemLabel: (props) => props.value || 'Project' }
+					{ label: 'Projects', itemLabel: (props: any) => props.value || 'Project' }
 				),
 				writing: fields.array(
 					fields.relationship({ label: 'Essay', collection: 'writing' }),
-					{ label: 'Writing', itemLabel: (props) => props.value || 'Essay' }
+					{ label: 'Writing', itemLabel: (props: any) => props.value || 'Essay' }
 				),
 				notebooks: fields.array(
 					fields.relationship({ label: 'Notebook', collection: 'notebooks' }),
-					{ label: 'Notebooks', itemLabel: (props) => props.value || 'Notebook' }
+					{ label: 'Notebooks', itemLabel: (props: any) => props.value || 'Notebook' }
 				)
 			}),
-			{ label: 'Concepts', itemLabel: (props) => props.fields.name.value || 'Concept' }
+			{ label: 'Concepts', itemLabel: (props: any) => props.fields.name.value || 'Concept' }
 		)
 	}
 })
@@ -248,7 +248,7 @@ export const timeline = singleton({
 					defaultValue: 'work'
 				})
 			}),
-			{ label: 'Timeline entries', itemLabel: (props) => props.fields.title.value || 'Entry' }
+			{ label: 'Timeline entries', itemLabel: (props: any) => props.fields.title.value || 'Entry' }
 		)
 	}
 })
@@ -292,10 +292,10 @@ export const impact = singleton({
 						meta: fields.text({ label: 'Meta (subtitle)' }),
 						link: fields.url({ label: 'Link' })
 					}),
-					{ label: 'Items', itemLabel: (props) => props.fields.text.value || 'Item' }
+					{ label: 'Items', itemLabel: (props: any) => props.fields.text.value || 'Item' }
 				)
 			}),
-			{ label: 'Impact sections', itemLabel: (props) => props.fields.title.value || 'Section' }
+			{ label: 'Impact sections', itemLabel: (props: any) => props.fields.title.value || 'Section' }
 		)
 	}
 })

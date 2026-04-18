@@ -14,10 +14,19 @@ interface Props {
 	}
 	showFooter?: boolean
 	showLeaderboard?: boolean
+	siteName?: string
 	headerNavItems?: { label: string; href: string }[]
 }
 
-const { meta = {}, showFooter = false, showLeaderboard = true, headerNavItems } = Astro.props
+const {
+	meta = {},
+	showFooter = false,
+	showLeaderboard = true,
+	siteName,
+	headerNavItems,
+} = Astro.props
+
+const headerSiteName = siteName ?? meta.title ?? 'Portfolio'
 ---
 
 <html lang="en" class="scroll-smooth">
@@ -34,7 +43,10 @@ const { meta = {}, showFooter = false, showLeaderboard = true, headerNavItems } 
 		<a href="#main-content" class="skip-link">Skip to content</a>
 		<ThemeProvider />
 		<div class="game-shell">
-			<Header navItems={headerNavItems} />
+			<Header navItems={headerNavItems} siteName={headerSiteName}>
+				<slot name="header-left" slot="header-left" />
+				<slot name="settings-trigger" slot="settings-trigger" />
+			</Header>
 			<div class="game-content">
 				<main class="game-main" id="main-content">
 					<slot />

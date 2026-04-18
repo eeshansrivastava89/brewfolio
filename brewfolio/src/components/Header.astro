@@ -11,12 +11,10 @@ interface Props {
 	showThemeToggle?: boolean
 }
 
+const hasHeaderLeft = Astro.slots.has('header-left')
+
 const {
-	navItems = [
-		{ label: 'Writing', href: '/writing' },
-		{ label: 'Analysis', href: '/analysis' },
-		{ label: 'About', href: '/about' }
-	],
+	navItems = [],
 	siteName = 'Portfolio',
 	showSearch = true,
 	showThemeToggle = true
@@ -33,14 +31,21 @@ const {
 
 <header class="h-[52px] flex items-center justify-between px-3 gap-2.5">
 	<span class="mobile-notch-label" aria-hidden="true">{siteName}</span>
-	<div class="flex items-center gap-2">
-		<nav class="flex gap-1.5" aria-label="Primary">
-			{navItems.map((item) => (
-				<a href={item.href} class="nav-pill" data-route={item.href}>
-					{item.label}
-				</a>
-			))}
-		</nav>
+	{hasHeaderLeft && (
+		<div class="header-left">
+			<slot name="header-left" />
+		</div>
+	)}
+	<div class="header-actions flex items-center gap-2">
+		{navItems.length > 0 && (
+			<nav class="flex gap-1.5" aria-label="Primary">
+				{navItems.map((item) => (
+					<a href={item.href} class="nav-pill" data-route={item.href}>
+						{item.label}
+					</a>
+				))}
+			</nav>
+		)}
 		{showThemeToggle && (
 			<button class="theme-toggle" type="button" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode">
 				<svg class="theme-icon theme-icon-moon w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -215,6 +220,13 @@ const {
 		display: none;
 	}
 
+	.header-left {
+		display: flex;
+		align-items: center;
+		min-width: 0;
+		flex: 1 1 auto;
+	}
+
 	.search-hint-mobile {
 		display: none;
 	}
@@ -241,10 +253,15 @@ const {
 			letter-spacing: 0.02em;
 		}
 
-		header > div {
+		.header-actions {
 			order: 2;
 			width: 100%;
 			gap: 8px;
+		}
+
+		.header-left {
+			order: 2;
+			width: 100%;
 		}
 
 		nav {

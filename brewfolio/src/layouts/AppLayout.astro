@@ -15,6 +15,7 @@ interface Props {
 		canonicalUrl?: string
 	}
 	showFooter?: boolean
+	siteName?: string
 	headerNavItems?: { label: string; href: string }[]
 	sections?: SectionConfig[]
 	notebookEntries?: { id: string; title: string }[]
@@ -24,11 +25,14 @@ interface Props {
 const {
 	meta = {},
 	showFooter = true,
+	siteName,
 	headerNavItems,
 	sections,
 	notebookEntries = [],
 	githubData = null,
 } = Astro.props
+
+const headerSiteName = siteName ?? meta.title ?? 'Portfolio'
 ---
 
 <html lang="en" class="scroll-smooth">
@@ -45,7 +49,10 @@ const {
 		<a href="#main-content" class="brewfolio-skip-link">Skip to content</a>
 		<ThemeProvider />
 		<div class="brewfolio-app-shell">
-			<Header navItems={headerNavItems} />
+			<Header navItems={headerNavItems} siteName={headerSiteName}>
+				<slot name="header-left" slot="header-left" />
+				<slot name="settings-trigger" slot="settings-trigger" />
+			</Header>
 			<main class="brewfolio-app-main" id="main-content">
 				{sections !== undefined && sections.length > 0 ? (
 					<AppSections

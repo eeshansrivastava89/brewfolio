@@ -30,14 +30,7 @@ type HeaderLocation = {
 	timezone: string
 }
 
-const DEFAULT_HEADER_LOCATION: HeaderLocation = {
-	cityName: 'Seattle',
-	latitude: 47.6062,
-	longitude: -122.3321,
-	timezone: 'America/Los_Angeles',
-}
-
-const geocodeCache = new Map<string, Promise<HeaderLocation>>()
+const geocodeCache = new Map<string, Promise<HeaderLocation | null>>()
 
 export async function getPortfolioData() {
 	const [
@@ -309,6 +302,17 @@ export async function dashboardHeader(config: PortfolioConfig) {
 
 	const location = await geocodeCache.get(cacheKey)!
 
+	if (!location) {
+		return {
+			siteName,
+			showClockWeather: false,
+			cityName: city,
+			timezone: undefined,
+			latitude: undefined,
+			longitude: undefined,
+		}
+	}
+
 	return {
 		siteName,
 		showClockWeather: true,
@@ -319,7 +323,10 @@ export async function dashboardHeader(config: PortfolioConfig) {
 	}
 }
 
-async function resolveHeaderLocation(city: string, country: string): Promise<HeaderLocation> {
+async function resolveHeaderLocation(
+	city: string,
+	country: string,
+): Promise<HeaderLocation | null> {
 	try {
 		const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=5&language=en&format=json`
 		const response = await fetch(url)
@@ -332,17 +339,21 @@ async function resolveHeaderLocation(city: string, country: string): Promise<Hea
 
 		if (!match) throw new Error(`No geocoding match for "${city}"`)
 
+		const latitude = Number(match.latitude)
+		const longitude = Number(match.longitude)
+		const timezone = String(match.timezone || '')
+		if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !timezone) {
+			return null
+		}
+
 		return {
 			cityName: String(match.name || city),
-			latitude: Number(match.latitude),
-			longitude: Number(match.longitude),
-			timezone: String(match.timezone || DEFAULT_HEADER_LOCATION.timezone),
+			latitude,
+			longitude,
+			timezone,
 		}
 	} catch {
-		return {
-			...DEFAULT_HEADER_LOCATION,
-			cityName: city || DEFAULT_HEADER_LOCATION.cityName,
-		}
+		return null
 	}
 }
 

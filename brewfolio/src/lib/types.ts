@@ -16,6 +16,9 @@ export interface Project {
 	analysis_url?: string
 	tags: { name: string }[]
 	related_writing: string[]
+	overview?: string
+	architecture?: string
+	nextActions?: string
 }
 
 export interface Notebook {
@@ -39,9 +42,9 @@ export interface Concept {
 	slug: string
 	name: string
 	description?: string
-	projects: { slug: string }[]
+	projects: string[]
 	writing: string[]
-	notebooks: { slug: string }[]
+	notebooks: string[]
 }
 
 export interface TimelineEntry {
@@ -61,9 +64,11 @@ export interface ImpactSection {
 }
 
 export interface SiteConfig {
+	siteTitle?: string
 	city: string
-	country: string
+	country?: string
 	conceptsIntro: string
+	githubHandle?: string
 }
 
 export interface About {
@@ -89,6 +94,21 @@ export interface GitHubActivityItem {
 	repo: string
 	message: string
 	url: string
+}
+
+export interface ProjectCommit {
+	sha: string
+	message: string
+	date: string
+	url: string
+}
+
+export interface ProjectGitHubData {
+	openIssues: number
+	openPRs: number
+	visibility: string
+	recentCommits: ProjectCommit[]
+	syncedAt: string
 }
 
 export interface GitHubActivityTotals {
