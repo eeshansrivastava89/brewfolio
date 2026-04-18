@@ -61,6 +61,11 @@ const {
 	document.getElementById('themeToggle')?.addEventListener('click', function () {
 		if (window.__toggleTheme) window.__toggleTheme()
 	})
+	document.querySelectorAll('.search-hint').forEach(function (button) {
+		button.addEventListener('click', function () {
+			if (window.__brewfolioOpenSearch) window.__brewfolioOpenSearch()
+		})
+	})
 
 	document.addEventListener('keydown', function (event) {
 		if (event.key === 'd' && !event.ctrlKey && !event.metaKey && !event.altKey) {

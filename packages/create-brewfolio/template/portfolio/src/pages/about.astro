@@ -1,0 +1,261 @@
+---
+import '../styles/global.css'
+import DashboardLayout from 'brewfolio/layouts/DashboardLayout.astro'
+import { reader } from '../lib/content'
+
+const [aboutData, timelineData, impactData] = await Promise.all([
+	reader.singletons.about.read(),
+	reader.singletons.timeline.read(),
+	reader.singletons.impact.read()
+])
+
+const work = (timelineData?.timeline ?? []).filter((item) => item.type !== 'education')
+const education = (timelineData?.timeline ?? []).filter((item) => item.type === 'education')
+const impactSections = (impactData?.impact ?? []).filter((section) => section.visible)
+---
+
+<DashboardLayout meta={{ title: 'About' }}>
+	<section class="about-page">
+		<div class="about-grid">
+			<section class="about-card about-intro">
+				<p class="content-kicker">About</p>
+				<h1>About this portfolio</h1>
+				<div class="prose">
+					<p>{aboutData?.bio || 'Add a bio in Keystatic to tell visitors who you are, what you work on, and what kind of problems you like solving.'}</p>
+					<p>{aboutData?.thisSite || 'Use the “This Site” field to explain how the portfolio is built, what the CMS controls, and which parts of the design system you want to highlight.'}</p>
+				</div>
+			</section>
+
+			<section class="about-card">
+				<h2>Experience</h2>
+				{work.length === 0 ? (
+					<p class="empty-copy">Add entries in Keystatic under <strong>Timeline</strong> to populate your experience.</p>
+				) : (
+					<div class="timeline-list">
+						{work.map((item) => (
+							<article class="timeline-item">
+								<div class="timeline-meta">{item.timespan || 'Dates coming soon'}</div>
+								<h3>{item.title}</h3>
+								{item.company && <p class="timeline-company">{item.company}</p>}
+								{item.description && <p class="timeline-description">{item.description}</p>}
+							</article>
+						))}
+					</div>
+				)}
+			</section>
+
+			<section class="about-card">
+				<h2>Education</h2>
+				{education.length === 0 ? (
+					<p class="empty-copy">Add education entries in Keystatic under <strong>Timeline</strong> to populate this section.</p>
+				) : (
+					<div class="timeline-list">
+						{education.map((item) => (
+							<article class="timeline-item">
+								<div class="timeline-meta">{item.timespan || 'Dates coming soon'}</div>
+								<h3>{item.title}</h3>
+								{item.company && <p class="timeline-company">{item.company}</p>}
+								{item.description && <p class="timeline-description">{item.description}</p>}
+							</article>
+						))}
+					</div>
+				)}
+			</section>
+
+			<section class="about-card about-impact">
+				<h2>Recognition & leadership</h2>
+				{impactSections.length === 0 ? (
+					<p class="empty-copy">Add visible impact sections in Keystatic under <strong>Impact</strong> to highlight awards, talks, communities, or leadership work.</p>
+				) : (
+					<div class="impact-grid">
+						{impactSections.map((section) => (
+							<section class="impact-section">
+								<h3>{section.title}</h3>
+								<ul>
+									{section.items.map((item) => (
+										<li>
+											{item.link ? (
+												<a href={item.link} target="_blank" rel="noopener noreferrer">{item.text}</a>
+											) : (
+												<span>{item.text}</span>
+											)}
+											{item.meta && <span class="impact-meta">{item.meta}</span>}
+										</li>
+									))}
+								</ul>
+							</section>
+						))}
+					</div>
+				)}
+			</section>
+		</div>
+	</section>
+</DashboardLayout>
+
+<style>
+	.about-page {
+		height: 100%;
+		min-height: 0;
+	}
+
+	.about-grid {
+		display: grid;
+		grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+		gap: 14px;
+		height: 100%;
+		min-height: 0;
+	}
+
+	.about-card {
+		background: var(--card);
+		border: 1px solid var(--border);
+		border-radius: var(--radius-lg);
+		box-shadow: var(--shadow);
+		padding: 24px;
+		overflow: auto;
+	}
+
+	.about-intro,
+	.about-impact {
+		grid-column: 1 / 3;
+	}
+
+	.content-kicker {
+		margin: 0 0 8px;
+		font-family: var(--font-mono);
+		font-size: 11px;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--muted);
+	}
+
+	h1,
+	h2,
+	h3 {
+		margin: 0;
+	}
+
+	h1 {
+		margin-bottom: 14px;
+		font-family: var(--font-serif);
+		font-size: clamp(2rem, 4vw, 2.8rem);
+		line-height: 1.05;
+		letter-spacing: -0.03em;
+	}
+
+	h2 {
+		margin-bottom: 14px;
+		font-family: var(--font-serif);
+		font-size: 1.4rem;
+	}
+
+	.prose {
+		max-width: 54rem;
+		color: var(--muted-foreground);
+		line-height: 1.7;
+	}
+
+	.prose p {
+		margin: 0 0 12px;
+	}
+
+	.timeline-list {
+		display: grid;
+		gap: 16px;
+	}
+
+	.timeline-item {
+		padding-top: 14px;
+		border-top: 1px solid var(--border);
+	}
+
+	.timeline-item:first-child {
+		padding-top: 0;
+		border-top: 0;
+	}
+
+	.timeline-meta {
+		margin-bottom: 6px;
+		font-family: var(--font-mono);
+		font-size: 11px;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--muted);
+	}
+
+	.timeline-company {
+		margin: 6px 0 0;
+		font-weight: 600;
+		color: var(--foreground);
+	}
+
+	.timeline-description {
+		margin: 8px 0 0;
+		color: var(--muted-foreground);
+		line-height: 1.6;
+	}
+
+	.empty-copy {
+		margin: 0;
+		color: var(--muted-foreground);
+		line-height: 1.6;
+	}
+
+	.impact-grid {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 14px;
+	}
+
+	.impact-section {
+		padding: 18px;
+		border: 1px solid var(--border);
+		border-radius: 14px;
+		background: var(--card-raised);
+	}
+
+	.impact-section h3 {
+		margin-bottom: 10px;
+		font-size: 1rem;
+	}
+
+	.impact-section ul {
+		margin: 0;
+		padding-left: 18px;
+		display: grid;
+		gap: 8px;
+	}
+
+	.impact-section a {
+		color: var(--foreground);
+	}
+
+	.impact-meta {
+		display: block;
+		margin-top: 2px;
+		color: var(--muted);
+		font-size: 0.92rem;
+	}
+
+	@media (max-width: 900px) {
+		.about-grid {
+			grid-template-columns: 1fr;
+			height: auto;
+		}
+
+		.about-intro,
+		.about-impact {
+			grid-column: auto;
+		}
+
+		.impact-grid {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	@media (max-width: 768px) {
+		.about-card {
+			padding: 18px;
+		}
+	}
+</style>
