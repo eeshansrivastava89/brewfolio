@@ -98,8 +98,7 @@ export async function getPortfolioData() {
 		url: entry.entry.url || undefined,
 		status: entry.entry.status,
 		external: entry.entry.external,
-		description: entry.entry.description,
-		shortDescription: entry.entry.shortDescription || undefined,
+		description: entry.entry.description || entry.entry.shortDescription || '',
 		image: entry.entry.image || undefined,
 		repo: entry.entry.repo || undefined,
 		featuredNotebook: normalizeSingleRelationship(entry.entry.featuredNotebook),
@@ -219,7 +218,7 @@ export async function getPortfolioData() {
 		...projects.map((project) => ({
 			type: 'project' as const,
 			title: project.name,
-			desc: project.shortDescription || project.description,
+			desc: project.description,
 			slug: project.id,
 		})),
 		...writing.map((post) => ({

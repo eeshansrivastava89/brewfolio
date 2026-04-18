@@ -39,10 +39,21 @@ export const notebooks = collection({
 	slugField: 'id',
 	path: 'src/data/notebooks/*',
 	schema: {
-		id: fields.slug({ name: { label: 'Notebook ID' } }),
-		title: fields.text({ label: 'Notebook title', validation: { isRequired: true } }),
+		id: fields.slug({
+			name: {
+				label: 'Notebook slug',
+				description:
+					'Used in the file name, relationships, and the /analysis/<slug> route. Example: ab-test-analysis.',
+			},
+		}),
+		title: fields.text({
+			label: 'Notebook title',
+			description: 'The visible page title for this analysis entry.',
+			validation: { isRequired: true },
+		}),
 		project: fields.relationship({
 			label: 'Project',
+			description: 'Pick the project drawer this notebook should attach to.',
 			collection: 'projects',
 			validation: { isRequired: true }
 		}),
@@ -52,7 +63,7 @@ export const notebooks = collection({
 		}),
 		description: fields.text({
 			label: 'Card description',
-			description: 'Shown in the analysis list and at the top of the notebook page.',
+			description: 'A short summary shown in the analysis archive and under the notebook title.',
 			multiline: true
 		}),
 		date: fields.date({ label: 'Published date', defaultValue: { kind: 'today' } }),
@@ -110,12 +121,16 @@ export const projects = collection({
 	schema: {
 		id: fields.slug({
 			name: {
-				label: 'Project ID',
+				label: 'Project slug',
 				description:
-					'Create projects first. Notebooks and concepts can link back to this project later.',
+					'Used in the file name, relationships, and links. Set it once, then avoid changing it. Example: local-llm-bench.',
 			},
 		}),
-		name: fields.text({ label: 'Project name', validation: { isRequired: true } }),
+		name: fields.text({
+			label: 'Project name',
+			description: 'The visible project title on the homepage and in the drawer.',
+			validation: { isRequired: true },
+		}),
 		url: fields.url({ label: 'Project URL' }),
 		status: fields.select({
 			label: 'Status',
@@ -130,20 +145,30 @@ export const projects = collection({
 			label: 'Open project URL in a new tab',
 			defaultValue: true,
 		}),
-		description: fields.text({
-			label: 'Full description',
-			description: 'Used in the drawer and as fallback copy on the home card.',
-			validation: { isRequired: true },
-			multiline: true,
-		}),
-		shortDescription: fields.text({
-			label: 'Home card description',
-			description: 'Shorter copy for the project tile on the dashboard.',
-		}),
-		image: fields.text({ label: 'Image path' }),
 		repo: fields.url({
 			label: 'GitHub repo URL',
 			description: 'Used for repo stats and recent commits in the project drawer.'
+		}),
+		description: fields.text({
+			label: 'Card description',
+			description: 'A short summary for the homepage project tile and search results.',
+			validation: { isRequired: true },
+			multiline: true,
+		}),
+		overview: fields.text({
+			label: 'What is it?',
+			description: 'The main explanation at the top of the project drawer.',
+			multiline: true
+		}),
+		architecture: fields.text({
+			label: 'How is it built?',
+			description: 'Tech stack, architecture, and the main implementation choices.',
+			multiline: true
+		}),
+		nextActions: fields.text({
+			label: 'What is next?',
+			description: 'What you are shipping, testing, or exploring next.',
+			multiline: true
 		}),
 		featuredNotebook: fields.relationship({
 			label: 'Featured analysis notebook',
@@ -167,21 +192,7 @@ export const projects = collection({
 				itemLabel: (props: any) => props.value || 'Post',
 			}
 		),
-		overview: fields.text({
-			label: 'Drawer overview',
-			description: 'The “What is it?” section in the project drawer.',
-			multiline: true
-		}),
-		architecture: fields.text({
-			label: 'How it is built',
-			description: 'Tech stack and the main implementation decisions.',
-			multiline: true
-		}),
-		nextActions: fields.text({
-			label: 'What is next',
-			description: 'What you are shipping, testing, or exploring next.',
-			multiline: true
-		})
+		image: fields.text({ label: 'Image path' })
 	}
 })
 
@@ -239,8 +250,8 @@ export const sections = singleton({
 					notebook: fields.object({
 						title: fields.text({ label: 'Block title' }),
 						notebookId: fields.text({
-							label: 'Notebook ID',
-							description: 'Must match a notebook entry.',
+							label: 'Notebook slug',
+							description: 'Must match the slug of a notebook entry.',
 							validation: { isRequired: true }
 						})
 					}),
@@ -261,7 +272,7 @@ export const concepts = singleton({
 		concepts: fields.array(
 			fields.object({
 				slug: fields.text({
-					label: 'Slug',
+					label: 'Concept slug',
 					description:
 						'Create projects, writing posts, and notebooks first. Concepts are the last curation step that ties those pieces together on the homepage.',
 					validation: { isRequired: true },
@@ -334,7 +345,7 @@ export const siteConfig = singleton({
 })
 
 export const about = singleton({
-	label: 'About',
+	label: 'About intro',
 	path: 'src/data/about',
 	schema: {
 		bio: fields.text({
@@ -377,13 +388,13 @@ export const impact = singleton({
 })
 
 export const secrets = singleton({
-	label: 'Secrets',
+	label: 'Developer secrets',
 	path: 'src/data/secrets',
 	schema: {
 		githubToken: fields.text({
 			label: 'GitHub token',
 			multiline: false,
-			description: 'Optional. Used to fetch GitHub activity while developing locally.'
+			description: 'Optional. Local development only. Used to fetch GitHub activity with higher rate limits.'
 		})
 	}
 })

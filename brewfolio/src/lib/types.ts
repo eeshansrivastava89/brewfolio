@@ -10,7 +10,6 @@ export interface Project {
 	status: 'live' | 'in-progress' | 'coming-soon'
 	external: boolean
 	description: string
-	shortDescription?: string
 	image?: string
 	repo?: string
 	featuredNotebook?: string

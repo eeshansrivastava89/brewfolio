@@ -43,7 +43,7 @@ const github = singleton({
 		handle: fields.text({
 			label: 'GitHub handle',
 			description:
-				'Without the @ sign. Used in the GitHub pane on the homepage and for contribution/activity data.',
+				'Without the @ sign. This powers the GitHub pane on the homepage and the repo activity shown inside project drawers.',
 		}),
 	},
 })
@@ -60,7 +60,7 @@ const writingSettings = singleton({
 		publicationUrl: fields.url({
 			label: 'Publication URL',
 			description:
-				'The publication home URL. Brewfolio derives the feed and subscribe links from this and pulls article metadata automatically.',
+				'Set this before curating concepts or linking related writing. Brewfolio derives the feed and subscribe links from this and pulls article metadata automatically.',
 		}),
 	},
 })
@@ -70,15 +70,15 @@ export default config({
 	ui: {
 		navigation: [
 			'config',
-			'github',
 			'writingSettings',
+			'github',
+			'secrets',
 			'projects',
 			'notebooks',
 			'concepts',
 			'about',
 			'timeline',
 			'impact',
-			'secrets',
 		],
 	},
 	collections: {

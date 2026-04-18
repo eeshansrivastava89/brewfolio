@@ -43,7 +43,7 @@ function getStatusLabel(status: string): string {
 					aria-label={`Open ${project.name} details`}
 				>
 					<div class="project-tile-name">{project.name}</div>
-					<div class="project-tile-desc">{project.shortDescription || project.description}</div>
+					<div class="project-tile-desc">{project.description}</div>
 					{project.tags && project.tags.length > 0 && (
 						<div class="project-tile-tags">
 							{project.tags.slice(0, 4).map((tag) => (
@@ -500,7 +500,7 @@ function getStatusLabel(status: string): string {
 						'</div></div>'
 					: '') +
 				(!primaryOverview && !project.architecture && !project.nextActions && !relatedLinks.length
-					? '<div class="bf-pdr-info-msg">No drawer copy configured yet. Fill in the overview fields in Keystatic.</div>'
+					? '<div class="bf-pdr-info-msg">No drawer copy configured yet. Fill in the “What is it?”, “How is it built?”, or “What is next?” fields in Keystatic.</div>'
 					: '') +
 				'</div></section>' +
 				'<section class="bf-pdr-section">' +
