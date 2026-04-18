@@ -93,7 +93,7 @@ function getInitials(value: string): string {
 				</>
 			)}
 		</div>
-		<ArticleTOC toc={toc} topLabel={post?.title || 'Writing'} />
+		<ArticleTOC toc={toc} topLabel={post?.title || 'Writing'} minEntries={2} />
 	</ModalSource>
 
 	<SearchData slot="search-data" data={searchData} />

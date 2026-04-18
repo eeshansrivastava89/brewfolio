@@ -377,7 +377,9 @@ async function fetchProjectGitHubData(
 			}),
 		])
 
-		if (!repoResponse.ok) return null
+		if (!repoResponse.ok) {
+			return await fetchProjectGitHubDataFromPublicPages(owner, repo)
+		}
 
 		const repoData = (await repoResponse.json()) as Record<string, unknown>
 		const openPRs = pullsResponse.ok
@@ -413,6 +415,129 @@ async function fetchProjectGitHubData(
 			syncedAt: new Date().toISOString(),
 		}
 	} catch {
+		return await fetchProjectGitHubDataFromPublicPages(owner, repo)
+	}
+}
+
+async function fetchProjectGitHubDataFromPublicPages(
+	owner: string,
+	repo: string,
+): Promise<ProjectGitHubData | null> {
+	try {
+		const headers = {
+			'User-Agent': 'brewfolio-theme',
+			Accept: 'text/html,application/atom+xml',
+		}
+
+		const repoUrl = `https://github.com/${owner}/${repo}`
+		const [repoPageResponse, commitsFeedResponse] = await Promise.all([
+			fetch(repoUrl, { headers }),
+			fetch(`${repoUrl}/commits.atom`, { headers }),
+		])
+
+		if (!repoPageResponse.ok && !commitsFeedResponse.ok) return null
+
+		const repoHtml = repoPageResponse.ok ? await repoPageResponse.text() : ''
+		const commitsFeed = commitsFeedResponse.ok ? await commitsFeedResponse.text() : ''
+
+		const openIssues = extractGitHubTabCount(repoHtml, 'issues-repo-tab-count')
+		const openPRs = extractGitHubTabCount(repoHtml, 'pull-requests-repo-tab-count')
+		const visibility = extractRepoVisibility(repoHtml)
+		const recentCommits = extractCommitsFromAtom(commitsFeed)
+
+		if (!repoHtml && recentCommits.length === 0) return null
+
+		return {
+			openIssues,
+			openPRs,
+			visibility,
+			recentCommits,
+			syncedAt: new Date().toISOString(),
+		}
+	} catch {
 		return null
 	}
+}
+
+function extractGitHubTabCount(html: string, elementId: string): number {
+	if (!html) return 0
+
+	const idPattern = new RegExp(
+		`id="${elementId}"[^>]*?(?:title="([\\d,]+)"[^>]*>([^<]+)|>([^<]+))`,
+		'i',
+	)
+	const match = html.match(idPattern)
+	const raw = match?.[1] || match?.[2] || match?.[3] || ''
+	return parseCount(raw)
+}
+
+function extractRepoVisibility(html: string): string {
+	if (!html) return 'public'
+	const match = html.match(/<span[^>]*>\s*(Public|Private)\s*<\/span>/i)
+	return match?.[1]?.toLowerCase() === 'private' ? 'private' : 'public'
+}
+
+function extractCommitsFromAtom(feedXml: string): ProjectCommit[] {
+	if (!feedXml) return []
+
+	const commits: ProjectCommit[] = []
+	const entryRegex = /<entry>([\s\S]*?)<\/entry>/gi
+	let entryMatch: RegExpExecArray | null
+
+	while ((entryMatch = entryRegex.exec(feedXml)) !== null && commits.length < 15) {
+		const entry = entryMatch[1]
+		const title = decodeHtml(extractTag(entry, 'title'))
+		const updated = extractTag(entry, 'updated')
+		const linkMatch = entry.match(/<link[^>]*rel="alternate"[^>]*href="([^"]+)"[^>]*>/i)
+		const url = linkMatch?.[1] || ''
+		const sha = url.split('/').pop()?.slice(0, 7) || ''
+
+		if (!title || !url) continue
+
+		commits.push({
+			sha,
+			message: title.slice(0, 80),
+			date: updated,
+			url,
+		})
+	}
+
+	return commits
+}
+
+function extractTag(content: string, tag: string): string {
+	const regex = new RegExp(`<${tag}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${tag}>`, 'i')
+	const match = content.match(regex)
+	return match?.[1]?.trim() || ''
+}
+
+function decodeHtml(value: string): string {
+	const entities: Record<string, string> = {
+		'&amp;': '&',
+		'&lt;': '<',
+		'&gt;': '>',
+		'&quot;': '"',
+		'&#39;': "'",
+		'&apos;': "'",
+	}
+
+	return value.replace(/&[^;]+;/g, (entity) => {
+		if (entities[entity]) return entities[entity]
+		const decimalMatch = entity.match(/^&#(\d+);$/)
+		if (decimalMatch) return String.fromCodePoint(Number(decimalMatch[1]))
+		const hexMatch = entity.match(/^&#x([0-9a-fA-F]+);$/)
+		if (hexMatch) return String.fromCodePoint(parseInt(hexMatch[1], 16))
+		return entity
+	})
+}
+
+function parseCount(value: string): number {
+	const normalized = value.replace(/,/g, '').trim().toLowerCase()
+	if (!normalized) return 0
+	if (normalized.endsWith('k')) {
+		const parsed = Number.parseFloat(normalized.slice(0, -1))
+		return Number.isFinite(parsed) ? Math.round(parsed * 1000) : 0
+	}
+	const parsed = Number.parseInt(normalized, 10)
+	return Number.isFinite(parsed) ? parsed : 0
 }

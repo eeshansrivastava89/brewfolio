@@ -43,7 +43,7 @@ const headerSiteName = siteName ?? meta.title ?? 'Portfolio'
 		<a href="#main-content" class="skip-link">Skip to content</a>
 		<ThemeProvider />
 		<div class="game-shell">
-			<Header navItems={headerNavItems} siteName={headerSiteName}>
+			<Header navItems={headerNavItems} siteName={headerSiteName} showSearch={false}>
 				<slot name="header-left" slot="header-left" />
 				<slot name="settings-trigger" slot="settings-trigger" />
 			</Header>

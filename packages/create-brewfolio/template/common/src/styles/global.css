@@ -7,8 +7,9 @@
 @import 'brewfolio/styles/tokens.css';
 
 @theme {
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-mono);
+  --font-sans: var(--brewfolio-font-sans, var(--font-sans, system-ui, sans-serif));
+  --font-serif: var(--brewfolio-font-serif, var(--font-serif, Georgia, serif));
+  --font-mono: var(--brewfolio-font-mono, var(--font-mono, monospace));
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);

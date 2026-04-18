@@ -1,7 +1,7 @@
 roundTitle: Round 3 of 10
 subtitle: >-
-  A seeded example for the GameLayout. Edit or remove every prompt, score,
-  choice, and leaderboard row in Keystatic.
+  A quick competitive round built to show the play area, timer, scoring, and
+  leaderboard working together in the same shell.
 scoreLabel: Your score
 scoreValue: '6870'
 previousScoreValue: '6820'
