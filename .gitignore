@@ -9,3 +9,6 @@ node_modules/
 
 # npm pack artifact; rebuild with `npm pack` inside brewfolio/
 *.tgz
+
+# Internal design docs, plans, test reports — kept locally, not published
+internal/

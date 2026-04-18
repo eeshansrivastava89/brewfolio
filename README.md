@@ -53,15 +53,7 @@ packages/create-brewfolio/            ← the npm package "create-brewfolio"
 │   ├── app/                          ← AppLayout starter pages
 │   └── game/                         ← GameLayout starter pages
 └── package.json
-
-internal/docs/                        ← design, architecture, test reports
 ```
-
-## Docs
-
-- [Vision + architecture](./internal/docs/brewfolio-vision-and-architecture.md)
-- [Implementation plan](./internal/docs/brewfolio-implementation-plan.md)
-- [Phase 6.5 end-to-end test report](./internal/docs/brewfolio-phase6_5-e2e-test-report.md) — 36 screenshots
 
 ## Contributing
 
