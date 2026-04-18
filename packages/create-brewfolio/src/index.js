@@ -4,7 +4,9 @@
  *
  * Usage:
  *   npx create-brewfolio my-site
- *   npx create-brewfolio my-site --template minimal
+ *   npx create-brewfolio my-site --type portfolio
+ *   npx create-brewfolio my-site --type app
+ *   npx create-brewfolio my-site --type game
  */
 
 import { Command } from 'commander'
@@ -16,58 +18,69 @@ import { copyTemplateOverlay, runProcess } from './utils.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
+const VALID_TYPES = new Set(['portfolio', 'app', 'game'])
+
 const program = new Command()
 
 program
   .name('create-brewfolio')
   .description('Scaffold a new Astro project with brewfolio pre-configured')
   .argument('<project-name>', 'Name of the project to create')
-  .option('-t, --template <template>', 'Astro project template', 'minimal')
+  .option('-t, --type <type>', 'Brewfolio site type: portfolio | app | game', 'portfolio')
   .option('-d, --dry-run', 'Print what would be done without doing it')
-  .option('-l, --local-brewfolio <path>', 'Path to local brewfolio package (for testing)')
+  .option('-l, --local-brewfolio <path>', 'Path to local brewfolio package (for testing before npm publish)')
+  .option('--astro-template <template>', 'Underlying Astro starter template', 'minimal')
   .action(async (projectName, opts) => {
+    const type = opts.type
+    if (!VALID_TYPES.has(type)) {
+      console.error(`\n  Error: --type must be one of: ${[...VALID_TYPES].join(', ')}\n`)
+      process.exit(1)
+    }
+
     const projectDir = join(process.cwd(), projectName)
 
-    console.log(`\n  brewfolio — scaffolding ${projectName}\n`)
+    console.log(`\n  brewfolio — scaffolding ${projectName} (type: ${type})\n`)
 
     if (opts.dryRun) {
       console.log(`  [dry-run] Would create project at: ${projectDir}`)
-      console.log(`  [dry-run] Would scaffold template: ${opts.template}`)
-      console.log(`  [dry-run] Would install: brewfolio, @keystatic/core, @keystatic/astro, tailwind, react`)
+      console.log(`  [dry-run] Would scaffold Astro starter: ${opts.astroTemplate}`)
+      console.log(`  [dry-run] Would copy template overlay: common + ${type}`)
+      console.log(`  [dry-run] Would install: brewfolio, @keystatic/core, @keystatic/astro, @astrojs/react, react, react-dom, tailwindcss`)
       return
     }
 
-    const spinner = ora()
-
     try {
       // 1. Check target directory doesn't already exist
-      spinner.start('Checking target directory…')
+      let spinner = ora('Checking target directory…').start()
       try {
         await fs.access(projectDir)
         spinner.fail(`Directory "${projectName}" already exists. Choose a different name or remove it first.`)
         process.exit(1)
       } catch {}
-      spinner.succeed('Checking target directory…')
+      spinner.succeed('Target directory is free')
 
       // 2. Scaffold Astro project
-      spinner.start(`Scaffolding Astro project (${opts.template} template)…`)
+      spinner = ora(`Scaffolding Astro project (${opts.astroTemplate} template)…`).start()
+      spinner.stop()
       await runProcess('npx', [
         '--yes',
         'create-astro@latest',
         projectName,
-        '--template', opts.template,
+        '--template', opts.astroTemplate,
         '--no-git',
+        '--install',
         '--yes',
       ])
 
-      // 3. Copy template overlay files into the new project
-      spinner.start('Applying brewfolio template…')
-      await copyTemplateOverlay(projectDir)
-      spinner.succeed('Applying brewfolio template…')
+      // 3. Copy template overlay: common + type-specific
+      spinner = ora('Applying brewfolio template overlay…').start()
+      await copyTemplateOverlay(projectDir, type)
+      spinner.succeed(`Applied brewfolio template (common + ${type})`)
 
       // 4. Install brewfolio + peer deps
       //    Use --legacy-peer-deps: @keystatic/astro hasn't updated its peer dep for Astro 6 yet
-      spinner.start('Installing dependencies…')
+      spinner = ora('Installing brewfolio + peer dependencies…').start()
+      spinner.stop()
       const brewfolioPath = opts.localBrewfolio
         ? opts.localBrewfolio
         : 'brewfolio'
@@ -77,6 +90,7 @@ program
         brewfolioPath,
         '@keystatic/core@latest',
         '@keystatic/astro@latest',
+        '@astrojs/react@latest',
         'tailwindcss@^4.2.2',
         '@tailwindcss/vite@^4.2.2',
         'react',
@@ -85,13 +99,17 @@ program
       ]
       await runProcess('npm', installArgs, { cwd: projectDir })
 
-      spinner.succeed(`\n  Done! Your project is ready at ./${projectName}\n`)
-      console.log('  Next steps:\n')
+      console.log('')
+      console.log(`  Done! Your ${type} is ready at ./${projectName}\n`)
+      console.log('  Next steps:')
       console.log(`    cd ${projectName}`)
       console.log('    npm run dev')
       console.log('')
+      console.log('  Then visit:')
+      console.log('    http://localhost:4321         — the site')
+      console.log('    http://localhost:4321/keystatic — the CMS admin\n')
     } catch (err) {
-      spinner.fail(`Scaffolding failed: ${err.message}`)
+      console.error(`\n  Scaffolding failed: ${err.message}\n`)
       process.exit(1)
     }
   })

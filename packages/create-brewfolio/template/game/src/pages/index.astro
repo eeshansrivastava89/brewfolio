@@ -1,0 +1,41 @@
+---
+import '../styles/global.css'
+import GameLayout from 'brewfolio/layouts/GameLayout.astro'
+import Leaderboard from 'brewfolio/components/Leaderboard.astro'
+import Timer from 'brewfolio/components/Timer.astro'
+import ScoreDisplay from 'brewfolio/components/ScoreDisplay.astro'
+
+const entries = [
+  { rank: 1, name: 'alice', score: 8450, delta: 200, variant: 'gold' as const },
+  { rank: 2, name: 'bob', score: 7990, delta: -80, variant: 'silver' as const },
+  { rank: 3, name: 'carol', score: 7420, delta: 120, variant: 'bronze' as const },
+  { rank: 4, name: 'dan (you)', score: 6870, delta: 50, isCurrentUser: true },
+  { rank: 5, name: 'erin', score: 6210, delta: 0 }
+]
+---
+
+<GameLayout meta={{ title: 'My Brewfolio Game' }} showLeaderboard={true}>
+  <div class="flex flex-col gap-6 p-4">
+    <section class="flex flex-col gap-2">
+      <h1 class="font-serif text-2xl font-bold">Round 3 of 10</h1>
+      <p class="text-muted-foreground text-sm">First to 10,000 wins. Streaks give a +20% multiplier.</p>
+    </section>
+    <section class="flex gap-6 items-center flex-wrap">
+      <ScoreDisplay value={6870} previousValue={6820} label="Your score" />
+      <Timer variant="countdown" totalMs={30000} showBar={true} showDigits={true} size="lg" />
+    </section>
+    <section class="flex flex-col gap-2">
+      <h2 class="font-serif text-lg font-bold">Question</h2>
+      <div class="rounded-lg border border-border bg-card p-6">
+        <p class="text-base">Which one of these is a brewfolio layout?</p>
+        <div class="grid grid-cols-2 gap-2 mt-4">
+          <button class="rounded-lg border border-border bg-card-raised p-3 hover:border-primary">DashboardLayout</button>
+          <button class="rounded-lg border border-border bg-card-raised p-3 hover:border-primary">SidebarLayout</button>
+          <button class="rounded-lg border border-border bg-card-raised p-3 hover:border-primary">BrewLayout</button>
+          <button class="rounded-lg border border-border bg-card-raised p-3 hover:border-primary">PourLayout</button>
+        </div>
+      </div>
+    </section>
+  </div>
+  <Leaderboard slot="sidebar" entries={entries} title="Leaderboard" showDelta={true} />
+</GameLayout>

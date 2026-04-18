@@ -1,0 +1,39 @@
+---
+import '../styles/global.css'
+import AppLayout from 'brewfolio/layouts/AppLayout.astro'
+import type { SectionConfig } from 'brewfolio/lib/types'
+import { reader } from '../lib/content'
+
+const sectionsData = await reader.singletons.sections.read()
+const notebookEntries = await reader.collections.notebooks.all()
+
+const sections = (sectionsData?.sections ?? []) as SectionConfig[]
+const mappedNotebooks = notebookEntries.map((n) => ({ id: n.slug, title: n.entry.title }))
+
+// Fallback starter content when nothing is configured yet in Keystatic
+const fallbackSections: SectionConfig[] = sections.length > 0 ? sections : [
+  {
+    discriminant: 'metrics-grid',
+    value: {
+      title: 'Welcome to your new brewfolio app',
+      metrics: [
+        { label: 'Sections', value: String(sections.length), delta: 'Add more in Keystatic', delta_direction: 'neutral' },
+        { label: 'Notebooks', value: String(mappedNotebooks.length), delta: '', delta_direction: 'neutral' }
+      ]
+    }
+  },
+  {
+    discriminant: 'results-list',
+    value: {
+      title: 'Getting started',
+      items: [
+        { title: 'Open the Keystatic admin at /keystatic', meta: 'Edit content live' },
+        { title: 'Add a section in Keystatic → Sections', meta: 'Reload this page to see it' },
+        { title: 'Read the docs at brewfolio docs', meta: 'Link TBD' }
+      ]
+    }
+  }
+]
+---
+
+<AppLayout meta={{ title: 'My Brewfolio App' }} sections={fallbackSections} notebookEntries={mappedNotebooks} />

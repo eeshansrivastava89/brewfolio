@@ -6,3 +6,6 @@ node_modules/
 .turbo/
 .astro/
 .output/
+
+# npm pack artifact; rebuild with `npm pack` inside brewfolio/
+*.tgz

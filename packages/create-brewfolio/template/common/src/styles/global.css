@@ -1,5 +1,9 @@
 @import 'tailwindcss';
 
+/* Scan brewfolio's source for Tailwind utility classes.
+ * Without this, utilities used only inside the package would be stripped. */
+@source '../../node_modules/brewfolio/src/**/*.{astro,ts,js,tsx,jsx}';
+
 @import 'brewfolio/styles/tokens.css';
 
 @theme {
