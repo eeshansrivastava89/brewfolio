@@ -1,23 +1,117 @@
 ---
-/**
- * Search Data Provider
- * Renders a JSON script block that SearchOverlay reads
- */
-
 interface SearchEntry {
-  id: string
-  title: string
-  href: string
-  category: string
-  excerpt?: string
+	type: 'concept' | 'project' | 'writing' | 'analysis'
+	title: string
+	desc: string
+	slug?: string
+	href?: string
 }
 
 interface Props {
-  data: SearchEntry[]
+	data: SearchEntry[]
 }
 
 const { data } = Astro.props
-const jsonData = JSON.stringify(data)
 ---
 
-<script type="application/json" id="search-data" set:html={jsonData} />
+<script define:vars={{ data }} is:inline>
+(function () {
+	var searchInput = document.getElementById('searchInput')
+	var searchResults = document.getElementById('searchResults')
+	if (!searchInput || !searchResults) return
+
+	function escapeHtml(value) {
+		return String(value == null ? '' : value)
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;')
+	}
+
+	function safeInternalHref(href) {
+		var path = String(href == null ? '' : href).trim()
+		return path.charAt(0) === '/' ? path : '/'
+	}
+
+	function renderEmpty(message) {
+		searchResults.innerHTML = '<div class="search-empty">' + escapeHtml(message) + '</div>'
+	}
+
+	function activateConcept(slug) {
+		if (window.__brewfolioCloseSearch) window.__brewfolioCloseSearch()
+		if (window.__brewfolioNavigateHome) window.__brewfolioNavigateHome()
+		if (window.__brewfolioToggleConcept) window.__brewfolioToggleConcept(slug)
+	}
+
+	function focusProject(projectId) {
+		if (window.__brewfolioCloseSearch) window.__brewfolioCloseSearch()
+		if (window.__brewfolioFocusProject) window.__brewfolioFocusProject(projectId)
+	}
+
+	function openPath(href) {
+		if (window.__brewfolioCloseSearch) window.__brewfolioCloseSearch()
+		if (window.__brewfolioOpenPathModal) window.__brewfolioOpenPathModal(href)
+	}
+
+	searchInput.addEventListener('input', function () {
+		var query = this.value.trim().toLowerCase()
+		if (!query) {
+			renderEmpty('Type to search across all content')
+			return
+		}
+
+		var results = data.filter(function (item) {
+			return item.title.toLowerCase().includes(query) ||
+				item.desc.toLowerCase().includes(query) ||
+				item.type.toLowerCase().includes(query)
+		}).slice(0, 10)
+
+		if (results.length === 0) {
+			renderEmpty('No results found')
+			return
+		}
+
+		searchResults.innerHTML = results.map(function (result) {
+			var typeLabel = result.type === 'writing'
+				? 'Writing'
+				: result.type === 'project'
+					? 'Project'
+					: result.type === 'analysis'
+						? 'Analysis'
+						: 'Concept'
+			var title = '<div class="search-result-title">' + escapeHtml(result.title) + '</div>'
+			var meta = '<div class="search-result-type">' + escapeHtml(typeLabel) + '</div>'
+			if (result.type === 'concept') {
+				return '<button type="button" class="search-result" data-search-concept="' + escapeHtml(result.slug) + '">' + meta + title + '</button>'
+			}
+			if (result.type === 'project') {
+				return '<button type="button" class="search-result" data-search-project="' + escapeHtml(result.slug) + '">' + meta + title + '</button>'
+			}
+			return '<a href="' + escapeHtml(safeInternalHref(result.href)) + '" class="search-result" data-modal-link>' + meta + title + '</a>'
+		}).join('')
+	})
+
+	searchResults.addEventListener('click', function (event) {
+		var conceptResult = event.target.closest('[data-search-concept]')
+		if (conceptResult) {
+			event.preventDefault()
+			activateConcept(conceptResult.getAttribute('data-search-concept') || '')
+			return
+		}
+
+		var projectResult = event.target.closest('[data-search-project]')
+		if (projectResult) {
+			event.preventDefault()
+			focusProject(projectResult.getAttribute('data-search-project') || '')
+			return
+		}
+
+		var modalLink = event.target.closest('a[data-modal-link]')
+		if (modalLink) {
+			event.preventDefault()
+			openPath(modalLink.getAttribute('href') || '/')
+		}
+	})
+})()
+</script>

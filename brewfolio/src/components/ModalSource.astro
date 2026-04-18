@@ -1,14 +1,20 @@
 ---
-/**
- * Modal Source Template
- * Marker for modal content extraction by dashboard
- */
+interface Props {
+	path: string
+	centerHtml?: string
+	rightHtml?: string
+	leftHtml?: string
+	size?: 'default' | 'medium' | 'wide'
+}
+
+const { path, centerHtml = '', rightHtml = '', leftHtml = '', size = 'default' } = Astro.props
 ---
 
-<div data-brewfolio-modal-source style="display:none;">
-  <div data-brewfolio-modal-left><slot name="left" /></div>
-  <div data-brewfolio-modal-center><slot name="center" /></div>
-  <div data-brewfolio-modal-right><slot name="right" /></div>
-  <div data-brewfolio-modal-titlebar><slot name="titlebar" /></div>
-  <div data-brewfolio-modal-body><slot /></div>
+<div data-brewfolio-modal-source data-path={path} data-size={size} style="display:none;">
+	<div data-brewfolio-modal-left set:html={leftHtml}></div>
+	<div data-brewfolio-modal-center set:html={centerHtml}></div>
+	<div data-brewfolio-modal-right set:html={rightHtml}></div>
+	<div data-brewfolio-modal-body>
+		<slot />
+	</div>
 </div>

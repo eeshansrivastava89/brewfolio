@@ -1,193 +1,225 @@
 ---
 import '../../styles/global.css'
 import DashboardLayout from 'brewfolio/layouts/DashboardLayout.astro'
-import { reader } from '../../lib/content'
+import Dashboard from 'brewfolio/components/Dashboard.astro'
+import ModalSource from 'brewfolio/components/ModalSource.astro'
+import SearchData from 'brewfolio/components/SearchData.astro'
+import { getPortfolioData, substackTitlebar, subscribeButton } from '../../lib/portfolio-data'
 
-const writingEntries = await reader.collections.writing.all()
+const { writing, conceptLabelsBySlug, searchData } = await getPortfolioData()
 
-const posts = writingEntries
-	.map((entry) => ({
-		slug: entry.slug,
-		title: entry.entry.title,
-		pubDate: entry.entry.pubDate,
-		substackUrl: entry.entry.substack_url || undefined,
-		description: entry.entry.description || ''
-	}))
-	.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime())
+const postsByYear = new Map<number, typeof writing>()
+for (const post of writing) {
+	const year = new Date(post.pubDate).getFullYear()
+	if (!postsByYear.has(year)) postsByYear.set(year, [])
+	postsByYear.get(year)!.push(post)
+}
+const years = [...postsByYear.keys()].sort((a, b) => b - a)
+const latestPost = writing[0]
+const centerHtml = substackTitlebar('The Asymptotic')
+const rightHtml = subscribeButton('Subscribe', 'https://theasymptotic.substack.com/subscribe')
 ---
 
 <DashboardLayout meta={{ title: 'Writing' }}>
-	<section class="content-page">
-		<div class="content-card">
-			<header class="content-header">
-				<p class="content-kicker">Writing</p>
-				<h1>Writing archive</h1>
-				<p class="content-intro">This scaffold ships a real route for the top navigation instead of a dead link. Add essays in Keystatic, then link them out to your published writing source.</p>
+	<Dashboard />
+
+	<ModalSource
+		slot="modal-source"
+		path="/writing"
+		centerHtml={centerHtml}
+		rightHtml={rightHtml}
+		size="medium"
+	>
+		<section class="writing-archive-shell">
+			<header class="writing-archive-hero">
+				<h1 class="modal-page-title">Writing archive</h1>
+				<p class="writing-archive-intro">Essays and notes from the portfolio CMS. Each item opens as a modal route and can point readers to the original published piece.</p>
 			</header>
 
-			{posts.length === 0 ? (
-				<div class="empty-state">
-					<h2>No writing entries yet</h2>
-					<p>Create one in Keystatic under <strong>Writing</strong> to populate this page.</p>
-				</div>
-			) : (
-				<div class="content-list">
-					{posts.map((post) => {
-						const content = (
-							<>
-								<div class="content-list-main">
-									<h2>{post.title}</h2>
-									{post.description && <p>{post.description}</p>}
-								</div>
-								<div class="content-list-meta">
-									<span>{post.pubDate}</span>
-									{post.substackUrl && <span class="link-cta">Open article</span>}
-								</div>
-							</>
-						)
-
-						return post.substackUrl ? (
-							<a class="content-row" href={post.substackUrl} target="_blank" rel="noopener noreferrer">
-								{content}
-							</a>
-						) : (
-							<article class="content-row">
-								{content}
-							</article>
-						)
-					})}
-				</div>
+			{latestPost && (
+				<a href={`/writing/${latestPost.slug}`} class="writing-feature-card" data-modal-link>
+					<div class="writing-feature-kicker">Latest</div>
+					<h2 class="writing-feature-title">{latestPost.title}</h2>
+					<p class="writing-feature-desc">{latestPost.description}</p>
+					<div class="writing-feature-meta">
+						<span>{new Date(latestPost.pubDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+						{conceptLabelsBySlug.get(latestPost.slug)?.map((label) => (
+							<span class="writing-modal-tag">{label}</span>
+						))}
+						<span class="writing-feature-cta">Open article →</span>
+					</div>
+				</a>
 			)}
-		</div>
-	</section>
+
+			<div class="writing-year-grid">
+				{years.map((year) => (
+					<section class="writing-year-card">
+						<div class="writing-year-card-header">
+							<h3 class="writing-year">{year}</h3>
+							<span class="writing-year-count">{postsByYear.get(year)?.length || 0} pieces</span>
+						</div>
+						<div class="writing-year-list">
+							{postsByYear.get(year)?.map((post) => (
+								<a href={`/writing/${post.slug}`} class="writing-archive-row" data-modal-link>
+									<div class="writing-archive-row-main">
+										<div class="writing-modal-title">{post.title}</div>
+										<div class="writing-archive-row-desc">{post.description}</div>
+									</div>
+									<div class="writing-modal-meta">
+										<span class="writing-modal-date">{new Date(post.pubDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+										{conceptLabelsBySlug.get(post.slug)?.map((label) => (
+											<span class="writing-modal-tag">{label}</span>
+										))}
+									</div>
+								</a>
+							))}
+						</div>
+					</section>
+				))}
+			</div>
+		</section>
+	</ModalSource>
+
+	<SearchData slot="search-data" data={searchData} />
 </DashboardLayout>
 
 <style>
-	.content-page {
-		height: 100%;
-		min-height: 0;
+	.writing-archive-shell {
+		display: grid;
+		gap: 28px;
 	}
 
-	.content-card {
-		height: 100%;
-		min-height: 0;
-		background: var(--card);
+	.writing-archive-hero {
+		display: grid;
+		gap: 12px;
+	}
+
+	.writing-archive-intro {
+		max-width: 44rem;
+		color: var(--muted-foreground);
+		line-height: 1.65;
+	}
+
+	.writing-feature-card,
+	.writing-year-card {
+		display: block;
 		border: 1px solid var(--border);
-		border-radius: var(--radius-lg);
-		box-shadow: var(--shadow);
-		padding: 28px;
-		overflow: auto;
+		border-radius: 18px;
+		background: var(--card-raised);
+		padding: 22px;
+		text-decoration: none;
 	}
 
-	.content-header {
-		margin-bottom: 24px;
-		max-width: 56rem;
+	.writing-feature-card:hover,
+	.writing-archive-row:hover {
+		text-decoration: none;
 	}
 
-	.content-kicker {
-		margin: 0 0 8px;
+	.writing-feature-kicker {
 		font-family: var(--font-mono);
 		font-size: 11px;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
 		color: var(--muted);
+		margin-bottom: 10px;
 	}
 
-	.content-header h1 {
-		margin: 0 0 10px;
+	.writing-feature-title,
+	.writing-year {
+		margin: 0;
 		font-family: var(--font-serif);
-		font-size: clamp(2rem, 4vw, 2.8rem);
-		line-height: 1.05;
+	}
+
+	.writing-feature-title {
+		font-size: 2rem;
+		line-height: 1.08;
 		letter-spacing: -0.03em;
 	}
 
-	.content-intro {
-		margin: 0;
-		max-width: 44rem;
+	.writing-feature-desc {
+		margin: 14px 0 0;
 		color: var(--muted-foreground);
-		line-height: 1.6;
+		line-height: 1.65;
 	}
 
-	.content-list {
-		display: grid;
-		gap: 14px;
-	}
-
-	.content-row {
+	.writing-feature-meta,
+	.writing-modal-meta {
 		display: flex;
-		justify-content: space-between;
-		gap: 18px;
-		padding: 18px 20px;
-		border: 1px solid var(--border);
-		border-radius: 14px;
-		background: var(--card-raised);
-		color: inherit;
-		text-decoration: none;
-		transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
-	}
-
-	.content-row:hover {
-		border-color: var(--primary);
-		box-shadow: var(--shadow-hover);
-		transform: translateY(-1px);
-		text-decoration: none;
-	}
-
-	.content-list-main h2 {
-		margin: 0 0 8px;
-		font-size: 1.05rem;
-	}
-
-	.content-list-main p {
-		margin: 0;
-		color: var(--muted-foreground);
-		line-height: 1.55;
-	}
-
-	.content-list-meta {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-end;
-		gap: 10px;
-		min-width: 8rem;
-		font-size: 0.9rem;
+		flex-wrap: wrap;
+		gap: 8px;
+		margin-top: 14px;
+		font-size: 0.92rem;
 		color: var(--muted);
 	}
 
-	.link-cta {
+	.writing-feature-cta {
 		color: var(--primary);
 		font-weight: 600;
 	}
 
-	.empty-state {
-		padding: 24px;
-		border: 1px dashed var(--border);
-		border-radius: 14px;
-		background: var(--card-raised);
+	.writing-year-grid {
+		display: grid;
+		gap: 14px;
 	}
 
-	.empty-state h2 {
-		margin: 0 0 8px;
-		font-size: 1.05rem;
+	.writing-year-card-header {
+		display: flex;
+		justify-content: space-between;
+		gap: 12px;
+		margin-bottom: 14px;
 	}
 
-	.empty-state p {
-		margin: 0;
+	.writing-year-count {
+		color: var(--muted);
+		font-size: 0.92rem;
+	}
+
+	.writing-year-list {
+		display: grid;
+		gap: 2px;
+	}
+
+	.writing-archive-row {
+		display: flex;
+		justify-content: space-between;
+		gap: 16px;
+		padding: 14px 0;
+		border-top: 1px solid var(--border);
+	}
+
+	.writing-archive-row:first-child {
+		border-top: 0;
+		padding-top: 0;
+	}
+
+	.writing-modal-title {
+		font-weight: 600;
+		font-size: 1rem;
+	}
+
+	.writing-archive-row-desc {
+		margin-top: 6px;
 		color: var(--muted-foreground);
+		line-height: 1.55;
+	}
+
+	.writing-modal-tag {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		background: rgba(var(--primary-rgb), 0.08);
+		color: var(--primary);
+		padding: 2px 8px;
+		border-radius: 999px;
 	}
 
 	@media (max-width: 768px) {
-		.content-card {
+		.writing-feature-card,
+		.writing-year-card {
 			padding: 18px;
 		}
 
-		.content-row {
+		.writing-archive-row {
 			flex-direction: column;
-		}
-
-		.content-list-meta {
-			align-items: flex-start;
-			min-width: 0;
 		}
 	}
 </style>

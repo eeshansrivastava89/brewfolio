@@ -1,193 +1,133 @@
 ---
 import '../../styles/global.css'
 import DashboardLayout from 'brewfolio/layouts/DashboardLayout.astro'
-import { reader } from '../../lib/content'
+import Dashboard from 'brewfolio/components/Dashboard.astro'
+import ModalSource from 'brewfolio/components/ModalSource.astro'
+import SearchData from 'brewfolio/components/SearchData.astro'
+import { getPortfolioData } from '../../lib/portfolio-data'
 
-const notebookEntries = await reader.collections.notebooks.all()
-
-const notebooks = notebookEntries
-	.map((entry) => ({
-		id: entry.slug,
-		title: entry.entry.title,
-		date: entry.entry.date,
-		description: entry.entry.description || '',
-		githubUrl: entry.entry.github_url || undefined
-	}))
-	.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+const { notebooks, projects, searchData } = await getPortfolioData()
+const projectById = new Map(projects.map((project) => [project.id, project]))
 ---
 
 <DashboardLayout meta={{ title: 'Analysis' }}>
-	<section class="content-page">
-		<div class="content-card">
-			<header class="content-header">
-				<p class="content-kicker">Analysis</p>
-				<h1>Notebook archive</h1>
-				<p class="content-intro">This starter page gives the portfolio nav a real destination. Published notebook links can point to GitHub, NBViewer, or your own analysis routes later.</p>
+	<Dashboard />
+
+	<ModalSource slot="modal-source" path="/analysis" size="medium">
+		<section class="analysis-shell">
+			<header class="analysis-hero">
+				<h1 class="modal-page-title">Published analyses</h1>
+				<p class="analysis-hero-intro">A modal-first archive of notebooks, experiments, and recommendations. Each entry can point to a notebook file, GitHub source, or deeper analysis page.</p>
 			</header>
 
 			{notebooks.length === 0 ? (
-				<div class="empty-state">
-					<h2>No analysis entries yet</h2>
-					<p>Create one in Keystatic under <strong>Notebooks</strong> to populate this page.</p>
-				</div>
+				<div class="analysis-empty">No notebooks published yet.</div>
 			) : (
-				<div class="content-list">
+				<div class="analysis-project-grid">
 					{notebooks.map((notebook) => {
-						const content = (
-							<>
-								<div class="content-list-main">
-									<h2>{notebook.title}</h2>
-									{notebook.description && <p>{notebook.description}</p>}
-								</div>
-								<div class="content-list-meta">
+						const project = projectById.get(notebook.project)
+						return (
+							<a href={`/analysis/${notebook.id}`} class="analysis-feature-card" data-modal-link>
+								<div class="analysis-feature-kicker">{project?.name || notebook.project || 'Analysis'}</div>
+								<h2 class="analysis-feature-title">{notebook.title}</h2>
+								{notebook.description && <p class="analysis-feature-desc">{notebook.description}</p>}
+								<div class="analysis-feature-meta">
 									<span>{new Date(notebook.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-									{notebook.githubUrl && <span class="link-cta">Open notebook</span>}
+									<span class="analysis-feature-cta">Open notebook →</span>
 								</div>
-							</>
-						)
-
-						return notebook.githubUrl ? (
-							<a class="content-row" href={notebook.githubUrl} target="_blank" rel="noopener noreferrer">
-								{content}
 							</a>
-						) : (
-							<article class="content-row">
-								{content}
-							</article>
 						)
 					})}
 				</div>
 			)}
-		</div>
-	</section>
+		</section>
+	</ModalSource>
+
+	<SearchData slot="search-data" data={searchData} />
 </DashboardLayout>
 
 <style>
-	.content-page {
-		height: 100%;
-		min-height: 0;
+	.analysis-shell {
+		display: grid;
+		gap: 24px;
 	}
 
-	.content-card {
-		height: 100%;
-		min-height: 0;
-		background: var(--card);
-		border: 1px solid var(--border);
-		border-radius: var(--radius-lg);
-		box-shadow: var(--shadow);
-		padding: 28px;
-		overflow: auto;
+	.analysis-hero {
+		display: grid;
+		gap: 12px;
 	}
 
-	.content-header {
-		margin-bottom: 24px;
-		max-width: 56rem;
-	}
-
-	.content-kicker {
-		margin: 0 0 8px;
-		font-family: var(--font-mono);
-		font-size: 11px;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--muted);
-	}
-
-	.content-header h1 {
-		margin: 0 0 10px;
-		font-family: var(--font-serif);
-		font-size: clamp(2rem, 4vw, 2.8rem);
-		line-height: 1.05;
-		letter-spacing: -0.03em;
-	}
-
-	.content-intro {
-		margin: 0;
-		max-width: 44rem;
+	.analysis-hero-intro {
+		max-width: 46rem;
 		color: var(--muted-foreground);
-		line-height: 1.6;
+		line-height: 1.65;
 	}
 
-	.content-list {
+	.analysis-empty {
+		border: 1px dashed var(--border);
+		border-radius: 16px;
+		padding: 24px;
+		background: var(--card-raised);
+		color: var(--muted-foreground);
+	}
+
+	.analysis-project-grid {
 		display: grid;
 		gap: 14px;
 	}
 
-	.content-row {
-		display: flex;
-		justify-content: space-between;
-		gap: 18px;
-		padding: 18px 20px;
+	.analysis-feature-card {
+		display: block;
+		padding: 22px;
 		border: 1px solid var(--border);
-		border-radius: 14px;
+		border-radius: 18px;
 		background: var(--card-raised);
-		color: inherit;
-		text-decoration: none;
-		transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
-	}
-
-	.content-row:hover {
-		border-color: var(--primary);
-		box-shadow: var(--shadow-hover);
-		transform: translateY(-1px);
 		text-decoration: none;
 	}
 
-	.content-list-main h2 {
-		margin: 0 0 8px;
-		font-size: 1.05rem;
+	.analysis-feature-card:hover {
+		text-decoration: none;
 	}
 
-	.content-list-main p {
-		margin: 0;
-		color: var(--muted-foreground);
-		line-height: 1.55;
-	}
-
-	.content-list-meta {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-end;
-		gap: 10px;
-		min-width: 8rem;
-		font-size: 0.9rem;
+	.analysis-feature-kicker {
+		margin-bottom: 10px;
+		font-family: var(--font-mono);
+		font-size: 11px;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
 		color: var(--muted);
 	}
 
-	.link-cta {
+	.analysis-feature-title {
+		margin: 0;
+		font-family: var(--font-serif);
+		font-size: 1.6rem;
+		line-height: 1.1;
+		letter-spacing: -0.03em;
+	}
+
+	.analysis-feature-desc {
+		margin: 12px 0 0;
+		color: var(--muted-foreground);
+		line-height: 1.65;
+	}
+
+	.analysis-feature-meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px;
+		margin-top: 14px;
+		color: var(--muted);
+	}
+
+	.analysis-feature-cta {
 		color: var(--primary);
 		font-weight: 600;
 	}
 
-	.empty-state {
-		padding: 24px;
-		border: 1px dashed var(--border);
-		border-radius: 14px;
-		background: var(--card-raised);
-	}
-
-	.empty-state h2 {
-		margin: 0 0 8px;
-		font-size: 1.05rem;
-	}
-
-	.empty-state p {
-		margin: 0;
-		color: var(--muted-foreground);
-	}
-
 	@media (max-width: 768px) {
-		.content-card {
+		.analysis-feature-card {
 			padding: 18px;
-		}
-
-		.content-row {
-			flex-direction: column;
-		}
-
-		.content-list-meta {
-			align-items: flex-start;
-			min-width: 0;
 		}
 	}
 </style>

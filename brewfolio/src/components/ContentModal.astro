@@ -173,17 +173,25 @@ const { size = 'default' } = Astro.props
 	window.__brewfolioOpenModal = openModal
 	window.__brewfolioCloseModal = closeModal
 
-	if (closeBtn) closeBtn.addEventListener('click', closeModal)
+	function handleCloseIntent() {
+		if (window.__brewfolioNavigateHome) {
+			window.__brewfolioNavigateHome()
+			return
+		}
+		closeModal()
+	}
+
+	if (closeBtn) closeBtn.addEventListener('click', handleCloseIntent)
 
 	if (modal) {
 		modal.addEventListener('click', function (e) {
-			if (e.target === modal) closeModal()
+			if (e.target === modal) handleCloseIntent()
 		})
 	}
 
 	document.addEventListener('keydown', function (e) {
 		if (e.key === 'Escape' && modal && modal.classList.contains('visible')) {
-			closeModal()
+			handleCloseIntent()
 		}
 	})
 
@@ -290,6 +298,36 @@ const { size = 'default' } = Astro.props
 		flex-shrink: 0;
 	}
 
+	.modal-breadcrumb-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		height: 40px;
+		padding: 0 14px;
+		border-radius: 6px;
+		border: 1px solid var(--border);
+		background: var(--card-raised);
+		color: var(--muted-foreground);
+		font-family: var(--font-sans, 'DM Sans', system-ui, sans-serif);
+		font-size: 13px;
+		font-weight: 500;
+		text-decoration: none;
+		transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+		white-space: nowrap;
+	}
+
+	.modal-breadcrumb-btn:hover {
+		background: var(--input);
+		color: var(--foreground);
+		text-decoration: none;
+	}
+
+	.modal-breadcrumb-btn svg {
+		width: 14px;
+		height: 14px;
+		flex-shrink: 0;
+	}
+
 	.modal-titlebar-left:empty,
 	.modal-titlebar-right:empty {
 		display: none;
@@ -316,6 +354,12 @@ const { size = 'default' } = Astro.props
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
+	}
+
+	.modal-titlebar-title strong {
+		font-style: normal;
+		font-weight: 700;
+		color: var(--substack, var(--primary));
 	}
 
 	.modal-body {

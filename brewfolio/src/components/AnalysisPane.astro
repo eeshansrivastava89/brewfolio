@@ -7,10 +7,9 @@ interface Notebook {
 
 interface Props {
 	notebooks: Notebook[]
-	showUntaggedBadge?: boolean
 }
 
-const { notebooks = [], showUntaggedBadge = false } = Astro.props
+const { notebooks = [] } = Astro.props
 ---
 
 <section class="pane pane-analysis" data-pane="analysis" aria-label="Analysis">

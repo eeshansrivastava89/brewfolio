@@ -70,7 +70,7 @@ const {
 	<div class="header-right">
 		<nav class="nav-pills" aria-label="Primary">
 			{navItems.map((item) => (
-				<a href={item.href} class="nav-pill" data-route={item.href}>
+				<a href={item.href} class="nav-pill" data-modal-link data-route={item.href}>
 					{item.label}
 				</a>
 			))}

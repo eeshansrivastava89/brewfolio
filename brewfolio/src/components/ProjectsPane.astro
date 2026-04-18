@@ -3,10 +3,9 @@ import type { Project } from '../lib/types'
 
 interface Props {
 	projects: Project[]
-	showUntaggedBadge?: boolean
 }
 
-const { projects, showUntaggedBadge = false } = Astro.props
+const { projects } = Astro.props
 
 function getStatusDot(status: string): string {
 	if (status === 'live') return 'live'

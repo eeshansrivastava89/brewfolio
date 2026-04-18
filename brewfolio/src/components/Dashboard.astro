@@ -6,12 +6,14 @@ interface Props {
 const { title = 'Home' } = Astro.props
 ---
 
-<div class="brewfolio-dashboard" data-brefolio-dashboard>
+<div class="brewfolio-dashboard" data-brewfolio-dashboard>
 	<slot />
 </div>
 
-<script is:inline>
+<script define:vars={{ title }} is:inline>
 (function () {
+	window.__brewfolioHomeTitle = window.__brewfolioHomeTitle || title
+
 	function normalizePath(path) {
 		if (!path) return '/'
 		var normalized = path.split('#')[0].split('?')[0]
@@ -21,6 +23,46 @@ const { title = 'Home' } = Astro.props
 		return normalized || '/'
 	}
 
+	var injectedStylePaths = {}
+
+	function setDocumentTitle(nextTitle) {
+		document.title = nextTitle || window.__brewfolioHomeTitle || title
+	}
+
+	function notchSectionForPath(normalized) {
+		if (!normalized || normalized === '/') return null
+		var sectionNames = {
+			'/writing': 'Writing',
+			'/analysis': 'Analysis',
+			'/about': 'About',
+		}
+		if (sectionNames[normalized]) return sectionNames[normalized]
+		var parts = normalized.split('/').filter(Boolean)
+		if (parts.length >= 1) {
+			var parent = '/' + parts[0]
+			if (sectionNames[parent]) return sectionNames[parent]
+		}
+		return null
+	}
+
+	function updateNotchForPath(normalized) {
+		var notch = document.getElementById('notch')
+		if (!notch) return
+		var sep = notch.querySelector('.notch-sep')
+		var pageEl = notch.querySelector('.notch-page')
+		if (!sep || !pageEl) return
+		var section = notchSectionForPath(normalized)
+		if (section) {
+			pageEl.textContent = section
+			sep.hidden = false
+			pageEl.hidden = false
+			return
+		}
+		sep.hidden = true
+		pageEl.hidden = true
+		pageEl.textContent = ''
+	}
+
 	function updateNavActive(path) {
 		var normalized = normalizePath(path || window.location.pathname)
 		document.querySelectorAll('.nav-pill[data-route]').forEach(function (pill) {
@@ -28,23 +70,225 @@ const { title = 'Home' } = Astro.props
 			var active = normalized !== '/' && (normalized === route || normalized.indexOf(route + '/') === 0)
 			pill.classList.toggle('active', active)
 		})
+		updateNotchForPath(normalized)
+	}
+
+	function clearHighlights() {
+		document.querySelectorAll('.concept-row').forEach(function (row) {
+			row.classList.remove('active')
+			row.setAttribute('aria-pressed', 'false')
+		})
+		document.querySelectorAll('.project-tile').forEach(function (tile) {
+			tile.classList.remove('highlighted', 'dimmed')
+		})
+		document.querySelectorAll('.writing-row').forEach(function (row) {
+			row.classList.remove('highlighted', 'dimmed')
+		})
+		document.querySelectorAll('.analysis-row').forEach(function (row) {
+			row.classList.remove('highlighted', 'dimmed')
+		})
+	}
+
+	function conceptMapFromDom() {
+		var map = {}
+		document.querySelectorAll('.concept-row[data-concept]').forEach(function (row) {
+			var slug = row.getAttribute('data-concept') || ''
+			if (!slug) return
+			map[slug] = {
+				projects: (row.getAttribute('data-projects') || '').split(',').filter(Boolean),
+				writing: (row.getAttribute('data-writing') || '').split(',').filter(Boolean),
+				notebooks: (row.getAttribute('data-notebooks') || '').split(',').filter(Boolean),
+			}
+		})
+		return map
+	}
+
+	function toggleConcept(slug) {
+		if (!slug) return
+		var current = window.__brewfolioActiveConcept || null
+		if (current === slug) {
+			window.__brewfolioActiveConcept = null
+			clearHighlights()
+			return
+		}
+
+		window.__brewfolioActiveConcept = slug
+		clearHighlights()
+		var conceptMap = conceptMapFromDom()
+		var linked = conceptMap[slug] || { projects: [], writing: [], notebooks: [] }
+
+		document.querySelectorAll('.concept-row').forEach(function (row) {
+			var isActive = row.getAttribute('data-concept') === slug
+			row.classList.toggle('active', isActive)
+			row.setAttribute('aria-pressed', isActive ? 'true' : 'false')
+		})
+
+		document.querySelectorAll('.project-tile').forEach(function (tile) {
+			var projectId = tile.getAttribute('data-project-id') || ''
+			var hasMatch = linked.projects.indexOf(projectId) !== -1
+			tile.classList.toggle('highlighted', hasMatch)
+			tile.classList.toggle('dimmed', !hasMatch)
+		})
+
+		document.querySelectorAll('.writing-row').forEach(function (row) {
+			var writingSlug = row.getAttribute('data-writing') || ''
+			var hasMatch = linked.writing.indexOf(writingSlug) !== -1
+			row.classList.toggle('highlighted', hasMatch)
+			row.classList.toggle('dimmed', !hasMatch)
+		})
+
+		document.querySelectorAll('.analysis-row').forEach(function (row) {
+			var notebookSlug = row.getAttribute('data-notebook-slug') || ''
+			var hasMatch = linked.notebooks.indexOf(notebookSlug) !== -1
+			row.classList.toggle('highlighted', hasMatch)
+			row.classList.toggle('dimmed', !hasMatch)
+		})
+	}
+
+	function parseFetchedModalDocument(doc, fallbackPath) {
+		var source = doc.querySelector('[data-brewfolio-modal-source]')
+		if (!source) return null
+		var left = source.querySelector('[data-brewfolio-modal-left]')
+		var center = source.querySelector('[data-brewfolio-modal-center]')
+		var right = source.querySelector('[data-brewfolio-modal-right]')
+		var body = source.querySelector('[data-brewfolio-modal-body]')
+		var titleEl = doc.querySelector('title')
+		return {
+			path: normalizePath(source.getAttribute('data-path') || fallbackPath || (doc.location && doc.location.pathname) || '/'),
+			size: source.getAttribute('data-size') || 'default',
+			left: left ? left.innerHTML : '',
+			center: center ? center.innerHTML : '',
+			right: right ? right.innerHTML : '',
+			body: body ? body.innerHTML : '',
+			title: titleEl ? titleEl.textContent : '',
+		}
+	}
+
+	function getCurrentDocumentModalSource(path) {
+		var source = document.querySelector('[data-brewfolio-modal-source]')
+		if (!source) return null
+		var sourcePath = normalizePath(source.getAttribute('data-path') || window.location.pathname)
+		if (path && sourcePath !== normalizePath(path)) return null
+		return parseFetchedModalDocument(document, sourcePath)
+	}
+
+	function focusProject(projectId) {
+		if (!projectId) return
+		var projectTile = document.querySelector('.project-tile[data-project-id="' + projectId + '"]')
+		if (!projectTile) return
+		projectTile.scrollIntoView({ behavior: 'smooth', block: 'center' })
+		projectTile.classList.add('project-focus-pulse')
+		setTimeout(function () {
+			projectTile.classList.remove('project-focus-pulse')
+		}, 1600)
+		var firstLink = projectTile.querySelector('a')
+		if (firstLink) firstLink.focus()
+	}
+
+	function navigateHome(options) {
+		var config = options || {}
+		if (config.clearConcept !== false) {
+			window.__brewfolioActiveConcept = null
+			clearHighlights()
+		}
+		if (window.__brewfolioCloseModal) window.__brewfolioCloseModal()
+		setDocumentTitle(window.__brewfolioHomeTitle || title)
+		updateNavActive('/')
+		if (config.push !== false && normalizePath(window.location.pathname) !== '/') {
+			history.pushState({ modal: false, path: '/' }, '', '/')
+		}
+	}
+
+	async function openModalForPath(path, options) {
+		var config = options || {}
+		var normalized = normalizePath(path)
+		if (normalized === '/') {
+			navigateHome(config)
+			return
+		}
+
+		if (window.__brewfolioCloseSearch) window.__brewfolioCloseSearch()
+
+		var modalData = getCurrentDocumentModalSource(normalized)
+		if (!modalData) {
+			var response = await fetch(normalized)
+			if (!response.ok) {
+				console.warn('[brewfolio] Fetch failed for', normalized, response.status, '— falling back to home')
+				navigateHome({ push: true })
+				return
+			}
+			var html = await response.text()
+			var parser = new DOMParser()
+			var doc = parser.parseFromString(html, 'text/html')
+			modalData = parseFetchedModalDocument(doc, normalized)
+
+			if (!injectedStylePaths[normalized]) {
+				injectedStylePaths[normalized] = true
+				doc.querySelectorAll('head style').forEach(function (styleEl) {
+					document.head.appendChild(document.adoptNode(styleEl))
+				})
+			}
+		}
+
+		if (!modalData || !window.__brewfolioOpenModal) {
+			console.warn('[brewfolio] No modal source for', normalized, '— falling back to home')
+			navigateHome({ push: true })
+			return
+		}
+
+		window.__brewfolioOpenModal(modalData.center, modalData.right, modalData.left, modalData.body, modalData.size)
+		setDocumentTitle(modalData.title)
+		updateNavActive(normalized)
+
+		if (config.push !== false && normalizePath(window.location.pathname) !== normalized) {
+			history.pushState({ modal: true, path: normalized }, '', normalized)
+		}
+	}
+
+	async function syncRouteToModal() {
+		var path = normalizePath(window.location.pathname)
+		if (path === '/') {
+			navigateHome({ push: false, clearConcept: false })
+			return
+		}
+		await openModalForPath(path, { push: false })
+	}
+
+	window.__brewfolioToggleConcept = toggleConcept
+	window.__brewfolioOpenPathModal = openModalForPath
+	window.__brewfolioNavigateHome = function () {
+		navigateHome({ push: true, clearConcept: false })
+	}
+	window.__brewfolioFocusProject = function (projectId) {
+		navigateHome({ push: true, clearConcept: false })
+		focusProject(projectId)
 	}
 
 	document.addEventListener('click', function (event) {
+		if (window.__brewfolioActiveConcept && !event.target.closest('.pane-concepts')) {
+			window.__brewfolioActiveConcept = null
+			clearHighlights()
+		}
+
 		var modalLink = event.target.closest('a[data-modal-link]')
 		if (modalLink) {
 			if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return
 			event.preventDefault()
-			var href = modalLink.getAttribute('href') || '/'
-			window.__brewfolioOpenPathModal && window.__brewfolioOpenPathModal(href)
+			openModalForPath(modalLink.getAttribute('href') || '/')
 			return
 		}
 
 		var conceptTrigger = event.target.closest('[data-concept-filter]')
 		if (conceptTrigger) {
 			event.preventDefault()
-			var slug = conceptTrigger.getAttribute('data-concept-filter') || ''
-			window.__brewfolioToggleConcept && window.__brewfolioToggleConcept(slug)
+			toggleConcept(conceptTrigger.getAttribute('data-concept-filter') || '')
+			return
+		}
+
+		var projectFocus = event.target.closest('[data-project-focus]')
+		if (projectFocus) {
+			event.preventDefault()
+			window.__brewfolioFocusProject(projectFocus.getAttribute('data-project-focus') || '')
 			return
 		}
 
@@ -55,10 +299,22 @@ const { title = 'Home' } = Astro.props
 			})
 			pane.classList.add('focused')
 		}
+	}, true)
+
+	window.addEventListener('popstate', function () {
+		syncRouteToModal()
+	})
+
+	document.addEventListener('keydown', function (event) {
+		if (event.key === 'Escape' && window.__brewfolioActiveConcept) {
+			window.__brewfolioActiveConcept = null
+			clearHighlights()
+		}
 	})
 
 	document.addEventListener('DOMContentLoaded', function () {
 		updateNavActive(window.location.pathname)
+		syncRouteToModal()
 	})
 })()
 </script>

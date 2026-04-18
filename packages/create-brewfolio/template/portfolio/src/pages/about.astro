@@ -1,181 +1,256 @@
 ---
 import '../styles/global.css'
 import DashboardLayout from 'brewfolio/layouts/DashboardLayout.astro'
-import { reader } from '../lib/content'
+import ArticleTOC from 'brewfolio/components/ArticleTOC.astro'
+import Dashboard from 'brewfolio/components/Dashboard.astro'
+import ModalSource from 'brewfolio/components/ModalSource.astro'
+import SearchData from 'brewfolio/components/SearchData.astro'
+import { getPortfolioData, renderProse } from '../lib/portfolio-data'
 
-const [aboutData, timelineData, impactData] = await Promise.all([
-	reader.singletons.about.read(),
-	reader.singletons.timeline.read(),
-	reader.singletons.impact.read()
-])
+const {
+	aboutData,
+	timelineData,
+	impactData,
+	searchData,
+} = await getPortfolioData()
 
-const work = (timelineData?.timeline ?? []).filter((item) => item.type !== 'education')
-const education = (timelineData?.timeline ?? []).filter((item) => item.type === 'education')
-const impactSections = (impactData?.impact ?? []).filter((section) => section.visible)
+const work = (timelineData?.timeline ?? []).filter((item: any) => item.type !== 'education')
+const education = (timelineData?.timeline ?? []).filter((item: any) => item.type === 'education')
+const impactSections = (impactData?.impact ?? []).filter((section: any) => section.visible)
+const currentRole = work[0]
+const bioHtml = renderProse(aboutData?.bio)
+const thisSiteHtml = renderProse(aboutData?.thisSite)
+const tocHeadings = [
+	{ id: 'this-site', text: 'This Site', level: 2 as const },
+	...(impactSections.length > 0 ? [{ id: 'impact', text: 'Recognition & Leadership', level: 2 as const }] : []),
+	{ id: 'experience', text: 'Experience', level: 2 as const },
+	{ id: 'education', text: 'Education', level: 2 as const },
+]
 ---
 
 <DashboardLayout meta={{ title: 'About' }}>
-	<section class="about-page">
-		<div class="about-grid">
-			<section class="about-card about-intro">
-				<p class="content-kicker">About</p>
-				<h1>About this portfolio</h1>
-				<div class="prose">
-					<p>{aboutData?.bio || 'Add a bio in Keystatic to tell visitors who you are, what you work on, and what kind of problems you like solving.'}</p>
-					<p>{aboutData?.thisSite || 'Use the “This Site” field to explain how the portfolio is built, what the CMS controls, and which parts of the design system you want to highlight.'}</p>
+	<Dashboard />
+
+	<ModalSource slot="modal-source" path="/about" size="medium">
+		<section class="about-masthead">
+			<div class="about-masthead-copy">
+				<div class="modal-eyebrow">About</div>
+				<h1 class="modal-page-title">About</h1>
+				{currentRole && (
+					<p class="about-role">{currentRole.title}{currentRole.company ? ` · ${currentRole.company}` : ''}</p>
+				)}
+				<div
+					class="about-prose"
+					set:html={bioHtml || '<p>Add a bio in Keystatic to tell visitors who you are, what kind of work you do, and what you care about.</p>'}
+				/>
+			</div>
+		</section>
+
+		<section class="about-section" id="this-site">
+			<h2 class="about-section-title">This Site</h2>
+			<div
+				class="about-prose"
+				set:html={thisSiteHtml || '<p>Use the “This Site” field in Keystatic to explain the stack, the design system, and the ideas behind the portfolio.</p>'}
+			/>
+		</section>
+
+		{impactSections.length > 0 && (
+			<section class="about-section" id="impact">
+				<h2 class="about-section-title">Recognition &amp; Leadership</h2>
+				<div class="about-impact-grid">
+					{impactSections.map((section: any) => (
+						<section class="about-impact-card">
+							<h3 class="about-impact-card-title">{section.title}</h3>
+							<ul class="about-impact-list">
+								{section.items.map((item: any) => (
+									<li class="about-impact-item">
+										{item.link ? (
+											<a href={item.link} target="_blank" rel="noopener noreferrer" class="about-impact-link">{item.text}</a>
+										) : (
+											<span class="about-impact-text">{item.text}</span>
+										)}
+										{item.meta && <span class="about-impact-meta">{item.meta}</span>}
+									</li>
+								))}
+							</ul>
+						</section>
+					))}
 				</div>
 			</section>
+		)}
 
-			<section class="about-card">
-				<h2>Experience</h2>
-				{work.length === 0 ? (
-					<p class="empty-copy">Add entries in Keystatic under <strong>Timeline</strong> to populate your experience.</p>
-				) : (
-					<div class="timeline-list">
-						{work.map((item) => (
-							<article class="timeline-item">
-								<div class="timeline-meta">{item.timespan || 'Dates coming soon'}</div>
-								<h3>{item.title}</h3>
-								{item.company && <p class="timeline-company">{item.company}</p>}
-								{item.description && <p class="timeline-description">{item.description}</p>}
-							</article>
-						))}
-					</div>
-				)}
-			</section>
+		<section class="about-section" id="experience">
+			<h2 class="about-section-title">Experience</h2>
+			{work.length === 0 ? (
+				<p class="about-empty">Add work entries in Keystatic under <strong>Timeline</strong> to populate this section.</p>
+			) : (
+				<div class="about-timeline">
+					{work.map((item: any) => (
+						<article class="about-timeline-item">
+							<div class="about-timeline-rail">
+								<div class="about-timeline-dot"></div>
+							</div>
+							<div class="about-timeline-content">
+								<div class="about-timeline-header">
+									<h3 class="about-timeline-title">{item.title}</h3>
+									{item.company && <span class="about-timeline-company">· {item.company}</span>}
+								</div>
+								<div class="about-timeline-meta">{item.timespan || 'Dates coming soon'}</div>
+								{item.description && <p class="about-timeline-description">{item.description}</p>}
+							</div>
+						</article>
+					))}
+				</div>
+			)}
+		</section>
 
-			<section class="about-card">
-				<h2>Education</h2>
-				{education.length === 0 ? (
-					<p class="empty-copy">Add education entries in Keystatic under <strong>Timeline</strong> to populate this section.</p>
-				) : (
-					<div class="timeline-list">
-						{education.map((item) => (
-							<article class="timeline-item">
-								<div class="timeline-meta">{item.timespan || 'Dates coming soon'}</div>
-								<h3>{item.title}</h3>
-								{item.company && <p class="timeline-company">{item.company}</p>}
-								{item.description && <p class="timeline-description">{item.description}</p>}
-							</article>
-						))}
-					</div>
-				)}
-			</section>
+		<section class="about-section" id="education">
+			<h2 class="about-section-title">Education</h2>
+			{education.length === 0 ? (
+				<p class="about-empty">Add education entries in Keystatic under <strong>Timeline</strong> to populate this section.</p>
+			) : (
+				<div class="about-timeline">
+					{education.map((item: any) => (
+						<article class="about-timeline-item">
+							<div class="about-timeline-rail">
+								<div class="about-timeline-dot about-timeline-dot-education"></div>
+							</div>
+							<div class="about-timeline-content">
+								<div class="about-timeline-header">
+									<h3 class="about-timeline-title">{item.title}</h3>
+									{item.company && <span class="about-timeline-company">· {item.company}</span>}
+								</div>
+								<div class="about-timeline-meta">{item.timespan || 'Dates coming soon'}</div>
+								{item.description && <p class="about-timeline-description">{item.description}</p>}
+							</div>
+						</article>
+					))}
+				</div>
+			)}
+		</section>
 
-			<section class="about-card about-impact">
-				<h2>Recognition & leadership</h2>
-				{impactSections.length === 0 ? (
-					<p class="empty-copy">Add visible impact sections in Keystatic under <strong>Impact</strong> to highlight awards, talks, communities, or leadership work.</p>
-				) : (
-					<div class="impact-grid">
-						{impactSections.map((section) => (
-							<section class="impact-section">
-								<h3>{section.title}</h3>
-								<ul>
-									{section.items.map((item) => (
-										<li>
-											{item.link ? (
-												<a href={item.link} target="_blank" rel="noopener noreferrer">{item.text}</a>
-											) : (
-												<span>{item.text}</span>
-											)}
-											{item.meta && <span class="impact-meta">{item.meta}</span>}
-										</li>
-									))}
-								</ul>
-							</section>
-						))}
-					</div>
-				)}
-			</section>
-		</div>
-	</section>
+		<ArticleTOC headings={tocHeadings} topLabel="About" />
+	</ModalSource>
+
+	<SearchData slot="search-data" data={searchData} />
 </DashboardLayout>
 
 <style>
-	.about-page {
-		height: 100%;
-		min-height: 0;
+	.about-masthead {
+		margin-bottom: 36px;
 	}
 
-	.about-grid {
-		display: grid;
-		grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
-		gap: 14px;
-		height: 100%;
-		min-height: 0;
+	.about-masthead-copy {
+		max-width: 42rem;
 	}
 
-	.about-card {
-		background: var(--card);
-		border: 1px solid var(--border);
-		border-radius: var(--radius-lg);
-		box-shadow: var(--shadow);
-		padding: 24px;
-		overflow: auto;
-	}
-
-	.about-intro,
-	.about-impact {
-		grid-column: 1 / 3;
-	}
-
-	.content-kicker {
-		margin: 0 0 8px;
+	.modal-eyebrow {
+		margin-bottom: 10px;
 		font-family: var(--font-mono);
 		font-size: 11px;
-		letter-spacing: 0.08em;
 		text-transform: uppercase;
+		letter-spacing: 0.08em;
 		color: var(--muted);
 	}
 
-	h1,
-	h2,
-	h3 {
-		margin: 0;
-	}
-
-	h1 {
-		margin-bottom: 14px;
-		font-family: var(--font-serif);
-		font-size: clamp(2rem, 4vw, 2.8rem);
-		line-height: 1.05;
-		letter-spacing: -0.03em;
-	}
-
-	h2 {
-		margin-bottom: 14px;
-		font-family: var(--font-serif);
-		font-size: 1.4rem;
-	}
-
-	.prose {
-		max-width: 54rem;
+	.about-role {
+		margin: 10px 0 18px;
+		font-size: 1rem;
+		font-weight: 600;
 		color: var(--muted-foreground);
-		line-height: 1.7;
 	}
 
-	.prose p {
-		margin: 0 0 12px;
+	.about-section {
+		margin-bottom: 32px;
 	}
 
-	.timeline-list {
+	.about-section-title {
+		margin: 0 0 16px;
+		font-family: var(--font-serif);
+		font-size: 1.7rem;
+		letter-spacing: -0.02em;
+	}
+
+	.about-prose {
+		font-family: var(--font-serif);
+		font-size: 1.08rem;
+		line-height: 1.75;
+		color: var(--foreground);
+	}
+
+	.about-prose p {
+		margin: 0 0 16px;
+	}
+
+	.about-prose :global(a) {
+		color: var(--primary);
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+
+	.about-prose :global(em) {
+		font-style: italic;
+	}
+
+	.about-prose :global(strong) {
+		font-weight: 700;
+	}
+
+	.about-empty {
+		color: var(--muted-foreground);
+		line-height: 1.6;
+	}
+
+	.about-timeline {
 		display: grid;
-		gap: 16px;
+		gap: 20px;
 	}
 
-	.timeline-item {
-		padding-top: 14px;
+	.about-timeline-item {
+		display: grid;
+		grid-template-columns: 20px minmax(0, 1fr);
+		gap: 14px;
+		padding-top: 18px;
 		border-top: 1px solid var(--border);
 	}
 
-	.timeline-item:first-child {
+	.about-timeline-item:first-child {
 		padding-top: 0;
 		border-top: 0;
 	}
 
-	.timeline-meta {
-		margin-bottom: 6px;
+	.about-timeline-rail {
+		padding-top: 4px;
+		display: flex;
+		justify-content: center;
+	}
+
+	.about-timeline-dot {
+		width: 9px;
+		height: 9px;
+		border-radius: 999px;
+		background: var(--primary);
+		box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1);
+	}
+
+	.about-timeline-dot-education {
+		background: var(--muted);
+		box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.05);
+	}
+
+	.about-timeline-content {
+		min-width: 0;
+	}
+
+	.about-timeline-header {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		align-items: baseline;
+	}
+
+	.about-timeline-meta {
+		margin-top: 6px;
 		font-family: var(--font-mono);
 		font-size: 11px;
 		letter-spacing: 0.08em;
@@ -183,79 +258,80 @@ const impactSections = (impactData?.impact ?? []).filter((section) => section.vi
 		color: var(--muted);
 	}
 
-	.timeline-company {
-		margin: 6px 0 0;
-		font-weight: 600;
-		color: var(--foreground);
+	.about-timeline-title {
+		margin: 0;
+		font-size: 1.05rem;
+		font-weight: 700;
 	}
 
-	.timeline-description {
+	.about-timeline-company {
+		font-weight: 600;
+		color: var(--muted-foreground);
+	}
+
+	.about-timeline-description {
 		margin: 8px 0 0;
 		color: var(--muted-foreground);
-		line-height: 1.6;
+		line-height: 1.65;
 	}
 
-	.empty-copy {
-		margin: 0;
-		color: var(--muted-foreground);
-		line-height: 1.6;
-	}
-
-	.impact-grid {
+	.about-impact-grid {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: 14px;
 	}
 
-	.impact-section {
+	.about-impact-card {
 		padding: 18px;
 		border: 1px solid var(--border);
 		border-radius: 14px;
 		background: var(--card-raised);
 	}
 
-	.impact-section h3 {
-		margin-bottom: 10px;
+	.about-impact-card-title {
+		margin: 0 0 12px;
 		font-size: 1rem;
+		font-weight: 700;
 	}
 
-	.impact-section ul {
+	.about-impact-list {
 		margin: 0;
-		padding-left: 18px;
+		padding-left: 0;
+		list-style: none;
 		display: grid;
 		gap: 8px;
 	}
 
-	.impact-section a {
+	.about-impact-item {
+		display: grid;
+		gap: 2px;
+	}
+
+	.about-impact-link {
+		color: var(--primary);
+		font-weight: 600;
+		text-decoration: none;
+	}
+
+	.about-impact-link:hover {
+		text-decoration: underline;
+	}
+
+	.about-impact-text {
+		font-weight: 600;
 		color: var(--foreground);
 	}
 
-	.impact-meta {
+	.about-impact-meta {
 		display: block;
 		margin-top: 2px;
 		color: var(--muted);
 		font-size: 0.92rem;
 	}
 
-	@media (max-width: 900px) {
-		.about-grid {
-			grid-template-columns: 1fr;
-			height: auto;
-		}
-
-		.about-intro,
-		.about-impact {
-			grid-column: auto;
-		}
-
-		.impact-grid {
-			grid-template-columns: 1fr;
-		}
-	}
-
 	@media (max-width: 768px) {
-		.about-card {
-			padding: 18px;
+		.about-impact-grid {
+			grid-template-columns: 1fr;
 		}
 	}
 </style>

@@ -1,5 +1,6 @@
 ---
 import BaseHead from '../components/BaseHead.astro'
+import ContentModal from '../components/ContentModal.astro'
 import Footer from '../components/Footer.astro'
 import HomeHeader from '../components/HomeHeader.astro'
 import SearchOverlay from '../components/SearchOverlay.astro'
@@ -39,7 +40,10 @@ const { meta = {}, showFooter = true } = Astro.props
 			</main>
 			{showFooter && <Footer />}
 		</div>
+		<slot name="modal-source" />
 		<SearchOverlay />
+		<ContentModal />
+		<slot name="search-data" />
 	</body>
 </html>
 

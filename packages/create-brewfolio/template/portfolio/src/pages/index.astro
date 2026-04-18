@@ -7,59 +7,34 @@ import ProjectsPane from 'brewfolio/components/ProjectsPane.astro'
 import WritingPane from 'brewfolio/components/WritingPane.astro'
 import AnalysisPane from 'brewfolio/components/AnalysisPane.astro'
 import GitHubPane from 'brewfolio/components/GitHubPane.astro'
-import { reader } from '../lib/content'
+import SearchData from 'brewfolio/components/SearchData.astro'
+import { getPortfolioData } from '../lib/portfolio-data'
 
-const [projectEntries, writingEntries, notebookEntries, conceptsData, siteConfig] = await Promise.all([
-  reader.collections.projects.all(),
-  reader.collections.writing.all(),
-  reader.collections.notebooks.all(),
-  reader.singletons.concepts.read(),
-  reader.singletons.siteConfig.read()
-])
+const {
+	projects,
+	writing,
+	notebooks,
+	concepts,
+	conceptLabelsBySlug,
+	siteConfig,
+	searchData,
+} = await getPortfolioData()
 
-const projects = projectEntries.map((p) => ({
-  id: p.slug,
-  name: p.entry.name,
-  url: p.entry.url || undefined,
-  status: p.entry.status,
-  external: p.entry.external,
-  description: p.entry.description,
-  shortDescription: p.entry.shortDescription || undefined,
-  image: p.entry.image || undefined,
-  repo: p.entry.repo || undefined,
-  analysis_url: p.entry.analysis_url || undefined,
-  tags: p.entry.tags?.map((t: any) => ({ name: t.name })) ?? [],
-  related_writing: p.entry.related_writing ?? []
+const writingWithLabels = writing.map((post) => ({
+	...post,
+	conceptLabels: conceptLabelsBySlug.get(post.slug) ?? [],
 }))
 
-const writing = writingEntries.map((w) => ({
-  slug: w.slug,
-  title: w.entry.title,
-  pubDate: w.entry.pubDate
-}))
-
-const notebooks = notebookEntries.map((n) => ({
-  id: n.slug,
-  title: n.entry.title,
-  date: n.entry.date
-}))
-
-const concepts = (conceptsData?.concepts ?? []).map((c: any) => ({
-  slug: c.slug,
-  name: c.name,
-  description: c.description
-}))
-
-const conceptsIntro = siteConfig?.conceptsIntro
 const title = 'My Portfolio'
 ---
 
 <DashboardLayout meta={{ title }}>
-  <Dashboard>
-    <ConceptsPane conceptsIntro={conceptsIntro} concepts={concepts} />
-    <ProjectsPane projects={projects} />
-    <WritingPane posts={writing} />
-    <AnalysisPane notebooks={notebooks} />
-    <GitHubPane data={{}} />
-  </Dashboard>
+	<Dashboard>
+		<ConceptsPane conceptsIntro={siteConfig?.conceptsIntro} concepts={concepts} />
+		<ProjectsPane projects={projects} />
+		<WritingPane posts={writingWithLabels} />
+		<AnalysisPane notebooks={notebooks} />
+		<GitHubPane data={{}} />
+	</Dashboard>
+	<SearchData slot="search-data" data={searchData} />
 </DashboardLayout>

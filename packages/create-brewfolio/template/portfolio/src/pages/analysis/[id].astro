@@ -1,0 +1,160 @@
+---
+import '../../styles/global.css'
+import DashboardLayout from 'brewfolio/layouts/DashboardLayout.astro'
+import Dashboard from 'brewfolio/components/Dashboard.astro'
+import ModalSource from 'brewfolio/components/ModalSource.astro'
+import SearchData from 'brewfolio/components/SearchData.astro'
+import { getPortfolioData, modalBreadcrumb } from '../../lib/portfolio-data'
+
+const { notebooks, projects, searchData } = await getPortfolioData()
+const notebook = notebooks.find((entry) => entry.id === Astro.params.id)
+const project = notebook ? projects.find((entry) => entry.id === notebook.project) : null
+const leftHtml = modalBreadcrumb('Published analyses', '/analysis')
+---
+
+<DashboardLayout meta={{ title: notebook?.title || 'Analysis' }}>
+	<Dashboard />
+
+	<ModalSource
+		slot="modal-source"
+		path={`/analysis/${Astro.params.id || ''}`}
+		leftHtml={leftHtml}
+		size="medium"
+	>
+		<article class="analysis-detail-shell">
+			{!notebook ? (
+				<>
+					<div class="modal-eyebrow">Analysis</div>
+					<h1 class="modal-page-title">Notebook not found</h1>
+					<div class="analysis-detail-card">
+						<p>This notebook route does not exist in the current CMS data. Go back to the analysis archive to choose another entry.</p>
+					</div>
+				</>
+			) : (
+				<>
+			<div class="modal-eyebrow">{project?.name || notebook.project || 'Analysis'}</div>
+			<h1 class="modal-page-title">{notebook.title}</h1>
+			{notebook.description && <p class="notebook-subtitle">{notebook.description}</p>}
+
+			<div class="notebook-byline">
+				<span class="notebook-byline-date">{new Date(notebook.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+				{notebook.github_url && (
+					<a href={notebook.github_url} target="_blank" rel="noopener noreferrer" class="notebook-github-link">Open source notebook</a>
+				)}
+			</div>
+
+			<div class="analysis-detail-card">
+				<h2>Notebook summary</h2>
+				<p>{notebook.description || 'Add a description in Keystatic to summarize the notebook here before sending readers to the source.'}</p>
+			</div>
+
+			<div class="modal-cta-row">
+				{notebook.github_url ? (
+					<a href={notebook.github_url} target="_blank" rel="noopener noreferrer" class="modal-cta modal-cta-primary">Open notebook source</a>
+				) : (
+					<span class="modal-cta modal-cta-secondary">Add a GitHub URL in Keystatic to link this notebook out</span>
+				)}
+				{project?.url && (
+					<a href={project.url} target="_blank" rel="noopener noreferrer" class="modal-cta modal-cta-secondary">Open project</a>
+				)}
+			</div>
+				</>
+			)}
+		</article>
+	</ModalSource>
+
+	<SearchData slot="search-data" data={searchData} />
+</DashboardLayout>
+
+<style>
+	.modal-eyebrow {
+		margin-bottom: 10px;
+		font-family: var(--font-mono);
+		font-size: 11px;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: var(--muted);
+	}
+
+	.notebook-subtitle {
+		margin: 14px 0 0;
+		font-size: 1.08rem;
+		line-height: 1.65;
+		color: var(--muted-foreground);
+	}
+
+	.notebook-byline {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 12px;
+		align-items: center;
+		margin: 20px 0 28px;
+	}
+
+	.notebook-byline-date {
+		font-family: var(--font-mono);
+		font-size: 12px;
+		color: var(--muted);
+	}
+
+	.notebook-github-link {
+		color: var(--primary);
+		font-weight: 600;
+		text-decoration: none;
+	}
+
+	.analysis-detail-card {
+		padding: 22px;
+		border: 1px solid var(--border);
+		border-radius: 18px;
+		background: var(--card-raised);
+	}
+
+	.analysis-detail-card h2 {
+		margin: 0 0 10px;
+		font-family: var(--font-serif);
+		font-size: 1.25rem;
+	}
+
+	.analysis-detail-card p {
+		margin: 0;
+		line-height: 1.7;
+		color: var(--muted-foreground);
+	}
+
+	.modal-cta-row {
+		display: flex;
+		gap: 10px;
+		margin-top: 24px;
+		flex-wrap: wrap;
+	}
+
+	.modal-cta {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		padding: 10px 22px;
+		border-radius: 24px;
+		font-size: 14px;
+		font-weight: 600;
+		text-decoration: none;
+	}
+
+	.modal-cta-primary {
+		background: var(--primary);
+		color: var(--card);
+		border: 1px solid var(--primary);
+	}
+
+	.modal-cta-primary:hover {
+		color: var(--card);
+		opacity: 0.92;
+		text-decoration: none;
+	}
+
+	.modal-cta-secondary {
+		background: transparent;
+		color: var(--primary);
+		border: 1px solid var(--border);
+	}
+</style>

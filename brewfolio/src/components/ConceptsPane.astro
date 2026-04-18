@@ -5,6 +5,9 @@ interface Props {
 		slug: string
 		name: string
 		description?: string
+		projects?: string[]
+		writing?: string[]
+		notebooks?: string[]
 		projectCount?: number
 		writingCount?: number
 		notebookCount?: number
@@ -29,6 +32,9 @@ const {
 				type="button"
 				data-concept={concept.slug}
 				data-concept-filter={concept.slug}
+				data-projects={concept.projects?.join(',') || ''}
+				data-writing={concept.writing?.join(',') || ''}
+				data-notebooks={concept.notebooks?.join(',') || ''}
 				aria-pressed="false"
 				aria-label={`Filter by ${concept.name}`}
 			>
