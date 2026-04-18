@@ -62,7 +62,7 @@ test('site, github, and writing settings edits reflect on the dashboard', async 
 
   await gotoSingleton(page, site.baseUrl, 'writingSettings')
   await page.getByLabel('Publication name').fill('Signal Notes')
-  await page.getByLabel('Subscribe URL').fill('https://example.com/subscribe')
+  await page.getByLabel('Publication URL').fill('https://www.oneusefulthing.org')
   await saveKeystatic(page)
 
   await page.goto(site.baseUrl, { waitUntil: 'networkidle' })
@@ -72,7 +72,7 @@ test('site, github, and writing settings edits reflect on the dashboard', async 
   await expect(page.getByRole('heading', { name: /Writing/i })).toContainText('Signal Notes')
   await expect(page.locator('a.subscribe-btn')).toHaveAttribute(
     'href',
-    'https://example.com/subscribe',
+    'https://www.oneusefulthing.org/subscribe',
   )
 })
 

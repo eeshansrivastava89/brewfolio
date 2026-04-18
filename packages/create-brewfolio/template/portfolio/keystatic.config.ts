@@ -55,12 +55,12 @@ const writingSettings = singleton({
 		publicationName: fields.text({
 			label: 'Publication name',
 			description:
-				'Shown in the Writing pane and the writing modal header. Usually the name of your publication or newsletter.',
+				'Shown in the Writing pane and writing modal header.',
 		}),
-		subscribeUrl: fields.url({
-			label: 'Subscribe URL',
+		publicationUrl: fields.url({
+			label: 'Publication URL',
 			description:
-				'Used for the subscribe buttons in Writing. Add this after you know where readers should subscribe.',
+				'The publication home URL. Brewfolio derives the feed and subscribe links from this and pulls article metadata automatically.',
 		}),
 	},
 })
@@ -73,7 +73,6 @@ export default config({
 			'github',
 			'writingSettings',
 			'projects',
-			'writing',
 			'notebooks',
 			'concepts',
 			'about',

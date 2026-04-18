@@ -1,3 +1,5 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import {
 	fetchIpynb,
 	getGitHubData,
@@ -42,6 +44,24 @@ type FeedPost = {
 	content: string
 }
 
+type WritingStubEntry = {
+	slug: string
+	entry: {
+		title?: string
+		pubDate?: string
+		substack_url?: string
+		description?: string
+	}
+}
+
+type ResolvedWritingSettings = {
+	publicationName: string
+	publicationUrl: string
+	subscribeUrl: string
+} | null
+
+const WRITING_MANIFEST_DIR = path.join(process.cwd(), 'src', 'data', 'writing')
+
 export async function getPortfolioData() {
 	const [
 		projectEntries,
@@ -70,6 +90,7 @@ export async function getPortfolioData() {
 	])
 
 	const token = secrets?.githubToken?.trim() || undefined
+	const resolvedWritingSettings = resolveWritingSettings(writingSettings)
 
 	const rawProjects = projectEntries.map((entry) => ({
 		id: entry.slug,
@@ -89,22 +110,28 @@ export async function getPortfolioData() {
 		nextActions: entry.entry.nextActions || undefined,
 	}))
 
-	const writing = (
-		await Promise.all(
-			writingEntries.map(async (entry) => {
-				const url = entry.entry.substack_url || ''
-				const contentHtml = url ? await resolveArticleContent(url) : ''
-				return {
-					slug: entry.slug,
-					title: entry.entry.title,
-					pubDate: entry.entry.pubDate,
-					substack_url: url,
-					description: entry.entry.description || '',
-					contentHtml,
-				}
-			}),
-		)
-	).sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime())
+	const concepts = (conceptsData?.concepts ?? []).map((concept: any) => ({
+		slug: concept.slug,
+		name: concept.name,
+		description: concept.description || '',
+		projects: normalizeRelationships(concept.projects),
+		writing: normalizeRelationships(concept.writing),
+		notebooks: normalizeRelationships(concept.notebooks),
+	}))
+
+	const referencedWritingSlugs = new Set<string>()
+	for (const project of rawProjects) {
+		for (const slug of project.relatedWriting) referencedWritingSlugs.add(slug)
+	}
+	for (const concept of concepts) {
+		for (const slug of concept.writing) referencedWritingSlugs.add(slug)
+	}
+
+	const writing = await resolveWritingPosts({
+		publicationUrl: resolvedWritingSettings?.publicationUrl || '',
+		existingEntries: writingEntries,
+		referencedSlugs: referencedWritingSlugs,
+	})
 
 	const notebooks = (
 		await Promise.all(
@@ -149,15 +176,6 @@ export async function getPortfolioData() {
 				.filter(Boolean),
 		}
 	})
-
-	const concepts = (conceptsData?.concepts ?? []).map((concept: any) => ({
-		slug: concept.slug,
-		name: concept.name,
-		description: concept.description || '',
-		projects: normalizeRelationships(concept.projects),
-		writing: normalizeRelationships(concept.writing),
-		notebooks: normalizeRelationships(concept.notebooks),
-	}))
 
 	const conceptLabelsBySlug = new Map<string, string[]>()
 	for (const concept of concepts) {
@@ -228,7 +246,7 @@ export async function getPortfolioData() {
 		config,
 		github,
 		githubData,
-		writingSettings,
+		writingSettings: resolvedWritingSettings,
 		aboutData,
 		timelineData,
 		impactData,
@@ -306,6 +324,78 @@ function normalizeSingleRelationship(value: any): string | undefined {
 	return undefined
 }
 
+function resolveWritingSettings(settings: any): ResolvedWritingSettings {
+	const publicationName = String(settings?.publicationName || '').trim()
+	const publicationUrl = derivePublicationBaseUrl(String(settings?.publicationUrl || '').trim())
+
+	if (!publicationName && !publicationUrl) return null
+
+	return {
+		publicationName,
+		publicationUrl,
+		subscribeUrl: publicationUrl ? deriveSubscribeUrl(publicationUrl) : '',
+	}
+}
+
+async function resolveWritingPosts({
+	publicationUrl,
+	existingEntries,
+	referencedSlugs,
+}: {
+	publicationUrl: string
+	existingEntries: WritingStubEntry[]
+	referencedSlugs: Set<string>
+}) {
+	const existingBySlug = new Map(
+		existingEntries.map((entry) => [
+			entry.slug,
+			{
+				title: entry.entry.title || '',
+				pubDate: entry.entry.pubDate || '',
+				substack_url: entry.entry.substack_url || '',
+				description: entry.entry.description || '',
+			},
+		]),
+	)
+
+	const livePosts = publicationUrl
+		? await fetchPublicationPosts(publicationUrl)
+		: []
+
+	syncWritingManifest({
+		posts: livePosts,
+		existingBySlug,
+		referencedSlugs,
+		publicationUrl,
+	})
+
+	const writing = livePosts.map((post) => ({
+		slug: post.slug,
+		title: post.title,
+		pubDate: post.pubDate,
+		substack_url: post.link,
+		description: post.description || '',
+		contentHtml: post.content || '',
+	}))
+
+	for (const slug of referencedSlugs) {
+		if (writing.some((post) => post.slug === slug)) continue
+		const fallback = existingBySlug.get(slug)
+		if (!fallback?.substack_url) continue
+
+		writing.push({
+			slug,
+			title: fallback.title || humanizeSlug(slug),
+			pubDate: fallback.pubDate || '',
+			substack_url: fallback.substack_url,
+			description: fallback.description || '',
+			contentHtml: await resolveArticleContent(fallback.substack_url),
+		})
+	}
+
+	return writing.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime())
+}
+
 export function escapeHtml(value: string): string {
 	return String(value)
 		.replace(/&/g, '&amp;')
@@ -339,12 +429,130 @@ export function renderProse(markdown: string | null | undefined): string {
 		.join('')
 }
 
-function deriveFeedUrl(articleUrl: string): string | null {
+function derivePublicationBaseUrl(url: string): string {
 	try {
-		const url = new URL(articleUrl)
-		return `${url.origin}/feed`
+		const parsed = new URL(url)
+		const pathname = parsed.pathname.replace(/\/$/, '')
+		if (!pathname || pathname === '/feed' || pathname === '/subscribe' || pathname.startsWith('/p/')) {
+			return parsed.origin
+		}
+		return `${parsed.origin}${pathname}`
 	} catch {
-		return null
+		return ''
+	}
+}
+
+function deriveFeedUrl(url: string): string | null {
+	const baseUrl = derivePublicationBaseUrl(url)
+	if (!baseUrl) return null
+	return `${baseUrl}/feed`
+}
+
+function deriveSubscribeUrl(url: string): string {
+	const baseUrl = derivePublicationBaseUrl(url)
+	return baseUrl ? `${baseUrl}/subscribe` : ''
+}
+
+function humanizeSlug(slug: string): string {
+	return slug
+		.split(/[-_]/)
+		.filter(Boolean)
+		.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+		.join(' ')
+}
+
+function serializeWritingStub(entry: {
+	slug: string
+	title: string
+	pubDate: string
+	substack_url: string
+	description: string
+}): string {
+	return [
+		`slug: ${JSON.stringify(entry.slug)}`,
+		`title: ${JSON.stringify(entry.title)}`,
+		`pubDate: ${JSON.stringify(entry.pubDate)}`,
+		`substack_url: ${JSON.stringify(entry.substack_url)}`,
+		`description: ${JSON.stringify(entry.description)}`,
+		'',
+	].join('\n')
+}
+
+function syncWritingManifest({
+	posts,
+	existingBySlug,
+	referencedSlugs,
+	publicationUrl,
+}: {
+	posts: FeedPost[]
+	existingBySlug: Map<
+		string,
+		{
+			title: string
+			pubDate: string
+			substack_url: string
+			description: string
+		}
+	>
+	referencedSlugs: Set<string>
+	publicationUrl: string
+}) {
+	if (!publicationUrl || !posts.length) return
+
+	const desiredEntries = new Map<string, string>()
+	const liveSlugs = new Set<string>()
+
+	for (const post of posts) {
+		liveSlugs.add(post.slug)
+		desiredEntries.set(
+			post.slug,
+			serializeWritingStub({
+				slug: post.slug,
+				title: post.title,
+				pubDate: post.pubDate.toISOString().slice(0, 10),
+				substack_url: post.link,
+				description: post.description || '',
+			}),
+		)
+	}
+
+	for (const slug of referencedSlugs) {
+		if (liveSlugs.has(slug)) continue
+		const fallback = existingBySlug.get(slug)
+		const fallbackUrl = fallback?.substack_url || `${publicationUrl}/p/${slug}`
+		desiredEntries.set(
+			slug,
+			serializeWritingStub({
+				slug,
+				title: fallback?.title || `(Older essay) ${humanizeSlug(slug)}`,
+				pubDate: fallback?.pubDate || '',
+				substack_url: fallbackUrl,
+				description:
+					fallback?.description ||
+					'Older publication entry — kept as a relationship stub because it is still linked elsewhere in the CMS.',
+			}),
+		)
+	}
+
+	try {
+		fs.mkdirSync(WRITING_MANIFEST_DIR, { recursive: true })
+
+		for (const [slug, content] of desiredEntries) {
+			const filePath = path.join(WRITING_MANIFEST_DIR, `${slug}.yaml`)
+			const existing = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf-8') : ''
+			if (existing !== content) {
+				fs.writeFileSync(filePath, content)
+			}
+		}
+
+		for (const filename of fs.readdirSync(WRITING_MANIFEST_DIR)) {
+			if (!filename.endsWith('.yaml')) continue
+			const slug = filename.slice(0, -5)
+			if (desiredEntries.has(slug)) continue
+			fs.rmSync(path.join(WRITING_MANIFEST_DIR, filename), { force: true })
+		}
+	} catch (error) {
+		console.warn('[brewfolio] Failed to sync writing manifest:', error)
 	}
 }
 
@@ -444,6 +652,26 @@ async function fetchFeedPosts(feedUrl: string): Promise<FeedPost[]> {
 	}
 
 	return items
+}
+
+async function fetchPublicationPosts(publicationUrl: string): Promise<FeedPost[]> {
+	const feedUrl = deriveFeedUrl(publicationUrl)
+	if (!feedUrl) return []
+
+	if (!feedCache.has(feedUrl)) {
+		feedCache.set(feedUrl, fetchFeedPosts(feedUrl).catch(() => []))
+	}
+
+	const posts = await feedCache.get(feedUrl)!
+
+	return await Promise.all(
+		posts.map(async (post) => ({
+			...post,
+			content: post.content
+				? normalizeArticleHtml(post.content)
+				: normalizeArticleHtml(await fetchArticlePageContent(post.link)),
+		})),
+	)
 }
 
 async function fetchArticlePageContent(articleUrl: string): Promise<string> {

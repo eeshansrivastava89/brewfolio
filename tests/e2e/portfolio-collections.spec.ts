@@ -12,7 +12,8 @@ import {
 
 let site: RunningSite
 
-const WRITING_SLUG = 'playwright-note'
+const WRITING_SLUG = 'good-enough-prompting'
+const WRITING_TITLE = 'Getting started with AI: Good enough prompting'
 const PROJECT_SLUG = 'playwright-project'
 const NOTEBOOK_SLUG = 'playwright-notebook'
 const TRASH_PROJECT_SLUG = 'playwright-trash-project'
@@ -31,35 +32,8 @@ test('portfolio collection index routes load', async ({ page }) => {
   await gotoCollection(page, site.baseUrl, 'projects')
   await expect(page.getByRole('button', { name: 'Add' })).toBeVisible()
 
-  await gotoCollection(page, site.baseUrl, 'writing')
-  await expect(page.getByRole('button', { name: 'Add' })).toBeVisible()
-
   await gotoCollection(page, site.baseUrl, 'notebooks')
   await expect(page.getByRole('button', { name: 'Add' })).toBeVisible()
-})
-
-test('can create and edit a writing post through Keystatic', async ({ page }) => {
-  await gotoCollectionCreate(page, site.baseUrl, 'writing')
-  await page.getByLabel('Slug*').fill(WRITING_SLUG)
-  await page.getByLabel('Post title').fill('Playwright field guide')
-  await page.getByLabel('Published date').fill('2026-04-18')
-  await page
-    .getByLabel('Post URL')
-    .fill('https://www.oneusefulthing.org/p/getting-started-with-ai-good-enough')
-  await page
-    .getByLabel('Card description')
-    .fill('A temporary article used to verify writing CRUD and route reflection.')
-  await createKeystaticEntry(page)
-
-  await expect(page).toHaveURL(new RegExp(`/collection/writing/item/${WRITING_SLUG}$`))
-  await page.getByLabel('Post title').fill('Playwright field guide updated')
-  await saveKeystatic(page)
-
-  await page.goto(site.baseUrl, { waitUntil: 'networkidle' })
-  await expect(page.getByText('Playwright field guide updated')).toBeVisible()
-
-  await page.goto(`${site.baseUrl}/writing/${WRITING_SLUG}`, { waitUntil: 'networkidle' })
-  await expect(page.getByRole('heading', { name: 'Playwright field guide updated' })).toBeVisible()
 })
 
 test('can create and edit a project through Keystatic', async ({ page }) => {
@@ -143,12 +117,12 @@ test('can wire project relationships and concept relationships through Keystatic
 
   await page.goto(site.baseUrl, { waitUntil: 'networkidle' })
   await expect(page.locator('[data-pane=\"projects\"]').getByText('Playwright Project Updated')).toBeVisible()
-  await expect(page.locator('[data-pane=\"writing\"]').getByText('Playwright field guide updated')).toBeVisible()
+  await expect(page.locator('[data-pane=\"writing\"]').getByText(WRITING_TITLE)).toBeVisible()
   await expect(page.locator('[data-pane=\"analysis\"]').getByText('Playwright Notebook')).toBeVisible()
   await expect(page.locator('[data-pane=\"writing\"]').getByText('Prompting systems')).toBeVisible()
 
   await page.getByRole('button', { name: /Open Playwright Project Updated details/i }).click()
-  await expect(page.getByRole('link', { name: 'Playwright field guide updated', exact: true })).toBeVisible()
+  await expect(page.getByRole('link', { name: WRITING_TITLE, exact: true })).toBeVisible()
   await expect(page.getByRole('link', { name: /Open analysis/i })).toBeVisible()
 
   await page.locator('[data-pane=\"concepts\"]').getByText('Prompting systems', { exact: true }).click()

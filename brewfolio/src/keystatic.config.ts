@@ -3,7 +3,7 @@ import { config, collection, singleton, fields } from '@keystatic/core'
 // ─── Collections ────────────────────────────────────────────────────────────
 
 export const writing = collection({
-	label: 'Writing posts',
+	label: 'Writing manifest',
 	slugField: 'slug',
 	path: 'src/data/writing/*',
 	schema: {
@@ -11,21 +11,24 @@ export const writing = collection({
 			name: {
 				label: 'Slug',
 				description:
-					'Create the post on Substack first, then use the same slug here so the /writing/<slug> route matches cleanly.',
+					'Auto-generated from your publication feed. This slug is used for relationships and the /writing/<slug> route.',
 			},
 		}),
-		title: fields.text({ label: 'Post title' }),
+		title: fields.text({
+			label: 'Post title',
+			description: 'Auto-generated from the publication feed metadata.',
+		}),
 		pubDate: fields.text({
 			label: 'Published date',
-			description: 'Use YYYY-MM-DD.',
+			description: 'Auto-generated from the publication feed metadata.',
 		}),
 		substack_url: fields.url({
 			label: 'Post URL',
-			description: 'Used for the “Read on …” button.',
+			description: 'Auto-generated source URL for the article.',
 		}),
 		description: fields.text({
 			label: 'Card description',
-			description: 'Shown on the writing list and article header.',
+			description: 'Auto-generated archive summary and article deck.',
 			multiline: true,
 		})
 	}
