@@ -1,0 +1,8 @@
+slug: building-an-ab-testing-memory-game
+title: 'From game design to p-values: Anatomy of a real A/B experiment'
+pubDate: '2025-12-21'
+substack_url: https://theasymptotic.substack.com/p/building-an-ab-testing-memory-game
+description: >-
+  Most data scientists inherit someone else's pipeline. I built one end-to-end
+  — product design, instrumentation, statistics — to show how it's done at the
+  highest levels.

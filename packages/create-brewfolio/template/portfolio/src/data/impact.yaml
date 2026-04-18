@@ -9,13 +9,3 @@ impact:
       - text: brewfolio on npm
         meta: Published package used by the scaffold
         link: https://www.npmjs.com/package/brewfolio
-  - title: Reference material
-    icon: lucide:book-open
-    visible: true
-    items:
-      - text: One Useful Thing
-        meta: Real Substack posts used for the writing starter content
-        link: https://www.oneusefulthing.org/
-      - text: OpenAI Cookbook
-        meta: Real public notebooks used for analysis examples
-        link: https://github.com/openai/openai-cookbook

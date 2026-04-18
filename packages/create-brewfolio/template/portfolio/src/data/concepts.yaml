@@ -1,29 +1,47 @@
 concepts:
-  - slug: prompting-systems
-    name: Prompting systems
-    description: Patterns for prompting, iteration loops, and publishable notes.
+  - slug: experimentation
+    name: Experimentation
+    description: A/B testing, causal inference, and measurement
     projects:
-      - prompting-workbench
+      - ab-simulator
     writing:
-      - practical-guide-to-using-ai-to
-      - good-enough-prompting
+      - building-an-ab-testing-memory-game
     notebooks:
-      - token-accounting-lab
-  - slug: retrieval-evaluation
-    name: Retrieval evaluation
-    description: Embeddings, search quality, and answer usefulness.
+      - ab-test-analysis
+  - slug: language
+    name: Language
+    description: NLP, text analysis, and how humans talk to machines
     projects:
-      - retrieval-studio
+      - how-i-prompt
+      - local-llm-bench
     writing:
-      - post-apocalyptic-education
-    notebooks:
-      - embeddings-qa-lab
-  - slug: notebook-experience
-    name: Notebook experience
-    description: How analysis artifacts turn into reusable product surfaces.
+      - how-i-de-vibed-a-vibe-coded-nlp-app
+      - i-built-a-spotify-wrapped-for-my
+    notebooks: []
+  - slug: data-viz
+    name: Data Visualization
+    description: Turning data into visual stories and interactive experiences
     projects:
-      - notebook-observatory
+      - how-i-prompt
     writing:
-      - good-enough-prompting
-    notebooks:
-      - running-code-tour
+      - i-built-a-spotify-wrapped-for-my
+    notebooks: []
+  - slug: local-ai
+    name: AI on Your Own Machine
+    description: Running AI models locally for privacy, speed, and independence
+    projects:
+      - local-llm-bench
+      - sidequests
+    writing:
+      - why-local-ai-is-more-important-than
+    notebooks: []
+  - slug: essays
+    name: Essays
+    description: Opinion pieces and reflective takes on the practice
+    projects: []
+    writing:
+      - how-i-de-vibed-a-vibe-coded-nlp-app
+      - agentic-coding-for-non-vibe-coders
+      - the-dopamine-trap-of-ai-coding
+      - why-local-ai-is-more-important-than
+    notebooks: []

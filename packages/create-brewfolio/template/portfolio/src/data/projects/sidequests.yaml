@@ -1,0 +1,16 @@
+id: sidequests
+name: Sidequests
+url: https://github.com/eeshansrivastava89/sidequests
+status: live
+external: true
+description: >-
+  A side-project tracker for solo devs — scans your dev folder and surfaces
+  health, GitHub state, and AI-powered next actions. Hands-off and fully local.
+shortDescription: A hands-off dashboard for every local side project
+repo: https://github.com/eeshansrivastava89/sidequests
+tags:
+  - name: Next.js / React
+  - name: Node CLI
+  - name: Prisma / libSQL
+  - name: Claude Code + Codex
+relatedWriting: []
