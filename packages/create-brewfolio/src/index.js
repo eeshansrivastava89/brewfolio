@@ -5,7 +5,6 @@
  * Usage:
  *   npx create-brewfolio my-site
  *   npx create-brewfolio my-site --template minimal
- *   npx create-brewfolio my-site --no-git
  */
 
 import { Command } from 'commander'
@@ -24,7 +23,6 @@ program
   .description('Scaffold a new Astro project with brewfolio pre-configured')
   .argument('<project-name>', 'Name of the project to create')
   .option('-t, --template <template>', 'Astro project template', 'minimal')
-  .option('-g, --no-git', 'Skip git initialization')
   .option('-d, --dry-run', 'Print what would be done without doing it')
   .option('-l, --local-brewfolio <path>', 'Path to local brewfolio package (for testing)')
   .action(async (projectName, opts) => {
@@ -35,8 +33,7 @@ program
     if (opts.dryRun) {
       console.log(`  [dry-run] Would create project at: ${projectDir}`)
       console.log(`  [dry-run] Would scaffold template: ${opts.template}`)
-      console.log(`  [dry-run] Would install: brewfolio, @keystatic/core, @keystatic/astro`)
-      console.log(`  [dry-run] Would init git: ${opts.git}`)
+      console.log(`  [dry-run] Would install: brewfolio, @keystatic/core, @keystatic/astro, tailwind, react`)
       return
     }
 
@@ -52,8 +49,7 @@ program
       } catch {}
       spinner.succeed('Checking target directory…')
 
-      // 2. Scaffold Astro project in one shot: npx create-astro --yes --no-git
-      //    We intercept the project directory so it doesn't prompt
+      // 2. Scaffold Astro project
       spinner.start(`Scaffolding Astro project (${opts.template} template)…`)
       await runProcess('npx', [
         '--yes',
@@ -71,7 +67,6 @@ program
 
       // 4. Install brewfolio + peer deps
       //    Use --legacy-peer-deps: @keystatic/astro hasn't updated its peer dep for Astro 6 yet
-      //    Use --local-brewfolio for testing with a local brewfolio package before npm publish
       spinner.start('Installing dependencies…')
       const brewfolioPath = opts.localBrewfolio
         ? opts.localBrewfolio
@@ -89,13 +84,6 @@ program
         '--legacy-peer-deps',
       ]
       await runProcess('npm', installArgs, { cwd: projectDir })
-
-      // 5. Init git if requested
-      if (opts.git) {
-        spinner.start('Initializing git…')
-        await runProcess('git', ['init'], { cwd: projectDir })
-        spinner.succeed('Initializing git…')
-      }
 
       spinner.succeed(`\n  Done! Your project is ready at ./${projectName}\n`)
       console.log('  Next steps:\n')
