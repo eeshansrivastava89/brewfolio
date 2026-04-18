@@ -290,3 +290,12 @@ The original `brewfolio` repo (now `brewfolio-deprecated`) attempted to build fa
 - Notebook rendering pipeline
 - Content loading utilities
 - The Keystatic schema itself (simplified, no factories)
+
+
+## Prompts (user's scratchpad)
+
+### Testing
+run a proper visual test like an actual user and take screenshots and make sure the screenshots I can access using Markdown in the internal docs. So I  
+  tried it before with Minimax, it didn't work. But I need you to go and do a proper full end-to-end test, build the site, different types of sites and mix and match different components. Make sure everything  
+  is showing up. Test out every single feature in key static, change it, see if it's changing or not, and you run all of that, and then document all of that with screenshots and with any findings of bugs,      
+  issues, errors, or inconsistencies in that same document. So, use parallel agents, use what you want, but take as much time as you need

@@ -134,6 +134,44 @@ packages/create-brewfolio/         ← scaffold CLI
 
 ---
 
+## Phase 6.5 — Close the gaps before migration
+
+Grounded from a repo scan against the vision + architecture docs. Scaffolded output did not run end-to-end without manual patching before this pass. Full run documented at `internal/docs/brewfolio-phase6_5-e2e-test-report.md` with 36 screenshots.
+
+### Broken in scaffolded output
+
+- [x] `template/keystatic.config.ts`: `sections` is imported from `brewfolio/keystatic.config` but no such named export exists — now imports `collections` + `singletons` bundles
+- [x] `template/keystatic.config.ts`: uses `fields.title` / `fields.slug` without importing `fields`; `fields.title` not real — template rewritten, no longer needs raw `fields`
+- [x] `brewfolio/src/index.ts`: re-exported non-existent `keystaticConfig` — now exports the real one plus `collections`, `singletons`, `fields`
+- [x] `brewfolio/src/index.ts`: dropped the broken CSS default re-export (consumers `@import` the CSS directly)
+- [x] `template/src/styles/global.css` is now imported by each scaffolded page, plus `@source`s the brewfolio package so Tailwind picks up utilities used inside its components
+- [x] Deleted vestigial `template/tailwind.config.js`
+
+### Vision-vs-reality gaps
+
+- [x] `Dashboard.astro` — kept as a grid-wrapper `<slot />` since panes need app-specific data; the scaffolded `portfolio/src/pages/index.astro` composes the five panes from the Keystatic reader
+- [x] CLI `--type portfolio|app|game` added. Each type gets its own template layer (`common/` + `<type>/`) with starter pages wired to the right layout
+- [x] `secrets` singleton (GitHub token) added
+- [ ] `lib/` notebook renderer is still missing; only a `fetchNotebookFromGitHub` URL fetch helper exists. Defer to a future phase
+
+### CLI UX
+
+- [ ] Publishing story: CLI still requires `--local-brewfolio <tarball>`. Decide on npm publish vs. committed tarball before external users can run `npx create-brewfolio`
+- [x] Scaffold ships with gracefully-empty first-run screens (homepage renders before Keystatic has any data); user adds content in Keystatic and it round-trips to the homepage end-to-end
+- [x] Spinner `start`/`succeed` calls paired correctly
+- [x] Reader API pattern documented and coded in `template/common/src/lib/content.ts` — each consuming app instantiates its own reader against its own `keystatic.config.ts`
+
+### Extra bugs uncovered during end-to-end testing (see Phase 6.5 report for detail)
+
+- [x] `sections` singleton `fields.conditional` shape was malformed — crashed Keystatic on any save. Rewrote to `fields.array(fields.conditional(discriminantSelect, branches))`
+- [x] `Leaderboard.astro` didn't compile because Astro parser mis-read `entry.rank <= 3` inside JSX
+- [x] `ExecutionPanel.astro` had bare Tailwind classes inside a plain CSS block; rejected by Tailwind v4
+- [x] `DataTable.astro` never rendered its `data` prop — empty tbody, "No data available" forever
+- [x] `ProjectsPane.astro` imported from `@/lib/types` alias and `astro-icon/components`; both would break any consumer. Rewrote with relative import + inline SVG
+- [x] `AppLayout.astro` default `sections = []` made the empty-sections hint fire even when the caller wanted `<slot />`; default is now `undefined`
+
+---
+
 ## Phase 7 — Migration (end)
 
 Existing apps converted to brewfolio after the package is proven:
