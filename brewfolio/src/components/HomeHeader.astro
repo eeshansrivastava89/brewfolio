@@ -9,6 +9,7 @@ interface Props {
 	siteName?: string
 	showSearch?: boolean
 	showThemeToggle?: boolean
+	showEditorShortcut?: boolean
 	showClockWeather?: boolean
 	latitude?: number
 	longitude?: number
@@ -25,6 +26,7 @@ const {
 	siteName = 'Portfolio',
 	showSearch = true,
 	showThemeToggle = true,
+	showEditorShortcut = import.meta.env.DEV,
 	showClockWeather,
 	latitude,
 	longitude,
@@ -88,6 +90,11 @@ const shouldShowClockWeather = showClockWeather ?? hasLocationConfig
 				</a>
 			))}
 		</nav>
+		{showEditorShortcut && (
+			<a href="/keystatic" class="editor-shortcut" title="Open Keystatic" aria-label="Open Keystatic">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="15" height="15"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06A2 2 0 1 1 7.04 3.4l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V2a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06A2 2 0 1 1 20.6 7.04l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H22a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+			</a>
+		)}
 		{showThemeToggle && (
 			<button class="theme-toggle" type="button" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode">
 				<svg class="theme-icon theme-icon-moon w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -425,6 +432,7 @@ const shouldShowClockWeather = showClockWeather ?? hasLocationConfig
 	}
 
 	.nav-pill:focus-visible,
+	.editor-shortcut:focus-visible,
 	.theme-toggle:focus-visible,
 	.search-hint:focus-visible {
 		outline: 2px solid var(--primary);
@@ -439,6 +447,7 @@ const shouldShowClockWeather = showClockWeather ?? hasLocationConfig
 	}
 
 	.theme-toggle,
+	.editor-shortcut,
 	.search-hint {
 		padding: 5px 12px;
 		border-radius: 6px;
@@ -454,7 +463,8 @@ const shouldShowClockWeather = showClockWeather ?? hasLocationConfig
 		touch-action: manipulation;
 	}
 
-	.theme-toggle { padding: 7px 10px; }
+	.theme-toggle,
+	.editor-shortcut { padding: 7px 10px; }
 
 	:global([data-theme='light']) .theme-icon-sun,
 	:global([data-theme='dark']) .theme-icon-moon { display: none; }
@@ -466,6 +476,7 @@ const shouldShowClockWeather = showClockWeather ?? hasLocationConfig
 	}
 
 	.theme-toggle:hover,
+	.editor-shortcut:hover,
 	.search-hint:hover {
 		background: var(--accent);
 		border-color: var(--primary);
@@ -524,7 +535,8 @@ const shouldShowClockWeather = showClockWeather ?? hasLocationConfig
 			font-size: 13px;
 		}
 
-		.theme-toggle { padding: 4px 10px; }
+		.theme-toggle,
+		.editor-shortcut { padding: 4px 10px; }
 
 		.search-hint {
 			display: inline-flex;

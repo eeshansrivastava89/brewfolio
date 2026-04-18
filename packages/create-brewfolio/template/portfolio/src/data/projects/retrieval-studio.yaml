@@ -10,12 +10,12 @@ description: >-
 shortDescription: Embeddings experiments and search quality snapshots.
 image: ''
 repo: https://github.com/openai/openai-cookbook
-analysis_url: /analysis/embeddings-qa-lab
+featuredNotebook: embeddings-qa-lab
 tags:
   - name: Retrieval
   - name: Embeddings
   - name: Evaluation
-related_writing:
+relatedWriting:
   - post-apocalyptic-education
 overview: >-
   Retrieval Studio is sample content for anyone who wants the portfolio to feel

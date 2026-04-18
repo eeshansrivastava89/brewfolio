@@ -10,12 +10,12 @@ description: >-
 shortDescription: Notebook-first product thinking with a reader-friendly shell.
 image: ''
 repo: https://github.com/jupyter/notebook
-analysis_url: /analysis/running-code-tour
+featuredNotebook: running-code-tour
 tags:
   - name: Notebooks
   - name: UX systems
   - name: Documentation
-related_writing:
+relatedWriting:
   - good-enough-prompting
 overview: >-
   The observatory frame treats notebooks as publishable artifacts rather than

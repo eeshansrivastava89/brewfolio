@@ -7,7 +7,13 @@ export const writing = collection({
 	slugField: 'slug',
 	path: 'src/data/writing/*',
 	schema: {
-		slug: fields.slug({ name: { label: 'Slug' } }),
+		slug: fields.slug({
+			name: {
+				label: 'Slug',
+				description:
+					'Create the post on Substack first, then use the same slug here so the /writing/<slug> route matches cleanly.',
+			},
+		}),
 		title: fields.text({ label: 'Post title' }),
 		pubDate: fields.text({
 			label: 'Published date',
@@ -26,7 +32,7 @@ export const writing = collection({
 })
 
 export const notebooks = collection({
-	label: 'Notebooks',
+	label: 'Analysis notebooks',
 	slugField: 'id',
 	path: 'src/data/notebooks/*',
 	schema: {
@@ -99,7 +105,13 @@ export const projects = collection({
 	slugField: 'id',
 	path: 'src/data/projects/*',
 	schema: {
-		id: fields.slug({ name: { label: 'Project ID' } }),
+		id: fields.slug({
+			name: {
+				label: 'Project ID',
+				description:
+					'Create projects first. Notebooks and concepts can link back to this project later.',
+			},
+		}),
 		name: fields.text({ label: 'Project name', validation: { isRequired: true } }),
 		url: fields.url({ label: 'Project URL' }),
 		status: fields.select({
@@ -130,14 +142,27 @@ export const projects = collection({
 			label: 'GitHub repo URL',
 			description: 'Used for repo stats and recent commits in the project drawer.'
 		}),
-		analysis_url: fields.url({ label: 'Related analysis URL' }),
+		featuredNotebook: fields.relationship({
+			label: 'Featured analysis notebook',
+			collection: 'notebooks',
+			description:
+				'Optional. Pick the analysis page that should open from the project drawer. If blank, brewfolio will use the first notebook already linked back to this project.',
+		}),
 		tags: fields.array(
 			fields.object({ name: fields.text({ label: 'Tag' }) }),
 			{ label: 'Tags', itemLabel: (props: any) => props.fields.name.value || 'Tag' }
 		),
-		related_writing: fields.array(
-			fields.text({ label: 'Writing slug' }),
-			{ label: 'Related writing', itemLabel: (props: any) => props.value || 'Writing slug' }
+		relatedWriting: fields.array(
+			fields.relationship({
+				label: 'Post',
+				collection: 'writing',
+			}),
+			{
+				label: 'Related writing',
+				description:
+					'Optional supporting essays or notes to surface alongside this project.',
+				itemLabel: (props: any) => props.value || 'Post',
+			}
 		),
 		overview: fields.text({
 			label: 'Drawer overview',
@@ -232,7 +257,12 @@ export const concepts = singleton({
 	schema: {
 		concepts: fields.array(
 			fields.object({
-				slug: fields.text({ label: 'Slug', validation: { isRequired: true } }),
+				slug: fields.text({
+					label: 'Slug',
+					description:
+						'Create projects, writing posts, and notebooks first. Concepts are the last curation step that ties those pieces together on the homepage.',
+					validation: { isRequired: true },
+				}),
 				name: fields.text({ label: 'Concept name', validation: { isRequired: true } }),
 				description: fields.text({
 					label: 'Short description',
@@ -306,7 +336,8 @@ export const about = singleton({
 	schema: {
 		bio: fields.text({
 			label: 'Top bio',
-			description: 'The intro at the top of the About page.',
+			description:
+				'The intro at the top of the About page. Write this after Site, Projects, Writing, and Notebooks are in place so the bio can describe the real work on the homepage.',
 			multiline: true,
 			validation: { isRequired: true }
 		}),
@@ -371,7 +402,7 @@ export const singletons = {
 export const keystaticConfig = config({
 	storage: { kind: 'local' },
 	ui: {
-		navigation: ['siteConfig', 'projects', 'notebooks', 'concepts', 'about', 'timeline', 'impact', 'sections', 'secrets']
+		navigation: ['siteConfig', 'projects', 'writing', 'notebooks', 'concepts', 'about', 'timeline', 'impact', 'sections', 'secrets']
 	},
 	collections,
 	singletons

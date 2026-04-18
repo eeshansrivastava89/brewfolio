@@ -10,12 +10,12 @@ description: >-
 shortDescription: Prompt experiments, notes, and linked essays in one place.
 image: ''
 repo: https://github.com/openai/openai-cookbook
-analysis_url: /analysis/token-accounting-lab
+featuredNotebook: token-accounting-lab
 tags:
   - name: Prompting
   - name: Editorial systems
   - name: Developer tools
-related_writing:
+relatedWriting:
   - practical-guide-to-using-ai-to
   - good-enough-prompting
 overview: >-

@@ -1,6 +1,6 @@
 {
 	"name": "brewfolio",
-	"version": "0.1.10",
+	"version": "0.1.11",
 	"description": "CMS-driven design system for Astro — tokens, components, layouts, and a Keystatic schema for portfolios, apps, and games.",
 	"type": "module",
 	"license": "MIT",

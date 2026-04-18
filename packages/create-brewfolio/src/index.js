@@ -120,7 +120,7 @@ program
     const summary = [
       `${pc.bold('Path:')}       ./${projectName}`,
       `${pc.bold('Type:')}       ${typeDef.label} (${typeDef.hint})`,
-      `${pc.bold('Installs:')}  brewfolio, @keystatic/core, @keystatic/astro, @astrojs/react, react, tailwindcss`,
+      `${pc.bold('Installs:')}  brewfolio, @keystatic/core, @keystatic/astro, @astrojs/react, astro-icon, lucide/simple-icons icon sets, react, tailwindcss`,
     ].join('\n')
     note(summary, 'Ready to scaffold')
 
@@ -166,6 +166,9 @@ program
         '@keystatic/core@latest',
         '@keystatic/astro@latest',
         '@astrojs/react@latest',
+        'astro-icon@latest',
+        '@iconify-json/lucide@latest',
+        '@iconify-json/simple-icons@latest',
         'tailwindcss@^4.2.2',
         '@tailwindcss/vite@^4.2.2',
         'react',

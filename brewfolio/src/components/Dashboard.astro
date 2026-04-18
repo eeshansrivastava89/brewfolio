@@ -264,6 +264,38 @@ const { title = 'Home' } = Astro.props
 		focusProject(projectId)
 	}
 
+	function setupPaneScrollHints() {
+		document.querySelectorAll('.pane').forEach(function (pane) {
+			var body = pane.querySelector('.pane-body')
+			if (!body) return
+			if (pane.querySelector('.pane-scroll-hint')) return
+
+			var hint = document.createElement('div')
+			hint.className = 'pane-scroll-hint'
+			hint.setAttribute('aria-hidden', 'true')
+			hint.hidden = true
+			pane.appendChild(hint)
+
+			function update() {
+				var canScroll = body.scrollHeight - body.clientHeight > 4
+				var atBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 8
+				hint.hidden = !(canScroll && !atBottom)
+			}
+
+			body.addEventListener('scroll', update, { passive: true })
+			window.addEventListener('resize', update)
+
+			if (typeof ResizeObserver !== 'undefined') {
+				var ro = new ResizeObserver(update)
+				ro.observe(body)
+				var inner = body.firstElementChild
+				if (inner) ro.observe(inner)
+			}
+
+			update()
+		})
+	}
+
 	document.addEventListener('click', function (event) {
 		if (window.__brewfolioActiveConcept && !event.target.closest('.pane-concepts')) {
 			window.__brewfolioActiveConcept = null
@@ -315,6 +347,7 @@ const { title = 'Home' } = Astro.props
 	document.addEventListener('DOMContentLoaded', function () {
 		updateNavActive(window.location.pathname)
 		syncRouteToModal()
+		setupPaneScrollHints()
 	})
 })()
 </script>
@@ -340,6 +373,52 @@ const { title = 'Home' } = Astro.props
 		overflow: hidden;
 		min-height: 0;
 		transition: box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+	}
+
+	.pane-scroll-hint {
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		height: 34px;
+		pointer-events: none;
+		display: flex;
+		align-items: flex-end;
+		justify-content: center;
+		padding-bottom: 6px;
+		z-index: 2;
+		background: linear-gradient(
+			to top,
+			color-mix(in srgb, var(--card) 92%, transparent) 0%,
+			color-mix(in srgb, var(--card) 55%, transparent) 50%,
+			color-mix(in srgb, var(--card) 0%, transparent) 100%
+		);
+	}
+
+	.pane-scroll-hint[hidden] {
+		display: none;
+	}
+
+	.pane-scroll-hint::after {
+		content: '';
+		display: block;
+		width: 16px;
+		height: 16px;
+		background: linear-gradient(to bottom, var(--muted) 0%, var(--primary) 100%);
+		-webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.75' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+		-webkit-mask-repeat: no-repeat;
+		-webkit-mask-position: center;
+		-webkit-mask-size: contain;
+		mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.75' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+		mask-repeat: no-repeat;
+		mask-position: center;
+		mask-size: contain;
+		animation: pane-hint-bounce 2.2s ease-in-out infinite;
+	}
+
+	@keyframes pane-hint-bounce {
+		0%, 100% { transform: translateY(0); }
+		50% { transform: translateY(2px); }
 	}
 
 	.pane:hover {
@@ -403,6 +482,12 @@ const { title = 'Home' } = Astro.props
 
 	.pane-body::-webkit-scrollbar {
 		display: none;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.pane-scroll-hint::after {
+			animation: none;
+		}
 	}
 
 	.pane-concepts { grid-column: 1; grid-row: 1; }

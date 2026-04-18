@@ -5,6 +5,7 @@ import ArticleTOC from 'brewfolio/components/ArticleTOC.astro'
 import Dashboard from 'brewfolio/components/Dashboard.astro'
 import ModalSource from 'brewfolio/components/ModalSource.astro'
 import SearchData from 'brewfolio/components/SearchData.astro'
+import { Icon } from 'astro-icon/components'
 import { dashboardHeader, getPortfolioData, renderProse } from '../lib/portfolio-data'
 
 const {
@@ -29,6 +30,24 @@ const tocHeadings = [
 	{ id: 'experience', text: 'Experience', level: 2 as const },
 	{ id: 'education', text: 'Education', level: 2 as const },
 ]
+
+function iconForUrl(url: string | null | undefined): string {
+	if (!url) return 'lucide:external-link'
+
+	let host = ''
+	try {
+		host = new URL(url).hostname.toLowerCase()
+	} catch {
+		return 'lucide:external-link'
+	}
+
+	if (host === 'github.com' || host.endsWith('.github.com')) return 'simple-icons:github'
+	if (host.includes('substack.com')) return 'simple-icons:substack'
+	if (host === 'youtube.com' || host.endsWith('.youtube.com') || host === 'youtu.be') return 'simple-icons:youtube'
+	if (host.endsWith('linkedin.com')) return 'simple-icons:linkedin'
+	if (host.includes('spotify.com')) return 'simple-icons:spotify'
+	return 'lucide:external-link'
+}
 ---
 
 <DashboardLayout meta={{ title: 'About', siteTitle }} header={headerConfig}>
@@ -57,12 +76,18 @@ const tocHeadings = [
 				<div class="about-impact-grid">
 					{impactSections.map((section: any) => (
 						<section class="about-impact-card">
-							<h3 class="about-impact-card-title">{section.title}</h3>
+							<h3 class="about-impact-card-title">
+								{section.icon && <Icon name={section.icon} class="about-impact-card-icon" />}
+								<span>{section.title}</span>
+							</h3>
 							<ul class="about-impact-list">
 								{section.items.map((item: any) => (
 									<li class="about-impact-item">
 										{item.link ? (
-											<a href={item.link} target="_blank" rel="noopener noreferrer" class="about-impact-link">{item.text}</a>
+											<a href={item.link} target="_blank" rel="noopener noreferrer" class="about-impact-link">
+												<Icon name={iconForUrl(item.link)} class="about-impact-link-icon" />
+												<span>{item.text}</span>
+											</a>
 										) : (
 											<span class="about-impact-text">{item.text}</span>
 										)}
@@ -277,9 +302,19 @@ const tocHeadings = [
 	}
 
 	.about-impact-card-title {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
 		margin: 0 0 12px;
 		font-size: 1rem;
 		font-weight: 700;
+	}
+
+	.about-impact-card-icon {
+		width: 14px;
+		height: 14px;
+		color: var(--muted-foreground);
+		flex-shrink: 0;
 	}
 
 	.about-impact-list {
@@ -296,9 +331,18 @@ const tocHeadings = [
 	}
 
 	.about-impact-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
 		color: var(--primary);
 		font-weight: 600;
 		text-decoration: none;
+	}
+
+	.about-impact-link-icon {
+		width: 12px;
+		height: 12px;
+		flex-shrink: 0;
 	}
 
 	.about-impact-link:hover {

@@ -300,68 +300,155 @@ function getStatusLabel(status: string): string {
 			'<svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path></svg>'
 		var extIcon =
 			'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="11" height="11"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>'
-
 		function sectionHeader(label, right) {
 			return (
-				'<div class="bf-pdr-section-header"><span>' +
-				label +
-				'</span>' +
-				(right || '') +
-				'</div>'
+				'<div class="bf-pdr-section-header"><span>' + label + '</span>' + (right || '') + '</div>'
 			)
 		}
 
-		function buildDrawerContent(project, githubData) {
-			var output = []
-			output.push(
-				'<div class="bf-pdr-meta"><span class="bf-pdr-status"><span class="bf-pdr-dot" style="background:' +
-					statusColor(project.status) +
-					'"></span>' +
-					esc(statusLabel(project.status)) +
-					'</span>',
-			)
-			if (project.tags) {
-				project.tags.forEach(function (tag) {
-					output.push('<span class="bf-pdr-tag">' + esc(tag.name) + '</span>')
+		function timelineMarkup(commits, page, pageSize) {
+			var start = page * pageSize
+			var pageItems = commits.slice(start, start + pageSize)
+			var rows = pageItems
+				.map(function (commit) {
+					return (
+						'<a href="' +
+						esc(commit.url) +
+						'" target="_blank" rel="noopener noreferrer" class="bf-pdr-commit">' +
+						'<span class="bf-pdr-commit-label">git</span>' +
+						'<span class="bf-pdr-commit-msg">' +
+						esc(commit.message) +
+						'</span>' +
+						'<span class="bf-pdr-commit-date">' +
+						fmtDate(commit.date) +
+						'</span>' +
+						'</a>'
+					)
 				})
-			}
-			output.push('</div>')
+				.join('')
 
-			if (project.url || project.repo) {
-				output.push('<div class="bf-pdr-links">')
-				if (project.url) {
-					output.push(
-						'<a href="' +
-							esc(project.url) +
-							'" target="_blank" rel="noopener noreferrer" class="bf-pdr-cta">Try it ' +
-							extIcon +
-							'</a>',
-					)
-				}
-				if (project.repo) {
-					output.push(
-						'<a href="' +
-							esc(project.repo) +
-							'" target="_blank" rel="noopener noreferrer" class="bf-pdr-cta-sec">' +
-							ghIcon +
-							' GitHub</a>',
-					)
-				}
-				output.push('</div>')
+			return rows || '<div class="bf-pdr-info-msg">No activity yet.</div>'
+		}
+
+		function timelinePaginationMarkup(totalPages, currentPage) {
+			if (totalPages <= 1) return ''
+			var buttons = []
+			buttons.push(
+				'<button type="button" class="bf-pdr-page-btn" data-bf-pdr-page="' +
+					(currentPage - 1) +
+					'"' +
+					(currentPage === 0 ? ' disabled' : '') +
+					'>&lt;</button>',
+			)
+			for (var i = 0; i < totalPages; i++) {
+				buttons.push(
+					'<button type="button" class="bf-pdr-page-btn' +
+						(i === currentPage ? ' is-active' : '') +
+						'" data-bf-pdr-page="' +
+						i +
+						'">' +
+						(i + 1) +
+						'</button>',
+				)
+			}
+			buttons.push(
+				'<button type="button" class="bf-pdr-page-btn" data-bf-pdr-page="' +
+					(currentPage + 1) +
+					'"' +
+					(currentPage === totalPages - 1 ? ' disabled' : '') +
+					'>&gt;</button>',
+			)
+			return buttons.join('')
+		}
+
+		function buildDrawerContent(project, githubData) {
+			var root = document.createElement('div')
+			var commits = githubData && githubData.recentCommits ? githubData.recentCommits : []
+			var pageSize = 8
+			var totalPages = Math.max(1, Math.ceil(commits.length / pageSize))
+			var primaryOverview = project.overview || project.description || ''
+			var relatedWritingItems = Array.isArray(project.relatedWritingItems)
+				? project.relatedWritingItems
+				: []
+
+			var actionLinks = []
+			if (project.url) {
+				actionLinks.push(
+					'<a href="' +
+						esc(project.url) +
+						'" target="_blank" rel="noopener noreferrer" class="bf-pdr-cta">Try it ' +
+						extIcon +
+						'</a>',
+				)
+			}
+			if (project.repo) {
+				actionLinks.push(
+					'<a href="' +
+						esc(project.repo) +
+						'" target="_blank" rel="noopener noreferrer" class="bf-pdr-cta-sec">' +
+						ghIcon +
+						' GitHub</a>',
+				)
+			}
+			if (project.featuredNotebook) {
+				actionLinks.push(
+					'<a href="/analysis/' +
+						esc(project.featuredNotebook) +
+						'" class="bf-pdr-cta-sec" data-modal-link data-close-drawer="true">Open analysis</a>',
+				)
 			}
 
-			output.push(
+			var tagMarkup = ''
+			if (project.tags) {
+				tagMarkup = project.tags
+					.map(function (tag) {
+						return '<span class="bf-pdr-tag">' + esc(tag.name) + '</span>'
+					})
+					.join('')
+			}
+
+			var relatedLinks = []
+			if (project.featuredNotebook) {
+				relatedLinks.push(
+					'<a href="/analysis/' +
+						esc(project.featuredNotebook) +
+						'" class="bf-pdr-related-link" data-modal-link data-close-drawer="true">' +
+						esc(project.featuredNotebookTitle || 'Featured notebook') +
+						'</a>',
+				)
+			}
+			relatedWritingItems.slice(0, 3).forEach(function (item) {
+				relatedLinks.push(
+					'<a href="' +
+						esc(item.href) +
+						'" class="bf-pdr-related-link" data-modal-link data-close-drawer="true">' +
+						esc(item.title) +
+						'</a>',
+				)
+			})
+
+			root.className = 'bf-pdr-root'
+			root.innerHTML =
+				'<div class="bf-pdr-meta"><span class="bf-pdr-status"><span class="bf-pdr-dot" style="background:' +
+				statusColor(project.status) +
+				'"></span>' +
+				esc(statusLabel(project.status)) +
+				'</span>' +
+				tagMarkup +
+				'</div>' +
+				(actionLinks.length
+					? '<div class="bf-pdr-links">' + actionLinks.join('') + '</div>'
+					: '') +
+				'<section class="bf-pdr-section">' +
 				sectionHeader(
 					'GITHUB',
 					githubData
 						? '<span class="bf-pdr-sync">Synced ' + fmtDate(githubData.syncedAt) + '</span>'
 						: '',
-				),
-			)
-			output.push('<div class="bf-pdr-card">')
-			if (githubData) {
-				output.push(
-					'<div class="bf-pdr-stats">' +
+				) +
+				'<div class="bf-pdr-card">' +
+				(githubData
+					? '<div class="bf-pdr-stats">' +
 						'<div class="bf-pdr-stat"><div class="bf-pdr-stat-val">' +
 						githubData.openIssues +
 						'</div><div class="bf-pdr-stat-label">Issues</div></div>' +
@@ -373,68 +460,76 @@ function getStatusLabel(status: string): string {
 						'">' +
 						esc(githubData.visibility.charAt(0).toUpperCase() + githubData.visibility.slice(1)) +
 						'</div><div class="bf-pdr-stat-label">Visibility</div></div>' +
-						'</div>',
-				)
-			} else {
-				output.push(
-					'<div class="bf-pdr-info-msg">' +
+						'</div>'
+					: '<div class="bf-pdr-info-msg">' +
 						(project.repo
 							? 'Could not load GitHub data.'
-							: 'No GitHub repository configured for this project.') +
-						'</div>',
-				)
-			}
-			output.push('</div>')
+							: 'Add a GitHub repository URL in Keystatic to unlock repo stats and the project timeline.') +
+						'</div>') +
+				'</div></section>' +
+				'<section class="bf-pdr-section">' +
+				sectionHeader('PROJECT OVERVIEW') +
+				'<div class="bf-pdr-card">' +
+				(primaryOverview
+					? '<div class="bf-pdr-copy-block"><div class="bf-pdr-subsection-label">What is it?</div><p class="bf-pdr-body">' +
+						esc(primaryOverview) +
+						'</p></div>'
+					: '') +
+				(project.architecture
+					? '<div class="bf-pdr-copy-block"><div class="bf-pdr-subsection-label">Architecture / Tech Stack</div><p class="bf-pdr-body">' +
+						esc(project.architecture) +
+						'</p></div>'
+					: '') +
+				(project.nextActions
+					? '<div class="bf-pdr-copy-block"><div class="bf-pdr-subsection-label">Next actions / Updates</div><p class="bf-pdr-body">' +
+						esc(project.nextActions) +
+						'</p></div>'
+					: '') +
+				(relatedLinks.length
+					? '<div class="bf-pdr-copy-block"><div class="bf-pdr-subsection-label">Linked work</div><div class="bf-pdr-related-links">' +
+						relatedLinks.join('') +
+						'</div></div>'
+					: '') +
+				(!primaryOverview && !project.architecture && !project.nextActions && !relatedLinks.length
+					? '<div class="bf-pdr-info-msg">No drawer copy configured yet. Fill in the overview fields in Keystatic.</div>'
+					: '') +
+				'</div></section>' +
+				'<section class="bf-pdr-section">' +
+				sectionHeader('TIMELINE') +
+				'<div class="bf-pdr-card">' +
+				'<div class="bf-pdr-timeline" data-bf-pdr-timeline-body></div>' +
+				'<div class="bf-pdr-pagination" data-bf-pdr-timeline-pagination></div>' +
+				'</div></section>'
 
-			output.push(sectionHeader('PROJECT OVERVIEW'))
-			output.push('<div class="bf-pdr-card">')
-			if (project.overview || project.architecture || project.nextActions) {
-				if (project.overview) {
-					output.push(
-						'<div class="bf-pdr-subsection-label">What is it?</div><p class="bf-pdr-body">' +
-							esc(project.overview) +
-							'</p>',
-					)
+			root.addEventListener('click', function (event) {
+				var closeLink = event.target.closest('[data-close-drawer]')
+				if (closeLink && window.__bfCloseDrawer) {
+					window.__bfCloseDrawer()
 				}
-				if (project.architecture) {
-					output.push(
-						'<div class="bf-pdr-subsection-label">Architecture / Tech Stack</div><p class="bf-pdr-body">' +
-							esc(project.architecture) +
-							'</p>',
-					)
-				}
-				if (project.nextActions) {
-					output.push(
-						'<div class="bf-pdr-subsection-label">Next actions / Updates</div><p class="bf-pdr-body">' +
-							esc(project.nextActions) +
-							'</p>',
-					)
-				}
-			} else {
-				output.push(
-					'<div class="bf-pdr-info-msg">No drawer copy configured yet. Fill in the overview fields in Keystatic.</div>',
-				)
-			}
-			output.push('</div>')
 
-			if (githubData && githubData.recentCommits && githubData.recentCommits.length) {
-				output.push(sectionHeader('TIMELINE'))
-				output.push('<div class="bf-pdr-card bf-pdr-timeline">')
-				githubData.recentCommits.forEach(function (commit) {
-					output.push(
-						'<a href="' +
-							esc(commit.url) +
-							'" target="_blank" rel="noopener noreferrer" class="bf-pdr-commit"><span class="bf-pdr-commit-label">git</span><span class="bf-pdr-commit-msg">' +
-							esc(commit.message) +
-							'</span><span class="bf-pdr-commit-date">' +
-							fmtDate(commit.date) +
-							'</span></a>',
-					)
-				})
-				output.push('</div>')
+				var pageBtn = event.target.closest('[data-bf-pdr-page]')
+				if (!pageBtn) return
+				var nextPage = Number(pageBtn.getAttribute('data-bf-pdr-page'))
+				if (!Number.isFinite(nextPage)) return
+				renderTimeline(nextPage)
+			})
+
+			var timelineBody = root.querySelector('[data-bf-pdr-timeline-body]')
+			var timelinePagination = root.querySelector('[data-bf-pdr-timeline-pagination]')
+
+			function renderTimeline(page) {
+				var safePage = Math.min(Math.max(page, 0), totalPages - 1)
+				if (timelineBody) {
+					timelineBody.innerHTML = timelineMarkup(commits, safePage, pageSize)
+				}
+				if (timelinePagination) {
+					timelinePagination.innerHTML = timelinePaginationMarkup(totalPages, safePage)
+					timelinePagination.hidden = totalPages <= 1
+				}
 			}
 
-			return output.join('')
+			renderTimeline(0)
+			return root
 		}
 
 		function initTiles() {
@@ -480,6 +575,12 @@ function getStatusLabel(status: string): string {
 </script>
 
 <style is:global>
+	.bf-pdr-root {
+		display: flex;
+		flex-direction: column;
+		gap: 18px;
+	}
+
 	.bf-pdr-meta {
 		display: flex;
 		flex-wrap: wrap;
@@ -523,7 +624,6 @@ function getStatusLabel(status: string): string {
 		display: flex;
 		gap: 8px;
 		flex-wrap: wrap;
-		margin-bottom: 20px;
 	}
 
 	.bf-pdr-cta,
@@ -558,7 +658,7 @@ function getStatusLabel(status: string): string {
 		text-transform: uppercase;
 		letter-spacing: 0.06em;
 		color: var(--muted);
-		margin: 22px 0 8px;
+		margin: 0 0 8px;
 	}
 
 	.bf-pdr-sync {
@@ -568,26 +668,34 @@ function getStatusLabel(status: string): string {
 
 	.bf-pdr-card {
 		border: 1px solid var(--border);
-		border-radius: 14px;
+		border-radius: 18px;
 		background: var(--card-raised);
-		padding: 16px;
+		padding: 16px 18px;
 	}
 
 	.bf-pdr-stats {
 		display: grid;
 		grid-template-columns: repeat(3, minmax(0, 1fr));
-		gap: 12px;
+		gap: 10px;
+	}
+
+	.bf-pdr-stat {
+		padding: 12px 14px;
+		border-radius: 12px;
+		background: color-mix(in srgb, var(--card) 75%, transparent);
+		border: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
 	}
 
 	.bf-pdr-stat-val {
 		font-family: var(--font-serif);
-		font-size: 26px;
-		line-height: 1;
+		font-size: 22px;
+		line-height: 1.05;
+		color: var(--foreground);
 	}
 
 	.bf-pdr-stat-badge {
-		font-size: 15px;
-		padding-top: 8px;
+		font-size: 16px;
+		padding-top: 4px;
 	}
 
 	.bf-pdr-stat-label,
@@ -600,9 +708,10 @@ function getStatusLabel(status: string): string {
 	}
 
 	.bf-pdr-body {
-		margin: 8px 0 0;
-		color: var(--muted-foreground);
-		line-height: 1.65;
+		margin: 6px 0 0;
+		color: var(--foreground);
+		line-height: 1.7;
+		font-size: 14px;
 	}
 
 	.bf-pdr-info-msg {
@@ -610,14 +719,16 @@ function getStatusLabel(status: string): string {
 		line-height: 1.6;
 	}
 
-	.bf-pdr-subsection-label:not(:first-child) {
-		margin-top: 14px;
+	.bf-pdr-copy-block + .bf-pdr-copy-block {
+		margin-top: 16px;
+		padding-top: 16px;
+		border-top: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
 	}
 
 	.bf-pdr-timeline {
 		display: flex;
 		flex-direction: column;
-		gap: 10px;
+		gap: 4px;
 	}
 
 	.bf-pdr-commit {
@@ -627,11 +738,84 @@ function getStatusLabel(status: string): string {
 		align-items: start;
 		text-decoration: none;
 		color: inherit;
+		padding: 10px 0;
+		border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+	}
+
+	.bf-pdr-commit:last-child {
+		border-bottom: 0;
+		padding-bottom: 0;
 	}
 
 	.bf-pdr-commit-msg {
 		color: var(--foreground);
 		line-height: 1.5;
+	}
+
+	.bf-pdr-related-links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+		margin-top: 8px;
+	}
+
+	.bf-pdr-related-link {
+		display: inline-flex;
+		align-items: center;
+		padding: 6px 12px;
+		border-radius: 999px;
+		border: 1px solid var(--border);
+		background: var(--card);
+		color: var(--foreground);
+		text-decoration: none;
+		font-size: 12px;
+		line-height: 1.3;
+		transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+	}
+
+	.bf-pdr-related-link:hover {
+		border-color: var(--primary);
+		background: var(--accent);
+		color: var(--primary);
+		text-decoration: none;
+	}
+
+	.bf-pdr-pagination {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 6px;
+		margin-top: 14px;
+	}
+
+	.bf-pdr-page-btn {
+		border: 1px solid var(--border);
+		background: var(--card);
+		color: var(--muted-foreground);
+		border-radius: 8px;
+		padding: 3px 8px;
+		font-family: var(--font-mono);
+		font-size: 11px;
+		cursor: pointer;
+		transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+	}
+
+	.bf-pdr-page-btn:hover:not(:disabled) {
+		border-color: var(--primary);
+		background: var(--accent);
+		color: var(--primary);
+	}
+
+	.bf-pdr-page-btn.is-active {
+		background: var(--foreground);
+		border-color: var(--foreground);
+		color: var(--background);
+		font-weight: 700;
+	}
+
+	.bf-pdr-page-btn:disabled {
+		opacity: 0.35;
+		cursor: default;
 	}
 
 	@media (max-width: 640px) {

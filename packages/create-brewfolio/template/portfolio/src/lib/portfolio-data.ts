@@ -71,7 +71,7 @@ export async function getPortfolioData() {
 
 	const token = secrets?.githubToken?.trim() || undefined
 
-	const projects = projectEntries.map((entry) => ({
+	const rawProjects = projectEntries.map((entry) => ({
 		id: entry.slug,
 		name: entry.entry.name,
 		url: entry.entry.url || undefined,
@@ -81,9 +81,9 @@ export async function getPortfolioData() {
 		shortDescription: entry.entry.shortDescription || undefined,
 		image: entry.entry.image || undefined,
 		repo: entry.entry.repo || undefined,
-		analysis_url: entry.entry.analysis_url || undefined,
+		featuredNotebook: normalizeSingleRelationship(entry.entry.featuredNotebook),
 		tags: entry.entry.tags?.map((tag: any) => ({ name: tag.name })) ?? [],
-		related_writing: entry.entry.related_writing ?? [],
+		relatedWriting: normalizeRelationships(entry.entry.relatedWriting),
 		overview: entry.entry.overview || undefined,
 		architecture: entry.entry.architecture || undefined,
 		nextActions: entry.entry.nextActions || undefined,
@@ -111,6 +111,44 @@ export async function getPortfolioData() {
 			notebookEntries.map(async (entry) => buildNotebookEntry(entry.slug, entry.entry)),
 		)
 	).sort((a, b) => b.date.getTime() - a.date.getTime())
+
+	const notebooksByProject = notebooks.reduce((map, notebook) => {
+		if (!notebook.project) return map
+		const existing = map.get(notebook.project)
+		if (existing) {
+			existing.push(notebook.id)
+		} else {
+			map.set(notebook.project, [notebook.id])
+		}
+		return map
+	}, new Map<string, string[]>())
+
+	const notebookById = new Map(notebooks.map((notebook) => [notebook.id, notebook]))
+	const writingBySlug = new Map(writing.map((post) => [post.slug, post]))
+
+	const projects = rawProjects.map((project) => {
+		const resolvedNotebookId =
+			project.featuredNotebook || notebooksByProject.get(project.id)?.[0] || undefined
+
+		return {
+			...project,
+			featuredNotebook: resolvedNotebookId,
+			featuredNotebookTitle: resolvedNotebookId
+				? notebookById.get(resolvedNotebookId)?.title
+				: undefined,
+			relatedWritingItems: project.relatedWriting
+				.map((slug) => {
+					const post = writingBySlug.get(slug)
+					if (!post) return null
+					return {
+						slug,
+						title: post.title,
+						href: `/writing/${slug}`,
+					}
+				})
+				.filter(Boolean),
+		}
+	})
 
 	const concepts = (conceptsData?.concepts ?? []).map((concept: any) => ({
 		slug: concept.slug,
@@ -260,6 +298,12 @@ function normalizeRelationships(values: any): string[] {
 			return ''
 		})
 		.filter(Boolean)
+}
+
+function normalizeSingleRelationship(value: any): string | undefined {
+	if (typeof value === 'string' && value) return value
+	if (value && typeof value.slug === 'string') return value.slug
+	return undefined
 }
 
 export function escapeHtml(value: string): string {

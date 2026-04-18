@@ -13,9 +13,11 @@ export interface Project {
 	shortDescription?: string
 	image?: string
 	repo?: string
-	analysis_url?: string
+	featuredNotebook?: string
+	featuredNotebookTitle?: string
 	tags: { name: string }[]
-	related_writing: string[]
+	relatedWriting: string[]
+	relatedWritingItems?: { slug: string; title: string; href: string }[]
 	overview?: string
 	architecture?: string
 	nextActions?: string

@@ -7,12 +7,13 @@ const appConfig = singleton({
 	schema: {
 		siteTitle: fields.text({
 			label: 'Site title',
-			description: 'Shown in the notch and page title.',
+			description: 'Start here. Shown in the notch and page title.',
 			validation: { isRequired: true },
 		}),
 		githubHandle: fields.text({
 			label: 'GitHub handle',
-			description: 'Without the @ sign. Used in the GitHub timeline block.',
+			description:
+				'Without the @ sign. Add this before using a GitHub timeline block on the homepage.',
 		}),
 	},
 })
@@ -89,6 +90,8 @@ const appSections = singleton({
 			),
 			{
 				label: 'Blocks',
+				description:
+					'Build the homepage from top to bottom. Start with a metrics or list block, then add supporting blocks like the GitHub timeline.',
 				itemLabel: (props: any) => props.value.discriminant,
 			},
 		),

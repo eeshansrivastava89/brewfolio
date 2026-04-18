@@ -6,7 +6,7 @@ const gameConfig = singleton({
 	schema: {
 		siteTitle: fields.text({
 			label: 'Site title',
-			description: 'Shown in the notch and page title.',
+			description: 'Start here. Shown in the notch and page title.',
 			validation: { isRequired: true },
 		}),
 	},
@@ -18,6 +18,8 @@ const gameHome = singleton({
 	schema: {
 		roundTitle: fields.text({
 			label: 'Top heading',
+			description:
+				'Fill these fields in roughly the same order visitors see them: heading, score, timer, question, then leaderboard.',
 			validation: { isRequired: true },
 		}),
 		subtitle: fields.text({
