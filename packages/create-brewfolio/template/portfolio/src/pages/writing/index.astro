@@ -16,7 +16,7 @@ for (const post of writing) {
 }
 const years = [...postsByYear.keys()].sort((a, b) => b - a)
 const latestPost = writing[0]
-const siteTitle = config?.siteTitle || 'Portfolio'
+const siteTitle = config?.siteTitle || ''
 const publicationName = writingSettings?.publicationName || ''
 const subscribeUrl = writingSettings?.subscribeUrl || ''
 const centerHtml = substackTitlebar(publicationName)

@@ -4,38 +4,66 @@ import GameLayout from 'brewfolio/layouts/GameLayout.astro'
 import Leaderboard from 'brewfolio/components/Leaderboard.astro'
 import Timer from 'brewfolio/components/Timer.astro'
 import ScoreDisplay from 'brewfolio/components/ScoreDisplay.astro'
+import { reader } from '../lib/content'
 
-const entries = [
-  { rank: 1, name: 'alice', score: 8450, delta: 200, variant: 'gold' as const },
-  { rank: 2, name: 'bob', score: 7990, delta: -80, variant: 'silver' as const },
-  { rank: 3, name: 'carol', score: 7420, delta: 120, variant: 'bronze' as const },
-  { rank: 4, name: 'dan (you)', score: 6870, delta: 50, isCurrentUser: true },
-  { rank: 5, name: 'erin', score: 6210, delta: 0 }
-]
+const [config, gameHome] = await Promise.all([
+  reader.singletons.config.read(),
+  reader.singletons.gameHome.read(),
+])
+
+function parseNumber(value: string | undefined, fallback: number) {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : fallback
+}
+
+const siteTitle = config?.siteTitle?.trim() || ''
+const scoreValue = parseNumber(gameHome?.scoreValue, 0)
+const previousScoreValue = parseNumber(gameHome?.previousScoreValue, scoreValue)
+const timerTotalMs = parseNumber(gameHome?.timerTotalMs, 30000)
+const timerVariant =
+  gameHome?.timerVariant === 'countup' ? 'countup' : 'countdown'
+
+const entries = (gameHome?.leaderboardEntries ?? []).map((entry) => ({
+  rank: parseNumber(entry.rank, 0),
+  name: entry.name,
+  score: parseNumber(entry.score, 0),
+  delta: entry.delta?.trim() ? parseNumber(entry.delta, 0) : undefined,
+  isCurrentUser: entry.isCurrentUser,
+  variant: entry.variant === 'default' ? undefined : entry.variant,
+}))
 ---
 
-<GameLayout meta={{ title: 'My Brewfolio Game' }} showLeaderboard={true}>
+<GameLayout meta={{ title: siteTitle }} siteName={siteTitle} showLeaderboard={true}>
   <div class="flex flex-col gap-6 p-4">
     <section class="flex flex-col gap-2">
-      <h1 class="font-serif text-2xl font-bold">Round 3 of 10</h1>
-      <p class="text-muted-foreground text-sm">First to 10,000 wins. Streaks give a +20% multiplier.</p>
+      <h1 class="font-serif text-2xl font-bold">{gameHome?.roundTitle}</h1>
+      <p class="text-muted-foreground text-sm">{gameHome?.subtitle}</p>
     </section>
     <section class="flex gap-6 items-center flex-wrap">
-      <ScoreDisplay value={6870} previousValue={6820} label="Your score" />
-      <Timer variant="countdown" totalMs={30000} showBar={true} showDigits={true} size="lg" />
+      <ScoreDisplay value={scoreValue} previousValue={previousScoreValue} label={gameHome?.scoreLabel} />
+      <Timer variant={timerVariant} totalMs={timerTotalMs} showBar={true} showDigits={true} size="lg" />
     </section>
     <section class="flex flex-col gap-2">
-      <h2 class="font-serif text-lg font-bold">Question</h2>
+      <h2 class="font-serif text-lg font-bold">{gameHome?.questionTitle}</h2>
       <div class="rounded-lg border border-border bg-card p-6">
-        <p class="text-base">Which one of these is a brewfolio layout?</p>
+        <p class="text-base">{gameHome?.questionPrompt}</p>
         <div class="grid grid-cols-2 gap-2 mt-4">
-          <button class="rounded-lg border border-border bg-card-raised p-3 hover:border-primary">DashboardLayout</button>
-          <button class="rounded-lg border border-border bg-card-raised p-3 hover:border-primary">SidebarLayout</button>
-          <button class="rounded-lg border border-border bg-card-raised p-3 hover:border-primary">BrewLayout</button>
-          <button class="rounded-lg border border-border bg-card-raised p-3 hover:border-primary">PourLayout</button>
+          {(gameHome?.choices ?? []).map((choice) => (
+            <button
+              type="button"
+              class="rounded-lg border border-border bg-card-raised p-3 hover:border-primary"
+            >
+              {choice}
+            </button>
+          ))}
         </div>
       </div>
     </section>
   </div>
-  <Leaderboard slot="sidebar" entries={entries} title="Leaderboard" showDelta={true} />
+  <Leaderboard
+    slot="sidebar"
+    entries={entries}
+    title={gameHome?.leaderboardTitle}
+    showDelta={true}
+  />
 </GameLayout>

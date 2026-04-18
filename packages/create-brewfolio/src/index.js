@@ -37,7 +37,7 @@ const TYPES = [
     value: 'app',
     label: 'App',
     hint: 'AppLayout · sections driven by the CMS',
-    blurb: 'Best for dashboards, tools, and landing pages where the home page is a CMS-editable sequence of sections (metrics, results, notebooks, github timeline).',
+    blurb: 'Best for dashboards, tools, and landing pages where the home page is a CMS-editable sequence of sections (metrics, results, and a GitHub timeline).',
   },
   {
     value: 'game',

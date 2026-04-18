@@ -1,0 +1,32 @@
+id: running-code-tour
+title: Running code notebook tour
+project: notebook-observatory
+github_url: https://github.com/jupyter/notebook/blob/main/docs/source/examples/Notebook/Running%20Code.ipynb
+description: >-
+  A public Jupyter notebook used here as a starter artifact for the notebook
+  reading experience.
+date: '2025-02-18'
+summary_status: significant
+summary_decision: >-
+  Notebook output becomes much more approachable when the page carries a clear
+  summary card before the raw cells.
+summary_methodology: >-
+  Use a public Jupyter notebook as the body, then layer editorial metadata in
+  Keystatic so readers understand why the notebook matters before diving in.
+summary_warnings:
+  - Raw notebooks can feel abrupt without framing or outcomes.
+  - Public examples may change upstream, so pin your own copies for production.
+summary_metrics:
+  - label: Readability gain
+    value: '+1 summary card'
+    delta: '+100%'
+    delta_direction: up
+    context: vs raw notebook alone
+  - label: Setup time
+    value: '1 link'
+    delta_direction: neutral
+    context: GitHub URL only
+  - label: Replacement cost
+    value: Low
+    delta_direction: neutral
+    context: local metadata

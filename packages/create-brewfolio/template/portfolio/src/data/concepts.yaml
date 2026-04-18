@@ -1,1 +1,29 @@
-concepts: []
+concepts:
+  - slug: prompting-systems
+    name: Prompting systems
+    description: Patterns for prompting, iteration loops, and publishable notes.
+    projects:
+      - prompting-workbench
+    writing:
+      - practical-guide-to-using-ai-to
+      - good-enough-prompting
+    notebooks:
+      - token-accounting-lab
+  - slug: retrieval-evaluation
+    name: Retrieval evaluation
+    description: Embeddings, search quality, and answer usefulness.
+    projects:
+      - retrieval-studio
+    writing:
+      - post-apocalyptic-education
+    notebooks:
+      - embeddings-qa-lab
+  - slug: notebook-experience
+    name: Notebook experience
+    description: How analysis artifacts turn into reusable product surfaces.
+    projects:
+      - notebook-observatory
+    writing:
+      - good-enough-prompting
+    notebooks:
+      - running-code-tour

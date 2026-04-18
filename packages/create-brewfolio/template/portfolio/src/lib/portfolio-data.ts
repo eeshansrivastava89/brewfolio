@@ -279,7 +279,7 @@ export function renderProse(markdown: string | null | undefined): string {
 }
 
 export async function dashboardHeader(config: PortfolioConfig) {
-	const siteName = config?.siteTitle || 'Portfolio'
+	const siteName = config?.siteTitle || ''
 	const city = config?.city?.trim()
 
 	if (!city) {

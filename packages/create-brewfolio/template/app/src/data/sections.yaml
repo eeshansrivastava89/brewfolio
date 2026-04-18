@@ -1,0 +1,49 @@
+sections:
+  - discriminant: metrics-grid
+    value:
+      title: Operating metrics
+      metrics:
+        - label: weekly active experiments
+          value: '18'
+          delta: '+12%'
+          delta_direction: up
+          context: vs last week
+        - label: rollout confidence
+          value: '92%'
+          delta: '+4 pts'
+          delta_direction: up
+          context: human review
+        - label: support backlog
+          value: '7'
+          delta: '-3'
+          delta_direction: down
+          context: open issues
+        - label: median response time
+          value: '280ms'
+          delta: '-18ms'
+          delta_direction: up
+          context: p95 steady
+  - discriminant: results-list
+    value:
+      title: Decision log
+      items:
+        - title: Move feature flags into content config
+          meta: Reduce deploy churn for homepage experiments.
+        - title: Keep GitHub activity visible in the shell
+          meta: Reinforce that the product is actively maintained.
+        - title: Ship examples as editable data files
+          href: https://github.com/eeshansrivastava89/brewfolio
+          meta: No sample copy lives in the page component.
+  - discriminant: github-timeline
+    value:
+      title: Shipping log
+  - discriminant: results-list
+    value:
+      title: Starter checklist
+      items:
+        - title: Open /keystatic and replace the sample values
+          meta: Every row on this page comes from src/data.
+        - title: Remove sections you do not need
+          meta: Delete rows in src/data/sections.yaml or clear them in Keystatic.
+        - title: Swap the GitHub handle
+          meta: The timeline follows the handle in src/data/site-config.yaml.

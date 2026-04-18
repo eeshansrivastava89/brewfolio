@@ -8,7 +8,7 @@ import { dashboardHeader, getPortfolioData } from '../../lib/portfolio-data'
 
 const { notebooks, projects, config, searchData } = await getPortfolioData()
 const projectById = new Map(projects.map((project) => [project.id, project]))
-const siteTitle = config?.siteTitle || 'Portfolio'
+const siteTitle = config?.siteTitle || ''
 const headerConfig = await dashboardHeader(config)
 ---
 
@@ -22,9 +22,7 @@ const headerConfig = await dashboardHeader(config)
 				<p class="analysis-hero-intro">A compact catalog of experiments, decisions, and notebook-backed recommendations. Each entry opens the full notebook inline.</p>
 			</header>
 
-			{notebooks.length === 0 ? (
-				<div class="analysis-empty">No notebooks published yet.</div>
-			) : (
+			{notebooks.length > 0 && (
 				<div class="analysis-project-grid">
 					{notebooks.map((notebook) => {
 						const project = projectById.get(notebook.project)
@@ -63,14 +61,6 @@ const headerConfig = await dashboardHeader(config)
 		max-width: 46rem;
 		color: var(--muted-foreground);
 		line-height: 1.65;
-	}
-
-	.analysis-empty {
-		border: 1px dashed var(--border);
-		border-radius: 16px;
-		padding: 24px;
-		background: var(--card-raised);
-		color: var(--muted-foreground);
 	}
 
 	.analysis-project-grid {

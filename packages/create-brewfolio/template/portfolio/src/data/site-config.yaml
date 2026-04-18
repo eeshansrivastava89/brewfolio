@@ -1,6 +1,6 @@
-siteTitle: Your Name
+siteTitle: Brewfolio Starter
 conceptsIntro: >-
-  Add a short positioning statement here. Click a concept to filter the grid by
-  topic.
+  This dashboard is fully seeded from Keystatic. Click a concept to filter the
+  grid, then replace or delete the example content from `src/data`.
 city: Seattle
 country: United States

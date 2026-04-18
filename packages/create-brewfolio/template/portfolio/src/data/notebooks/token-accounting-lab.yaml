@@ -1,0 +1,33 @@
+id: token-accounting-lab
+title: Token accounting with tiktoken
+project: prompting-workbench
+github_url: https://github.com/openai/openai-cookbook/blob/main/examples/How_to_count_tokens_with_tiktoken.ipynb
+description: >-
+  A rendered notebook example that shows how to measure token usage before you
+  set model budgets or context limits.
+date: '2025-01-12'
+summary_status: significant
+summary_decision: >-
+  Count tokens with the model-specific encoding before you set budgets,
+  truncation rules, or prompt guardrails.
+summary_methodology: >-
+  Compare tokenizer outputs across representative prompts, then inspect the
+  deltas against the model's context window and expected request volume.
+summary_warnings:
+  - Token estimates drift when you switch models or tool-call formats.
+  - Cost previews are misleading if you count with the wrong encoding.
+summary_metrics:
+  - label: Coverage
+    value: '4 encodings'
+    delta: '+2'
+    delta_direction: up
+    context: compared in one notebook
+  - label: Prompt savings
+    value: '18%'
+    delta: '-420 tokens'
+    delta_direction: up
+    context: after trimming boilerplate
+  - label: Budget confidence
+    value: High
+    delta_direction: neutral
+    context: model-specific counts

@@ -1,9 +1,22 @@
 ---
-const START_YEAR = 2025
+interface Props {
+	startYear?: number
+	label?: string
+}
+
+const {
+	startYear,
+	label = '',
+} = Astro.props
+
 const currentYear = new Date().getFullYear()
-const yearDisplay = currentYear > START_YEAR ? `${START_YEAR}–${currentYear}` : `${START_YEAR}`
+const resolvedStartYear = startYear && startYear <= currentYear ? startYear : currentYear
+const yearDisplay =
+	currentYear > resolvedStartYear
+		? `${resolvedStartYear}–${currentYear}`
+		: `${resolvedStartYear}`
 ---
 
 <footer class="flex items-center justify-center gap-4 px-6 py-3 border-t border-border text-muted text-[11px] font-sans flex-shrink-0">
-	<span>© {yearDisplay} Personal project · MIT License</span>
+	<span>© {yearDisplay}{label ? ` ${label}` : ''}</span>
 </footer>

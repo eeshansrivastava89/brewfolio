@@ -21,7 +21,7 @@ const impactSections = (impactData?.impact ?? []).filter((section: any) => secti
 const currentRole = work[0]
 const bioHtml = renderProse(aboutData?.bio)
 const thisSiteHtml = renderProse(aboutData?.thisSite)
-const siteTitle = config?.siteTitle || 'About'
+const siteTitle = config?.siteTitle || ''
 const headerConfig = await dashboardHeader(config)
 const tocHeadings = [
 	{ id: 'this-site', text: 'This Site', level: 2 as const },
@@ -42,19 +42,13 @@ const tocHeadings = [
 				{currentRole && (
 					<p class="about-role">{currentRole.title}{currentRole.company ? ` · ${currentRole.company}` : ''}</p>
 				)}
-				<div
-					class="about-prose"
-					set:html={bioHtml || '<p>Add a bio in Keystatic to tell visitors who you are, what kind of work you do, and what you care about.</p>'}
-				/>
+				<div class="about-prose" set:html={bioHtml} />
 			</div>
 		</section>
 
 		<section class="about-section" id="this-site">
 			<h2 class="about-section-title">This Site</h2>
-			<div
-				class="about-prose"
-				set:html={thisSiteHtml || '<p>Use the “This Site” field in Keystatic to explain the stack, the design system, and the ideas behind the portfolio.</p>'}
-			/>
+			<div class="about-prose" set:html={thisSiteHtml} />
 		</section>
 
 		{impactSections.length > 0 && (
@@ -84,9 +78,7 @@ const tocHeadings = [
 
 		<section class="about-section" id="experience">
 			<h2 class="about-section-title">Experience</h2>
-			{work.length === 0 ? (
-				<p class="about-empty">Add work entries in Keystatic under <strong>Timeline</strong> to populate this section.</p>
-			) : (
+			{work.length > 0 && (
 				<div class="about-timeline">
 					{work.map((item: any) => (
 						<article class="about-timeline-item">
@@ -109,9 +101,7 @@ const tocHeadings = [
 
 		<section class="about-section" id="education">
 			<h2 class="about-section-title">Education</h2>
-			{education.length === 0 ? (
-				<p class="about-empty">Add education entries in Keystatic under <strong>Timeline</strong> to populate this section.</p>
-			) : (
+			{education.length > 0 && (
 				<div class="about-timeline">
 					{education.map((item: any) => (
 						<article class="about-timeline-item">
@@ -197,11 +187,6 @@ const tocHeadings = [
 
 	.about-prose :global(strong) {
 		font-weight: 700;
-	}
-
-	.about-empty {
-		color: var(--muted-foreground);
-		line-height: 1.6;
 	}
 
 	.about-timeline {

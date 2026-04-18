@@ -1,0 +1,31 @@
+id: retrieval-studio
+name: Retrieval Studio
+url: https://cookbook.openai.com/
+status: live
+external: true
+description: >-
+  A search and answer-quality sandbox that pairs notebook analysis with a
+  cleaner project narrative. It demonstrates how analysis links can sit beside
+  product framing.
+shortDescription: Embeddings experiments and search quality snapshots.
+image: ''
+repo: https://github.com/openai/openai-cookbook
+analysis_url: /analysis/embeddings-qa-lab
+tags:
+  - name: Retrieval
+  - name: Embeddings
+  - name: Evaluation
+related_writing:
+  - post-apocalyptic-education
+overview: >-
+  Retrieval Studio is sample content for anyone who wants the portfolio to feel
+  analytical rather than purely editorial. The tile, drawer, and notebook route
+  all point back to the same idea: analysis should be visible work, not buried
+  in a repo.
+architecture: >-
+  The project shell is local content, while notebook bodies stream from GitHub
+  and render as HTML. That split keeps the scaffold light and makes the example
+  easy to replace with your own notebook pipeline later.
+nextActions: >-
+  Swap in your own repository, point the analysis URL at your notebook route,
+  and edit the related writing links when your archive is ready.

@@ -1,10 +1,18 @@
 bio: >-
-  Add a short bio in Keystatic to explain who you are, what you work on, and
-  what you care about.
+  This portfolio starter ships with editable sample content so you can see the
+  full dashboard, modal flow, project drawers, and notebook summaries before
+  you replace anything.
 
 
-  Use blank lines for paragraphs, *italics* for emphasis, and
-  [links](https://example.com) where they help.
+  Swap this copy for your own bio in Keystatic, or clear it entirely if you
+  want to start from a blank shell. The page supports paragraphs, *italics*,
+  and [links](https://github.com/eeshansrivastava89/brewfolio).
 thisSite: >-
-  Explain how this portfolio works: the stack, the design system, and the ideas
-  you want visitors to understand before they explore the rest of the site.
+  The portfolio pairs Astro routes with Keystatic-managed data files. Concepts,
+  projects, writing, and notebook analysis all come from `src/data`, while
+  GitHub and notebook bodies are fetched from external links.
+
+
+  The goal is to keep the shell reusable and move every page-level decision
+  into editable content. If something looks like starter content, you can
+  remove it without touching a shared component.

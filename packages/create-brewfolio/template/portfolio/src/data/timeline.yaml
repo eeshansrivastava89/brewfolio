@@ -1,1 +1,33 @@
-timeline: []
+timeline:
+  - timespan: 2024 – present
+    title: Independent builder
+    company: Starter portfolio
+    description: >-
+      Prototyping portfolio patterns that blend content management, project
+      drawers, and notebook-backed analysis pages.
+    logo: ''
+    type: work
+  - timespan: 2022 – 2024
+    title: Product engineer
+    company: Applied AI studio
+    description: >-
+      Built internal tools, launch dashboards, and editorial workflows with a
+      strong bias toward small, reusable systems.
+    logo: ''
+    type: work
+  - timespan: 2020 – 2022
+    title: Data scientist
+    company: Research and ops team
+    description: >-
+      Led experiments, wrote notebooks for stakeholders, and turned findings
+      into shipping product changes.
+    logo: ''
+    type: work
+  - timespan: 2016 – 2020
+    title: B.S. in computer science
+    company: Example University
+    description: >-
+      Focused on machine learning, product analytics, and human-centered
+      software systems.
+    logo: ''
+    type: education

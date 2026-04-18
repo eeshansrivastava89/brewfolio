@@ -19,7 +19,7 @@ const { notebooks, projects, config, searchData } = await getPortfolioData()
 const notebook = notebooks.find((entry) => entry.id === Astro.params.id)
 const project = notebook ? projects.find((entry) => entry.id === notebook.project) : null
 const leftHtml = modalBreadcrumb('Published analyses', '/analysis')
-const siteTitle = config?.siteTitle || 'Portfolio'
+const siteTitle = config?.siteTitle || ''
 const headerConfig = await dashboardHeader(config)
 ---
 
@@ -57,10 +57,8 @@ const headerConfig = await dashboardHeader(config)
 					<NotebookSummaryCard summary={notebook.summary} />
 
 					<div class="modal-cta-row">
-						{notebook.github_url ? (
+						{notebook.github_url && (
 							<a href={notebook.github_url} target="_blank" rel="noopener noreferrer" class="modal-cta modal-cta-primary">Open notebook source</a>
-						) : (
-							<span class="modal-cta modal-cta-secondary">Add a GitHub URL in Keystatic to link this notebook out</span>
 						)}
 						{project?.url && (
 							<a href={project.url} target="_blank" rel="noopener noreferrer" class="modal-cta modal-cta-secondary">Open project</a>
