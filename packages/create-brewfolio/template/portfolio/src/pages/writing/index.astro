@@ -165,9 +165,9 @@ const headerConfig = await dashboardHeader(config)
 	}
 
 	.writing-modal-meta {
-		margin-top: 2px;
+		margin-top: 10px;
 		flex: 0 0 auto;
-		justify-content: flex-end;
+		justify-content: flex-start;
 	}
 
 	.writing-modal-date,
@@ -209,9 +209,7 @@ const headerConfig = await dashboardHeader(config)
 	}
 
 	.writing-archive-row {
-		display: flex;
-		justify-content: space-between;
-		gap: 16px;
+		display: block;
 		padding: 14px 0;
 		border-top: 1px solid var(--border);
 	}
@@ -230,6 +228,7 @@ const headerConfig = await dashboardHeader(config)
 		margin-top: 6px;
 		color: var(--muted-foreground);
 		line-height: 1.55;
+		max-width: 48rem;
 	}
 
 	.writing-modal-tag {
@@ -243,10 +242,6 @@ const headerConfig = await dashboardHeader(config)
 		.writing-feature-card,
 		.writing-year-card {
 			padding: 18px;
-		}
-
-		.writing-archive-row {
-			flex-direction: column;
 		}
 	}
 </style>
