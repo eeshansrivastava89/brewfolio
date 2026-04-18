@@ -3,178 +3,135 @@
  * Article Table of Contents - Sticky floating TOC with scroll spy
  */
 
-interface Heading {
-  id: string
-  text: string
-  level: 2 | 3
+interface Entry {
+	id: string
+	text: string
+	level: 2 | 3
 }
 
 interface Props {
-  headings: Heading[]
-  topLabel?: string
-  minEntries?: number
+	headings?: Entry[]
+	toc?: Entry[]
+	topLabel?: string
+	minEntries?: number
 }
 
-const { headings, topLabel = 'Overview', minEntries = 3 } = Astro.props
-const visible = headings.length >= minEntries
+const {
+	headings = [],
+	toc = [],
+	topLabel = 'Overview',
+	minEntries = 3,
+} = Astro.props
+
+const entries = headings.length > 0 ? headings : toc
+const visible = entries.length >= minEntries
 ---
 
 {visible && (
-  <aside class="article-toc" aria-label="Table of contents">
-    <div class="article-toc-label">On this page</div>
-    <nav class="article-toc-nav" id="tocNav">
-      {topLabel && (
-        <a
-          href="#top"
-          class="article-toc-link article-toc-top"
-          data-toc-link="__top"
-        >
-          {topLabel}
-        </a>
-      )}
-      {headings.map((heading) => (
-        <a
-          href={`#${heading.id}`}
-          class:list={[
-            'article-toc-link',
-            `article-toc-level-${heading.level}`
-          ]}
-          data-toc-link={heading.id}
-        >
-          {heading.text}
-        </a>
-      ))}
-    </nav>
-  </aside>
+	<aside class="article-toc" aria-label="Table of contents">
+		<div class="article-toc-label">On this page</div>
+		<nav class="article-toc-nav" id="tocNav">
+			{topLabel && (
+				<a
+					href="#top"
+					class="article-toc-link article-toc-top"
+					data-toc-link="__top"
+				>
+					{topLabel}
+				</a>
+			)}
+			{entries.map((entry) => (
+				<a
+					href={`#${entry.id}`}
+					class:list={['article-toc-link', `article-toc-level-${entry.level}`]}
+					data-toc-link={entry.id}
+				>
+					{entry.text}
+				</a>
+			))}
+		</nav>
+	</aside>
 )}
 
-<script is:inline>
-(function() {
-  function initTOC() {
-    const tocLinks = document.querySelectorAll('[data-toc-link]')
-    if (!tocLinks.length) return
+<style is:global>
+	.article-toc {
+		display: none;
+		font-family: var(--font-sans, 'DM Sans', system-ui, sans-serif);
+		font-size: 13px;
+		line-height: 1.45;
+	}
 
-    const headingElements = []
-    tocLinks.forEach(function(link) {
-      const id = link.getAttribute('data-toc-link')
-      if (id === '__top') {
-        headingElements.push({ id: '__top', element: document.querySelector('.modal-article-title, .modal-page-title, [data-toc-top]') || document.body })
-      } else {
-        const el = document.getElementById(id)
-        if (el) headingElements.push({ id: id, element: el })
-      }
-    })
+	.article-toc-label {
+		font-size: 11px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: var(--muted);
+		margin-bottom: 12px;
+		padding-bottom: 8px;
+		border-bottom: 1px solid var(--input);
+	}
 
-    let activeId = null
+	.article-toc-nav {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
 
-    var observer = new IntersectionObserver(
-      function(entries) {
-        entries.forEach(function(entry) {
-          if (entry.isIntersecting) {
-            var id = entry.target.id || '__top'
-            if (id !== activeId) {
-              activeId = id
-              tocLinks.forEach(function(link) {
-                link.classList.toggle('active', link.getAttribute('data-toc-link') === id)
-              })
-            }
-          }
-        })
-      },
-      {
-        rootMargin: '-80px 0px -70% 0px',
-        threshold: 0
-      }
-    )
+	.article-toc-link {
+		display: block;
+		padding: 5px 8px;
+		color: var(--muted-foreground);
+		text-decoration: none;
+		border-radius: 4px;
+		transition: color 0.15s ease;
+		text-wrap: balance;
+	}
 
-    headingElements.forEach(function(item) {
-      if (item.element) observer.observe(item.element)
-    })
-  }
+	.article-toc-link:hover {
+		color: var(--foreground);
+		text-decoration: none;
+	}
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initTOC)
-  } else {
-    initTOC()
-  }
-})()
-</script>
+	.article-toc-link.active {
+		color: var(--primary);
+		font-weight: 600;
+	}
 
-<style>
-  .article-toc {
-    position: sticky;
-    top: 100px;
-    max-height: calc(100vh - 120px);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
-  }
+	.article-toc-level-3 {
+		padding-left: 20px;
+		font-size: 12px;
+	}
 
-  .article-toc::-webkit-scrollbar {
-    width: 4px;
-  }
+	.article-toc-top {
+		font-family: var(--font-serif, 'Fraunces', Georgia, serif);
+		font-size: 13px;
+		font-weight: 600;
+		color: var(--foreground);
+		margin-bottom: 10px;
+		padding-bottom: 10px;
+		border-bottom: 1px solid var(--input);
+		text-wrap: balance;
+	}
 
-  .article-toc::-webkit-scrollbar-track {
-    background: transparent;
-  }
+	.article-toc-top:hover,
+	.article-toc-top.active {
+		color: var(--primary);
+	}
 
-  .article-toc::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 2px;
-  }
-
-  .article-toc-label {
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--muted-foreground);
-    margin-bottom: 12px;
-  }
-
-  .article-toc-nav {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .article-toc-link {
-    display: block;
-    font-size: 13px;
-    line-height: 1.5;
-    color: var(--muted-foreground);
-    text-decoration: none;
-    padding: 4px 0;
-    border-left: 2px solid transparent;
-    padding-left: 12px;
-    margin-left: -14px;
-    transition: color 0.15s ease, border-color 0.15s ease;
-  }
-
-  .article-toc-link:hover {
-    color: var(--foreground);
-  }
-
-  .article-toc-link.active {
-    color: var(--primary);
-    border-left-color: var(--primary);
-    font-weight: 500;
-  }
-
-  .article-toc-level-3 {
-    font-size: 12px;
-    padding-left: 24px;
-    margin-left: -26px;
-  }
-
-  .article-toc-top {
-    margin-bottom: 8px;
-  }
-
-  @media (max-width: 1200px) {
-    .article-toc {
-      display: none;
-    }
-  }
+	@media (min-width: 1320px) {
+		.article-toc {
+			display: block;
+			position: fixed;
+			top: 140px;
+			right: 32px;
+			width: 200px;
+			max-height: calc(100vh - 180px);
+			overflow-y: auto;
+			overscroll-behavior: contain;
+			padding-right: 8px;
+			scrollbar-width: thin;
+			z-index: 201;
+		}
+	}
 </style>

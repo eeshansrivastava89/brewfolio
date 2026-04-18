@@ -33,7 +33,7 @@ const rightHtml = subscribeButton('Subscribe', 'https://theasymptotic.substack.c
 		<section class="writing-archive-shell">
 			<header class="writing-archive-hero">
 				<h1 class="modal-page-title">Writing archive</h1>
-				<p class="writing-archive-intro">Essays and notes from the portfolio CMS. Each item opens as a modal route and can point readers to the original published piece.</p>
+				<p class="writing-archive-intro">Essays on experimentation, local AI, prompting, and product thinking. The archive is organized like a compact editorial index: one featured read, then chronological shelves.</p>
 			</header>
 
 			{latestPost && (
@@ -76,6 +76,10 @@ const rightHtml = subscribeButton('Subscribe', 'https://theasymptotic.substack.c
 						</div>
 					</section>
 				))}
+			</div>
+
+			<div class="writing-modal-cta">
+				<a href="https://theasymptotic.substack.com/subscribe" target="_blank" rel="noopener noreferrer" class="modal-cta modal-cta-primary">Subscribe on Substack</a>
 			</div>
 		</section>
 	</ModalSource>
@@ -160,6 +164,11 @@ const rightHtml = subscribeButton('Subscribe', 'https://theasymptotic.substack.c
 	.writing-year-grid {
 		display: grid;
 		gap: 14px;
+	}
+
+	.writing-modal-cta {
+		display: flex;
+		justify-content: flex-start;
 	}
 
 	.writing-year-card-header {

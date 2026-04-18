@@ -387,6 +387,61 @@ const { size = 'default' } = Astro.props
 		max-width: 1020px;
 	}
 
+	.modal-page-title {
+		font-family: var(--font-serif, 'Fraunces', Georgia, serif);
+		font-weight: 700;
+		font-size: 36px;
+		letter-spacing: -0.025em;
+		line-height: 1.05;
+		color: var(--foreground);
+		margin: 0 0 20px;
+	}
+
+	.modal-eyebrow {
+		font-family: var(--font-sans, 'DM Sans', system-ui, sans-serif);
+		font-size: 11px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--muted);
+		margin-bottom: 12px;
+	}
+
+	.modal-eyebrow a {
+		color: var(--muted);
+	}
+
+	.subscribe-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		padding: 5px 11px;
+		border-radius: 6px;
+		border: 1px solid #c44e00;
+		background: #c44e00;
+		color: #fff;
+		font-family: var(--font-sans, 'DM Sans', system-ui, sans-serif);
+		font-size: 11px;
+		font-weight: 700;
+		cursor: pointer;
+		transition: border-color 0.15s ease, background-color 0.15s ease, opacity 0.15s ease;
+		text-decoration: none;
+		flex-shrink: 0;
+	}
+
+	.subscribe-btn:hover {
+		background: #9e3d00;
+		border-color: #9e3d00;
+		text-decoration: none;
+		color: #fff;
+	}
+
+	.subscribe-btn svg {
+		width: 11px;
+		height: 11px;
+		flex-shrink: 0;
+	}
+
 	@media (max-width: 768px) {
 		.modal-overlay {
 			padding: 0;
@@ -410,6 +465,10 @@ const { size = 'default' } = Astro.props
 		.modal-close {
 			width: 36px;
 			height: 36px;
+		}
+
+		.modal-page-title {
+			font-size: 28px;
 		}
 	}
 </style>
