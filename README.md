@@ -1,7 +1,8 @@
 # brewfolio
 
 `brewfolio` is a monorepo with two published packages: the shared Astro design
-system, and the scaffolder that generates new sites from it.
+system, and the scaffolder that generates new sites from it. The supported
+site types are `portfolio` and `app`.
 
 ## Quick start
 
@@ -30,7 +31,7 @@ Each scaffold owns a layout-specific editing surface.
 | Layout | For |
 |--------|-----|
 | `DashboardLayout` | Personal portfolio sites — 5-pane grid (concepts, projects, writing, analysis, GitHub) |
-| `AppLayout` | Tools, dashboards, landing pages — section sequence driven by the `sections` singleton |
+| `AppLayout` | Tools, dashboards, and landing pages — section sequence driven by the `sections` singleton, with built-in analysis routes |
 
 ## Content model
 
@@ -39,8 +40,8 @@ them per template so the editor matches the page surface.
 
 - `portfolio`: `config`, `github`, `writingSettings`, `concepts`, `about`,
   `timeline`, `impact`, `secrets`, plus the `projects`, `writing`, and
-  `notebooks` collections.
-- `app`: `config`, `sections`, `secrets`, and the `notebooks` collection.
+  `notebooks` collections
+- `app`: `config`, `sections`, `secrets`, and the `notebooks` collection
 
 Sample content never lives in the shared components. The scaffold writes it to
 template-local `src/data` files so you can delete or replace it without
@@ -60,6 +61,15 @@ your generated project.
   `src/data/writing-config.yaml`, and `src/data/secrets.yaml`.
 - App: clear `src/data/site-config.yaml`, `src/data/sections.yaml`,
   `src/data/notebooks/*`, and `src/data/secrets.yaml`.
+
+## Testing
+
+The repo includes a simple root-level test harness.
+
+- `npm test` runs unit tests with coverage
+- `npm run test:e2e` runs Playwright end-to-end tests
+- `npm run test:e2e:report` opens the Playwright HTML report
+- `npm run test:full` runs both
 
 ## Design philosophy
 
@@ -81,7 +91,7 @@ The repo is split between the shared package and the scaffolder.
 brewfolio/                            ← the npm package "brewfolio"
 ├── src/
 │   ├── layouts/                      ← 2 layouts
-│   ├── components/                   ← ~35 components
+│   ├── components/                   ← shared Astro UI primitives
 │   ├── lib/                          ← types + helpers
 │   ├── styles/tokens.css             ← design tokens (CSS vars)
 │   ├── keystatic.config.ts           ← full schema
@@ -95,6 +105,8 @@ packages/create-brewfolio/            ← the npm package "create-brewfolio"
 │   ├── portfolio/                    ← DashboardLayout starter pages
 │   └── app/                          ← AppLayout starter pages
 └── package.json
+
+tests/                                ← root Vitest + Playwright suites
 ```
 
 ## Contributing

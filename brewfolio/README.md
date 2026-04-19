@@ -1,16 +1,17 @@
 # brewfolio
 
-A CMS-driven design system for Astro. Ships two layouts (Dashboard and App),
-plus a library of pre-built components, design tokens, and a full Keystatic
-schema so the admin UI is populated out of the box.
+`brewfolio` is the shared Astro package behind the `create-brewfolio`
+scaffolder. It ships the supported layouts, reusable UI primitives, design
+tokens, notebook rendering helpers, and the shared Keystatic schema used by the
+generated sites.
 
-The fastest way to start a new brewfolio site is the scaffolder:
+The fastest way to start a new site is the published scaffolder:
 
 ```bash
 npx create-brewfolio my-site
 ```
 
-…which picks a site type, installs this package, and wires up the CMS for you.
+It picks a site type, installs this package, and wires up the CMS for you.
 
 ## Install manually
 
@@ -37,6 +38,8 @@ export default config({
 
 ### Layouts
 
+The package currently supports two layouts.
+
 ```astro
 ---
 import DashboardLayout from 'brewfolio/layouts/DashboardLayout.astro'
@@ -49,6 +52,8 @@ import DashboardLayout from 'brewfolio/layouts/DashboardLayout.astro'
 
 ### Components
 
+Import the shared pieces you actually need.
+
 ```astro
 ---
 import ProjectsPane from 'brewfolio/components/ProjectsPane.astro'
@@ -57,6 +62,8 @@ import AnalysisPane from 'brewfolio/components/AnalysisPane.astro'
 ```
 
 ### Design tokens (CSS)
+
+Import the package tokens and point Tailwind at the package source.
 
 In your `src/styles/global.css`:
 
@@ -68,10 +75,27 @@ In your `src/styles/global.css`:
 
 ## What's inside
 
-- **2 layouts** — Dashboard (5-pane grid) and App (section-driven with optional notebook-backed analysis routes)
-- **Portfolio components** — ConceptsPane, ProjectsPane, WritingPane, AnalysisPane, GitHubPane, WorkTimeline, ImpactShelf, ContentModal, and more
-- **Shared components** — Header, Footer, ContentModal, NotebookSummaryCard, ArticleTOC, GitHubTimeline
-- **Keystatic schema** — `projects`, `writing`, `notebooks` collections; `concepts`, `timeline`, `about`, `impact`, `siteConfig`, `sections`, `secrets` singletons
+The package is intentionally narrower than it was earlier in the project. It
+only includes the surfaces that are still part of the supported product.
+
+- **Layouts** — `DashboardLayout` and `AppLayout`
+- **Portfolio primitives** — `Dashboard`, `ConceptsPane`, `ProjectsPane`,
+  `WritingPane`, `AnalysisPane`, `GitHubPane`, `WorkTimeline`, and
+  `ImpactShelf`
+- **Shared primitives** — `Header`, `Footer`, `ContentModal`,
+  `NotebookSummaryCard`, `ArticleTOC`, `GitHubTimeline`, `ModalRuntime`, and
+  `ModalSource`
+- **Shared lib helpers** — GitHub fetchers, notebook loaders and renderers,
+  TOC extraction, and header resolution
+- **Shared schema** — collection and singleton primitives used by the
+  scaffolds
+
+## Scope
+
+This package no longer includes the earlier experimental game layout or the old
+generic shared app widgets that were never adopted by the real scaffolds. The
+goal is to keep the package aligned with the actual supported product rather
+than preserving unused abstractions.
 
 ## License
 

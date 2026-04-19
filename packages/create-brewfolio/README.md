@@ -1,7 +1,8 @@
 # create-brewfolio
 
 `create-brewfolio` scaffolds a new Astro + Keystatic site powered by
-[brewfolio](https://npmjs.com/package/brewfolio).
+[brewfolio](https://npmjs.com/package/brewfolio). The supported site types are
+`portfolio` and `app`.
 
 ## Quick start
 
@@ -46,6 +47,20 @@ Each type maps to one layout and one Keystatic surface.
 | `portfolio` | `DashboardLayout` — 5-pane grid | Personal site: concepts, projects, writing, analysis, GitHub activity |
 | `app` | `AppLayout` — CMS-configured sections + analysis routes | Dashboards, tools, and landing pages driven by `sections`, with notebook-backed analysis pages |
 
+## App analysis support
+
+The `app` scaffold ships with the same notebook-backed analysis flow used by
+the portfolio scaffold:
+
+- `Analysis` navigation in the shared header
+- `/analysis` archive route
+- `/analysis/[id]` detail route
+- rendered GitHub notebook body
+- notebook summary card
+- table of contents for long notebooks
+
+Configure those entries in **Keystatic → Analysis notebooks**.
+
 ## Non-interactive (for scripts / CI)
 
 You can pass every prompt as a flag.
@@ -70,3 +85,9 @@ The CLI installs the shared package and the Astro dependencies it needs.
 - `@keystatic/core` + `@keystatic/astro` — the CMS
 - `@astrojs/react` + `react` + `react-dom` — required by Keystatic
 - `tailwindcss` + `@tailwindcss/vite` — styling
+
+## Notes
+
+The earlier `game` scaffold has been removed. If you need a game-like
+experience, start from `app` and add the app-specific interactive components in
+your generated project.
