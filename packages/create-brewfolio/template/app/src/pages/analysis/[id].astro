@@ -1,0 +1,357 @@
+---
+import '../../styles/global.css'
+import AppLayout from 'brewfolio/layouts/AppLayout.astro'
+import ModalSource from 'brewfolio/components/ModalSource.astro'
+import ArticleTOC from 'brewfolio/components/ArticleTOC.astro'
+import NotebookSummaryCard from 'brewfolio/components/NotebookSummaryCard.astro'
+import { extractToc, getAppData, modalBreadcrumb } from '../../lib/app-data'
+
+export async function getStaticPaths() {
+	const { notebooks } = await getAppData()
+
+	return notebooks.map((notebook) => ({
+		params: { id: notebook.id },
+	}))
+}
+
+const { siteTitle, headerConfig, sections, githubData, notebookSummaries, notebooks } =
+	await getAppData()
+const notebook = notebooks.find((entry) => entry.id === Astro.params.id)
+const contextLabel = notebook?.project || 'Analysis'
+const formattedDate = notebook
+	? new Date(notebook.date).toLocaleDateString('en-US', {
+			month: 'long',
+			day: 'numeric',
+			year: 'numeric',
+		})
+	: ''
+const { html: notebookHtmlWithIds, toc } = notebook
+	? extractToc(notebook.html)
+	: { html: '', toc: [] }
+const leftHtml = modalBreadcrumb('Published analyses', '/analysis')
+---
+
+<AppLayout
+	meta={{ title: notebook?.title || 'Analysis' }}
+	siteName={siteTitle}
+	header={headerConfig}
+	headerNavItems={[{ label: 'Analysis', href: '/analysis' }]}
+	sections={sections}
+	notebookEntries={notebookSummaries}
+	githubData={githubData}
+>
+	<ModalSource
+		slot="modal-source"
+		path={`/analysis/${Astro.params.id || ''}`}
+		leftHtml={leftHtml}
+		size="medium"
+	>
+		<div class="article-body">
+			{!notebook ? (
+				<>
+					<div class="modal-eyebrow">Analysis</div>
+					<h1 class="modal-page-title">Notebook not found</h1>
+					<div class="notebook-content">
+						<div class="nb-error-banner">
+							This notebook route does not exist in the current CMS data. Go back
+							to the analysis archive to choose another entry.
+						</div>
+					</div>
+				</>
+			) : (
+				<>
+					<div class="modal-eyebrow">{contextLabel}</div>
+					<h1 class="modal-page-title">{notebook.title}</h1>
+					{notebook.description && <p class="notebook-subtitle">{notebook.description}</p>}
+					<div class="notebook-byline">
+						<span class="notebook-byline-date">{formattedDate}</span>
+						{notebook.github_url && (
+							<a
+								href={notebook.github_url}
+								target="_blank"
+								rel="noopener noreferrer"
+								class="notebook-github-link"
+							>
+								View on GitHub →
+							</a>
+						)}
+					</div>
+
+					<NotebookSummaryCard summary={notebook.summary} />
+
+					<div class="notebook-content" set:html={notebookHtmlWithIds} />
+				</>
+			)}
+		</div>
+		<ArticleTOC toc={toc} topLabel={notebook?.title || 'Analysis'} />
+	</ModalSource>
+</AppLayout>
+
+<style is:global>
+	.notebook-subtitle {
+		margin: 14px 0 0;
+		font-size: 1.08rem;
+		line-height: 1.65;
+		color: var(--muted-foreground);
+	}
+
+	.notebook-byline {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 12px;
+		align-items: center;
+		margin: 20px 0 28px;
+	}
+
+	.notebook-byline-date {
+		font-family: var(--font-mono);
+		font-size: 12px;
+		color: var(--muted);
+	}
+
+	.notebook-github-link {
+		color: var(--primary);
+		font-weight: 600;
+		text-decoration: none;
+	}
+
+	.notebook-github-link:hover {
+		text-decoration: underline;
+	}
+
+	.notebook-content .notebook {
+		display: grid;
+		gap: 24px;
+	}
+
+	.notebook-content .nb-cell {
+		display: grid;
+		gap: 8px;
+	}
+
+	.notebook-content .nb-markdown {
+		font-family: var(--font-serif);
+		font-size: 16px;
+		line-height: 1.65;
+		color: var(--foreground);
+	}
+
+	.notebook-content .nb-markdown h1,
+	.notebook-content .nb-markdown h2,
+	.notebook-content .nb-markdown h3,
+	.notebook-content .nb-markdown h4 {
+		font-family: var(--font-serif);
+		color: var(--foreground);
+		margin: 12px 0 4px;
+		letter-spacing: -0.02em;
+	}
+
+	.notebook-content .nb-markdown h1 { font-size: 26px; }
+	.notebook-content .nb-markdown h2 { font-size: 22px; }
+	.notebook-content .nb-markdown h3 { font-size: 18px; }
+	.notebook-content .nb-markdown h4 { font-size: 16px; }
+
+	.notebook-content .nb-markdown p {
+		margin: 0 0 8px;
+	}
+
+	.notebook-content .nb-markdown ul,
+	.notebook-content .nb-markdown ol {
+		margin: 0 0 8px;
+		padding-left: 1.5rem;
+	}
+
+	.notebook-content .nb-markdown code {
+		font-family: var(--font-mono);
+		font-size: 0.9em;
+		background: var(--card-raised);
+		padding: 1px 5px;
+		border-radius: 4px;
+	}
+
+	.notebook-content .nb-markdown a {
+		color: var(--primary);
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+
+	.notebook-content .nb-markdown table {
+		border-collapse: collapse;
+		margin: 8px 0;
+		font-family: var(--font-mono);
+		font-size: 12px;
+	}
+
+	.notebook-content .nb-markdown th,
+	.notebook-content .nb-markdown td {
+		border: 1px solid var(--border);
+		padding: 6px 10px;
+		text-align: left;
+	}
+
+	.notebook-content .nb-input {
+		font-family: var(--font-mono);
+		font-size: 13px;
+		line-height: 1.6;
+		background: var(--card-raised);
+		border: 1px solid var(--input);
+		border-radius: 8px;
+		padding: 14px 16px;
+		margin: 0;
+		overflow-x: auto;
+	}
+
+	.notebook-content .nb-input code {
+		background: transparent;
+		padding: 0;
+		color: var(--foreground);
+	}
+
+	.notebook-content .token.comment,
+	.notebook-content .token.prolog,
+	.notebook-content .token.doctype,
+	.notebook-content .token.cdata {
+		color: var(--muted);
+		font-style: italic;
+	}
+
+	.notebook-content .token.punctuation {
+		color: var(--muted-foreground);
+	}
+
+	.notebook-content .token.string,
+	.notebook-content .token.char,
+	.notebook-content .token.attr-value,
+	.notebook-content .token.regex,
+	.notebook-content .token.variable {
+		color: var(--green);
+	}
+
+	.notebook-content .token.number,
+	.notebook-content .token.boolean {
+		color: var(--blue);
+	}
+
+	.notebook-content .token.keyword,
+	.notebook-content .token.atrule,
+	.notebook-content .token.important {
+		color: var(--primary);
+		font-weight: 600;
+	}
+
+	.notebook-content .token.function,
+	.notebook-content .token.class-name {
+		color: var(--blue);
+	}
+
+	.notebook-content .token.builtin,
+	.notebook-content .token.constant,
+	.notebook-content .token.symbol,
+	.notebook-content .token.deleted {
+		color: var(--primary);
+	}
+
+	.notebook-content .token.operator,
+	.notebook-content .token.entity,
+	.notebook-content .token.url {
+		color: var(--foreground);
+	}
+
+	.notebook-content .token.tag,
+	.notebook-content .token.selector,
+	.notebook-content .token.attr-name {
+		color: var(--green);
+	}
+
+	.notebook-content .token.namespace {
+		opacity: 0.8;
+	}
+
+	[data-theme='dark'] .notebook-content .token.string,
+	[data-theme='dark'] .notebook-content .token.char,
+	[data-theme='dark'] .notebook-content .token.attr-value {
+		color: #8de1c7;
+	}
+
+	[data-theme='dark'] .notebook-content .token.number,
+	[data-theme='dark'] .notebook-content .token.boolean,
+	[data-theme='dark'] .notebook-content .token.function,
+	[data-theme='dark'] .notebook-content .token.class-name {
+		color: #8ab4ff;
+	}
+
+	.notebook-content .nb-outputs {
+		display: grid;
+		gap: 10px;
+	}
+
+	.notebook-content .nb-output {
+		margin: 0;
+	}
+
+	.notebook-content .nb-stream,
+	.notebook-content .nb-text,
+	.notebook-content .nb-error {
+		font-family: var(--font-mono);
+		font-size: 12px;
+		line-height: 1.6;
+		background: var(--card-raised);
+		border: 1px solid var(--input);
+		border-radius: 8px;
+		padding: 12px 14px;
+		overflow-x: auto;
+		white-space: pre-wrap;
+	}
+
+	.notebook-content .nb-error {
+		border-color: rgba(200, 75, 49, 0.24);
+		color: #c84b31;
+	}
+
+	.notebook-content .nb-image {
+		padding: 8px 0;
+	}
+
+	.notebook-content .nb-image img {
+		max-width: 100%;
+		height: auto;
+		border: 1px solid var(--border);
+		border-radius: 10px;
+	}
+
+	.notebook-content .nb-image svg {
+		max-width: 100%;
+		height: auto;
+	}
+
+	.notebook-content .nb-html table {
+		border-collapse: collapse;
+		width: 100%;
+		font-family: var(--font-mono);
+		font-size: 12px;
+	}
+
+	.notebook-content .nb-html th,
+	.notebook-content .nb-html td {
+		border: 1px solid var(--border);
+		padding: 6px 10px;
+		text-align: left;
+	}
+
+	.notebook-content .nb-error-banner {
+		padding: 14px 16px;
+		border-radius: 10px;
+		border: 1px solid rgba(200, 75, 49, 0.22);
+		background: rgba(200, 75, 49, 0.08);
+		color: var(--foreground);
+	}
+
+	.notebook-content .nb-error-banner a {
+		color: var(--primary);
+		font-weight: 600;
+	}
+
+	.notebook-content .nb-error-banner a:hover {
+		text-decoration: underline;
+	}
+</style>

@@ -33,17 +33,11 @@ const TYPES = [
     hint: 'DashboardLayout · 5-pane grid (concepts, projects, writing, analysis, github)',
     blurb: 'Best for personal sites. Ships a dashboard home page pre-wired to the Keystatic collections (projects, writing, notebooks, concepts).',
   },
-  {
+ {
     value: 'app',
     label: 'App',
     hint: 'AppLayout · sections driven by the CMS',
-    blurb: 'Best for dashboards, tools, and landing pages where the home page is a CMS-editable sequence of sections (metrics, results, and a GitHub timeline).',
-  },
-  {
-    value: 'game',
-    label: 'Game',
-    hint: 'GameLayout · main column + leaderboard sidebar',
-    blurb: 'Best for real-time games or live events. Ships a demo home page with a Leaderboard, Timer, and ScoreDisplay.',
+    blurb: 'Best for dashboards, tools, and landing pages where the home page is a CMS-editable sequence of sections, with built-in analysis notebook routes and modal detail views.',
   },
 ]
 
@@ -64,7 +58,7 @@ program
   .name('create-brewfolio')
   .description('Interactive scaffolder for a new Astro + Keystatic site powered by brewfolio.')
   .argument('[project-name]', 'Name of the project to create (optional; you will be prompted)')
-  .option('-t, --type <type>', 'Site type: portfolio | app | game')
+  .option('-t, --type <type>', 'Site type: portfolio | app')
   .option('-y, --yes', 'Skip confirmation prompts and use defaults')
   .option('--astro-template <template>', 'Underlying Astro starter template', 'minimal')
   .option('-d, --dry-run', 'Print what would be done without doing it')

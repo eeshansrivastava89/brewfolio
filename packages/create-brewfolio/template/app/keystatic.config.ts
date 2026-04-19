@@ -1,4 +1,4 @@
-import { config, fields, singleton } from '@keystatic/core'
+import { collection, config, fields, singleton } from '@keystatic/core'
 import { secrets } from 'brewfolio/keystatic.config'
 
 const appConfig = singleton({
@@ -38,6 +38,7 @@ const appSections = singleton({
 						{ label: 'Metrics', value: 'metrics-grid' },
 						{ label: 'List', value: 'results-list' },
 						{ label: 'Content area', value: 'content-area' },
+						{ label: 'Notebook link', value: 'notebook' },
 						{ label: 'GitHub timeline', value: 'github-timeline' },
 					],
 					defaultValue: 'metrics-grid',
@@ -109,6 +110,15 @@ const appSections = singleton({
 							description: 'Optional CSS size like 240px or 18rem.',
 						}),
 					}),
+					notebook: fields.object({
+						title: fields.text({ label: 'Block title' }),
+						notebook: fields.relationship({
+							label: 'Analysis notebook',
+							description: 'Pick the notebook this block should open.',
+							collection: 'notebooks',
+							validation: { isRequired: true },
+						}),
+					}),
 					'github-timeline': fields.object({
 						title: fields.text({ label: 'Block title' }),
 					}),
@@ -124,10 +134,94 @@ const appSections = singleton({
 	},
 })
 
+const appNotebooks = collection({
+	label: 'Analysis notebooks',
+	slugField: 'id',
+	path: 'src/data/notebooks/*',
+	schema: {
+		id: fields.slug({
+			name: {
+				label: 'Notebook slug',
+				description:
+					'Used in the file name, the /analysis/<slug> route, and notebook link blocks.',
+			},
+		}),
+		title: fields.text({
+			label: 'Notebook title',
+			description: 'The visible page title for this analysis entry.',
+			validation: { isRequired: true },
+		}),
+		contextLabel: fields.text({
+			label: 'Context label',
+			description: 'Shown as the eyebrow in the analysis archive and notebook page.',
+		}),
+		github_url: fields.url({
+			label: 'Notebook URL',
+			description: 'Paste the GitHub URL for the .ipynb file.',
+		}),
+		description: fields.text({
+			label: 'Card description',
+			description: 'Shown in the archive and under the notebook title.',
+			multiline: true,
+		}),
+		date: fields.date({ label: 'Published date', defaultValue: { kind: 'today' } }),
+		summary_status: fields.select({
+			label: 'Summary status',
+			description: 'Choose a result to show the summary card on the notebook page.',
+			options: [
+				{ label: 'None', value: 'none' },
+				{ label: 'Significant', value: 'significant' },
+				{ label: 'Not significant', value: 'not_significant' },
+				{ label: 'Inconclusive', value: 'inconclusive' },
+				{ label: 'Error', value: 'error' },
+			],
+			defaultValue: 'none',
+		}),
+		summary_decision: fields.text({
+			label: 'Summary headline',
+			description: 'The main takeaway shown at the top of the summary card.',
+			multiline: true,
+		}),
+		summary_methodology: fields.text({
+			label: 'How you got the result',
+			description: 'A short explanation of the method, test, or workflow.',
+			multiline: true,
+		}),
+		summary_warnings: fields.array(fields.text({ label: 'Note' }), {
+			label: 'Things to watch',
+			itemLabel: (props: any) => props.value || 'Note',
+		}),
+		summary_metrics: fields.array(
+			fields.object({
+				label: fields.text({ label: 'Metric label', validation: { isRequired: true } }),
+				value: fields.text({ label: 'Metric value', validation: { isRequired: true } }),
+				delta: fields.text({ label: 'Change', description: 'For example +12% or -5%.' }),
+				delta_direction: fields.select({
+					label: 'Change direction',
+					options: [
+						{ label: 'Up', value: 'up' },
+						{ label: 'Down', value: 'down' },
+						{ label: 'Neutral', value: 'neutral' },
+					],
+					defaultValue: 'neutral',
+				}),
+				context: fields.text({ label: 'Context', description: 'For example “vs baseline”.' }),
+			}),
+			{
+				label: 'Summary metrics',
+				itemLabel: (props: any) => props.fields.label.value || 'Metric',
+			},
+		),
+	},
+})
+
 export default config({
 	storage: { kind: 'local' },
 	ui: {
-		navigation: ['config', 'secrets', 'sections'],
+		navigation: ['config', 'sections', 'notebooks', 'secrets'],
+	},
+	collections: {
+		notebooks: appNotebooks,
 	},
 	singletons: {
 		sections: appSections,

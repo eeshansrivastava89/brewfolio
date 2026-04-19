@@ -16,7 +16,7 @@ const portfolioConfig = singleton({
 	schema: {
 		siteTitle: fields.text({
 			label: 'Site title',
-			description: 'Start here. This name appears in the notch, header, and browser tab.',
+			description: 'Start here. This name appears in the header title box and browser tab.',
 			validation: { isRequired: true },
 		}),
 		conceptsIntro: fields.text({

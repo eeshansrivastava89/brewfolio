@@ -1,44 +1,17 @@
 ---
 import '../styles/global.css'
 import AppLayout from 'brewfolio/layouts/AppLayout.astro'
-import { getGitHubData, resolveHeaderConfig, type GitHubData } from 'brewfolio'
-import type { SectionConfig } from 'brewfolio/lib/types'
-import { reader } from '../lib/content'
+import { getAppData } from '../lib/app-data'
 
-const [sectionsData, config, secrets] = await Promise.all([
-  reader.singletons.sections.read(),
-  reader.singletons.config.read(),
-  reader.singletons.secrets.read(),
-])
-
-const sections = (sectionsData?.sections ?? []) as SectionConfig[]
-const siteTitle = config?.siteTitle?.trim() || ''
-const githubHandle = config?.githubHandle?.trim() || ''
-const githubToken = secrets?.githubToken?.trim() || undefined
-
-let githubData: GitHubData | null = null
-if (githubHandle) {
-  try {
-    githubData = await getGitHubData({
-      username: githubHandle,
-      token: githubToken,
-    })
-  } catch {
-    githubData = null
-  }
-}
-
-const headerConfig = await resolveHeaderConfig({
-  siteName: siteTitle,
-  city: config?.city?.trim() || '',
-  country: config?.country?.trim() || '',
-})
+const { siteTitle, headerConfig, sections, githubData, notebookSummaries } = await getAppData()
 ---
 
 <AppLayout
   meta={{ title: siteTitle }}
   siteName={siteTitle}
   header={headerConfig}
+  headerNavItems={[{ label: 'Analysis', href: '/analysis' }]}
   sections={sections}
+  notebookEntries={notebookSummaries}
   githubData={githubData}
 />

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 import { createSite, type RunningSite } from './support/scaffold'
-import { gotoSingleton, saveKeystatic } from './support/keystatic'
+import { gotoCollection, gotoSingleton, saveKeystatic } from './support/keystatic'
 
 let site: RunningSite
 
@@ -23,6 +23,9 @@ test('app keystatic routes load', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Homepage' })).toBeVisible()
   await expect(page.getByText('Blocks', { exact: true }).first()).toBeVisible()
 
+  await gotoCollection(page, site.baseUrl, 'notebooks')
+  await expect(page.getByRole('heading', { name: 'Analysis notebooks' })).toBeVisible()
+
   await gotoSingleton(page, site.baseUrl, 'secrets')
   await expect(page.getByLabel('GitHub token')).toBeVisible()
 })
@@ -39,7 +42,8 @@ test('app config edits reflect on the page', async ({ page }) => {
 
 test('app homepage block edits reflect on the page', async ({ page }) => {
   await gotoSingleton(page, site.baseUrl, 'sections')
-  await page.getByText('metrics-grid', { exact: true }).first().click()
+  await page.getByText('Item 1', { exact: true }).click()
+  await expect(page.getByLabel('Block title').first()).toBeVisible()
   await page.getByLabel('Block title').first().fill('Playwright Metrics')
   await page.getByLabel('Metric label').first().fill('Checks')
   await page.getByLabel('Metric value').first().fill('128')
@@ -49,4 +53,15 @@ test('app homepage block edits reflect on the page', async ({ page }) => {
   await expect(page.getByText('Playwright Metrics')).toBeVisible()
   await expect(page.getByText('Checks')).toBeVisible()
   await expect(page.getByText('128')).toBeVisible()
+})
+
+test('app analysis archive and notebook detail render', async ({ page }) => {
+  await page.goto(`${site.baseUrl}/analysis`, { waitUntil: 'networkidle' })
+  await expect(page.getByRole('heading', { name: 'Published analyses' })).toBeVisible()
+  await expect(page.getByText('Running code notebook tour')).toBeVisible()
+
+  await page.goto(`${site.baseUrl}/analysis/running-code-tour`, { waitUntil: 'networkidle' })
+  await expect(page.getByRole('heading', { name: 'Running code notebook tour' })).toBeVisible()
+  await expect(page.locator('.nb-cell').first()).toBeVisible()
+  await expect(page.getByText('View on GitHub →')).toBeVisible()
 })

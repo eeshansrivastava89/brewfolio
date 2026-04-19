@@ -1,6 +1,8 @@
 # brewfolio
 
-A CMS-driven design system for Astro. Ships three layouts (Dashboard, App, Game), a library of pre-built components, design tokens, and a full Keystatic schema so the admin UI is populated out of the box.
+A CMS-driven design system for Astro. Ships two layouts (Dashboard and App),
+plus a library of pre-built components, design tokens, and a full Keystatic
+schema so the admin UI is populated out of the box.
 
 The fastest way to start a new brewfolio site is the scaffolder:
 
@@ -38,7 +40,7 @@ export default config({
 ```astro
 ---
 import DashboardLayout from 'brewfolio/layouts/DashboardLayout.astro'
-// or AppLayout, GameLayout
+// or AppLayout
 ---
 <DashboardLayout meta={{ title: 'My Portfolio' }}>
   {/* your content */}
@@ -50,8 +52,7 @@ import DashboardLayout from 'brewfolio/layouts/DashboardLayout.astro'
 ```astro
 ---
 import ProjectsPane from 'brewfolio/components/ProjectsPane.astro'
-import StatsGrid from 'brewfolio/components/StatsGrid.astro'
-import Leaderboard from 'brewfolio/components/Leaderboard.astro'
+import AnalysisPane from 'brewfolio/components/AnalysisPane.astro'
 ---
 ```
 
@@ -67,9 +68,9 @@ In your `src/styles/global.css`:
 
 ## What's inside
 
-- **3 layouts** — Dashboard (5-pane grid), App (section-driven), Game (main + leaderboard sidebar)
+- **2 layouts** — Dashboard (5-pane grid) and App (section-driven with optional notebook-backed analysis routes)
 - **Portfolio components** — ConceptsPane, ProjectsPane, WritingPane, AnalysisPane, GitHubPane, WorkTimeline, ImpactShelf, ContentModal, and more
-- **Shared components** — StatsGrid, StatusCard, DataTable, FilterBar, ActivityLog, ExecutionPanel, Leaderboard, Timer, ScoreDisplay, SettingsModal, SetupWizard
+- **Shared components** — Header, Footer, ContentModal, NotebookSummaryCard, ArticleTOC, GitHubTimeline
 - **Keystatic schema** — `projects`, `writing`, `notebooks` collections; `concepts`, `timeline`, `about`, `impact`, `siteConfig`, `sections`, `secrets` singletons
 
 ## License

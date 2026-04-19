@@ -4,6 +4,8 @@ import Header from '../components/Header.astro'
 import Footer from '../components/Footer.astro'
 import ThemeProvider from '../components/ThemeProvider.astro'
 import AppSections from '../components/AppSections.astro'
+import ContentModal from '../components/ContentModal.astro'
+import ModalRuntime from '../components/ModalRuntime.astro'
 import type { SectionConfig, GitHubData } from '../lib/types'
 import type { HeaderConfig } from '../lib/header'
 
@@ -72,12 +74,15 @@ const headerSiteName = siteName ?? meta.title ?? 'Portfolio'
 				) : sections !== undefined && sections.length === 0 ? (
 					<div class="flex flex-col gap-4 text-sm text-muted-foreground p-6">
 						<p>No sections configured yet.</p>
-						<p>Add section blocks in <strong>Keystatic → Sections → Sections</strong>.</p>
+						<p>Add section blocks in <strong>Keystatic → Homepage → Blocks</strong>.</p>
 					</div>
 				) : (
 					<slot />
 				)}
 			</main>
+			<slot name="modal-source" />
+			<ContentModal size="medium" />
+			<ModalRuntime homeTitle={header?.siteName ?? headerSiteName} />
 			{showFooter && <Footer />}
 		</div>
 	</body>

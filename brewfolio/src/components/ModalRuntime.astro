@@ -1,0 +1,166 @@
+---
+interface Props {
+	homePath?: string
+	homeTitle?: string
+}
+
+const { homePath = '/', homeTitle = 'Home' } = Astro.props
+---
+
+<script define:vars={{ homePath, homeTitle }} is:inline>
+	(function () {
+		window.__brewfolioHomeTitle = window.__brewfolioHomeTitle || homeTitle
+
+		function normalizePath(path) {
+			if (!path) return '/'
+			var normalized = path.split('#')[0].split('?')[0]
+			if (normalized.length > 1 && normalized.endsWith('/')) {
+				normalized = normalized.slice(0, -1)
+			}
+			return normalized || '/'
+		}
+
+		var injectedStylePaths = {}
+
+		function setDocumentTitle(nextTitle) {
+			document.title = nextTitle || window.__brewfolioHomeTitle || homeTitle
+		}
+
+		function updateNavActive(path) {
+			var normalized = normalizePath(path || window.location.pathname)
+			document.querySelectorAll('.nav-pill[data-route]').forEach(function (pill) {
+				var route = pill.getAttribute('data-route') || ''
+				var active = normalized !== homePath && (normalized === route || normalized.indexOf(route + '/') === 0)
+				pill.classList.toggle('active', active)
+			})
+		}
+
+		function parseFetchedModalDocument(doc, fallbackPath) {
+			var source = doc.querySelector('[data-brewfolio-modal-source]')
+			if (!source) return null
+			var left = source.querySelector('[data-brewfolio-modal-left]')
+			var center = source.querySelector('[data-brewfolio-modal-center]')
+			var right = source.querySelector('[data-brewfolio-modal-right]')
+			var body = source.querySelector('[data-brewfolio-modal-body]')
+			var titleEl = doc.querySelector('title')
+			return {
+				path: normalizePath(
+					source.getAttribute('data-path') ||
+						fallbackPath ||
+						(doc.location && doc.location.pathname) ||
+						homePath,
+				),
+				size: source.getAttribute('data-size') || 'default',
+				left: left ? left.innerHTML : '',
+				center: center ? center.innerHTML : '',
+				right: right ? right.innerHTML : '',
+				body: body ? body.innerHTML : '',
+				title: titleEl ? titleEl.textContent : '',
+			}
+		}
+
+		function getCurrentDocumentModalSource(path) {
+			var source = document.querySelector('[data-brewfolio-modal-source]')
+			if (!source) return null
+			var sourcePath = normalizePath(source.getAttribute('data-path') || window.location.pathname)
+			if (path && sourcePath !== normalizePath(path)) return null
+			return parseFetchedModalDocument(document, sourcePath)
+		}
+
+		function navigateHome(options) {
+			var config = options || {}
+			if (window.__brewfolioCloseModal) window.__brewfolioCloseModal()
+			setDocumentTitle(window.__brewfolioHomeTitle || homeTitle)
+			updateNavActive(homePath)
+			if (config.push !== false && normalizePath(window.location.pathname) !== homePath) {
+				history.pushState({ modal: false, path: homePath }, '', homePath)
+			}
+		}
+
+		async function openModalForPath(path, options) {
+			var config = options || {}
+			var normalized = normalizePath(path)
+			if (normalized === homePath) {
+				navigateHome(config)
+				return
+			}
+
+			if (window.__brewfolioCloseSearch) window.__brewfolioCloseSearch()
+
+			var modalData = getCurrentDocumentModalSource(normalized)
+			if (!modalData) {
+				var response = await fetch(normalized)
+				if (!response.ok) {
+					console.warn('[brewfolio] Fetch failed for', normalized, response.status)
+					window.location.href = normalized
+					return
+				}
+				var html = await response.text()
+				var parser = new DOMParser()
+				var doc = parser.parseFromString(html, 'text/html')
+				modalData = parseFetchedModalDocument(doc, normalized)
+
+				if (!injectedStylePaths[normalized]) {
+					injectedStylePaths[normalized] = true
+					doc.querySelectorAll('head style').forEach(function (styleEl) {
+						document.head.appendChild(document.adoptNode(styleEl))
+					})
+				}
+			}
+
+			if (!modalData || !window.__brewfolioOpenModal) {
+				window.location.href = normalized
+				return
+			}
+
+			window.__brewfolioOpenModal(
+				modalData.center,
+				modalData.right,
+				modalData.left,
+				modalData.body,
+				modalData.size,
+			)
+			setDocumentTitle(modalData.title)
+			updateNavActive(normalized)
+
+			if (config.push !== false && normalizePath(window.location.pathname) !== normalized) {
+				history.pushState({ modal: true, path: normalized }, '', normalized)
+			}
+		}
+
+		async function syncRouteToModal() {
+			var path = normalizePath(window.location.pathname)
+			if (path === homePath) {
+				navigateHome({ push: false })
+				return
+			}
+			await openModalForPath(path, { push: false })
+		}
+
+		window.__brewfolioOpenPathModal = openModalForPath
+		window.__brewfolioNavigateHome = function () {
+			navigateHome({ push: true })
+		}
+
+		document.addEventListener('click', function (event) {
+			var link = event.target && event.target.closest ? event.target.closest('a[data-modal-link]') : null
+			if (!link) return
+
+			var href = link.getAttribute('href')
+			if (!href) return
+
+			var url = new URL(href, window.location.origin)
+			if (url.origin !== window.location.origin) return
+
+			event.preventDefault()
+			openModalForPath(url.pathname)
+		})
+
+		window.addEventListener('popstate', function () {
+			syncRouteToModal()
+		})
+
+		updateNavActive(window.location.pathname)
+		syncRouteToModal()
+	})()
+</script>

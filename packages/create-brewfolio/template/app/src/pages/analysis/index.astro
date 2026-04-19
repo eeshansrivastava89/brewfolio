@@ -1,0 +1,140 @@
+---
+import '../../styles/global.css'
+import AppLayout from 'brewfolio/layouts/AppLayout.astro'
+import ModalSource from 'brewfolio/components/ModalSource.astro'
+import { getAppData } from '../../lib/app-data'
+
+const { siteTitle, headerConfig, sections, githubData, notebookSummaries, notebooks } =
+	await getAppData()
+---
+
+<AppLayout
+	meta={{ title: 'Analysis' }}
+	siteName={siteTitle}
+	header={headerConfig}
+	headerNavItems={[{ label: 'Analysis', href: '/analysis' }]}
+	sections={sections}
+	notebookEntries={notebookSummaries}
+	githubData={githubData}
+>
+	<ModalSource slot="modal-source" path="/analysis" size="medium">
+		<section class="analysis-shell">
+			<header class="analysis-hero">
+				<h1 class="modal-page-title">Published analyses</h1>
+				<p class="analysis-hero-intro">
+					A compact catalog of experiments, decisions, and notebook-backed
+					recommendations. Each entry opens the full notebook inline.
+				</p>
+			</header>
+
+			{notebooks.length > 0 ? (
+				<div class="analysis-project-grid">
+					{notebooks.map((notebook) => (
+						<a href={`/analysis/${notebook.id}`} class="analysis-feature-card" data-modal-link>
+							<div class="analysis-feature-kicker">{notebook.project || 'Analysis'}</div>
+							<h2 class="analysis-feature-title">{notebook.title}</h2>
+							{notebook.description && <p class="analysis-feature-desc">{notebook.description}</p>}
+							<div class="analysis-feature-meta">
+								<span>
+									{new Date(notebook.date).toLocaleDateString('en-US', {
+										month: 'short',
+										day: 'numeric',
+										year: 'numeric',
+									})}
+								</span>
+								<span class="analysis-feature-cta">Open notebook →</span>
+							</div>
+						</a>
+					))}
+				</div>
+			) : (
+				<div class="analysis-empty">Add a notebook in Keystatic → Analysis notebooks.</div>
+			)}
+		</section>
+	</ModalSource>
+</AppLayout>
+
+<style>
+	.analysis-shell {
+		display: grid;
+		gap: 24px;
+	}
+
+	.analysis-hero {
+		display: grid;
+		gap: 12px;
+	}
+
+	.analysis-hero-intro {
+		max-width: 46rem;
+		color: var(--muted-foreground);
+		line-height: 1.65;
+	}
+
+	.analysis-project-grid {
+		display: grid;
+		gap: 14px;
+	}
+
+	.analysis-feature-card {
+		display: block;
+		padding: 22px;
+		border: 1px solid var(--border);
+		border-radius: 18px;
+		background: var(--card-raised);
+		text-decoration: none;
+	}
+
+	.analysis-feature-card:hover {
+		text-decoration: none;
+	}
+
+	.analysis-feature-kicker {
+		margin-bottom: 10px;
+		font-family: var(--font-mono);
+		font-size: 11px;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: var(--muted);
+	}
+
+	.analysis-feature-title {
+		margin: 0;
+		font-family: var(--font-serif);
+		font-size: 1.6rem;
+		line-height: 1.1;
+		letter-spacing: -0.03em;
+	}
+
+	.analysis-feature-desc {
+		margin: 12px 0 0;
+		color: var(--muted-foreground);
+		line-height: 1.65;
+	}
+
+	.analysis-feature-meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px;
+		margin-top: 14px;
+		color: var(--muted);
+	}
+
+	.analysis-feature-cta {
+		color: var(--primary);
+		font-weight: 600;
+	}
+
+	.analysis-empty {
+		border: 1px dashed var(--border);
+		border-radius: 18px;
+		padding: 18px 20px;
+		color: var(--muted-foreground);
+	}
+
+	@media (max-width: 768px) {
+		.analysis-feature-card {
+			padding: 18px;
+		}
+	}
+</style>

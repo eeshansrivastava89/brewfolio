@@ -15,7 +15,7 @@ const sharedSites = new Map<
   Promise<{ acquire: () => RunningSite }>
 >()
 
-type ScaffoldType = 'portfolio' | 'app' | 'game'
+type ScaffoldType = 'portfolio' | 'app'
 
 export interface RunningSite {
   type: ScaffoldType

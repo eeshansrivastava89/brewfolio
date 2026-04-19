@@ -31,9 +31,8 @@ empty. None of that sample content is embedded in shared components.
 - `portfolio`: examples live in `src/data/projects/*`, `src/data/writing/*`,
   `src/data/notebooks/*`, and the singleton files in `src/data/`.
 - `app`: examples live in `src/data/site-config.yaml`,
-  `src/data/sections.yaml`, and `src/data/secrets.yaml`.
-- `game`: examples live in `src/data/site-config.yaml` and
-  `src/data/game-home.yaml`.
+  `src/data/sections.yaml`, `src/data/notebooks/*`, and
+  `src/data/secrets.yaml`.
 
 To start blank, delete the sample collection files and clear the singleton
 files after scaffolding.
@@ -45,8 +44,7 @@ Each type maps to one layout and one Keystatic surface.
 | Type | Layout | For |
 |------|--------|-----|
 | `portfolio` | `DashboardLayout` — 5-pane grid | Personal site: concepts, projects, writing, analysis, GitHub activity |
-| `app` | `AppLayout` — CMS-configured sections | Dashboards, tools, and landing pages driven by `sections` |
-| `game` | `GameLayout` — main + leaderboard sidebar | Real-time games or live events |
+| `app` | `AppLayout` — CMS-configured sections + analysis routes | Dashboards, tools, and landing pages driven by `sections`, with notebook-backed analysis pages |
 
 ## Non-interactive (for scripts / CI)
 
@@ -58,7 +56,7 @@ npx create-brewfolio my-site --type portfolio --yes
 
 | Flag | Description | Default |
 |------|-------------|---------|
-| `--type <portfolio\|app\|game>` | Which site type to scaffold | prompted |
+| `--type <portfolio\|app>` | Which site type to scaffold | prompted |
 | `--astro-template <name>` | Underlying Astro starter template | `minimal` |
 | `--yes` | Skip confirmation | `false` |
 | `--dry-run` | Print what would be done without doing it | `false` |

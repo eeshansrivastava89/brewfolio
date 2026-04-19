@@ -40,6 +40,10 @@ sections:
       tagline: Use this block as the main interactive surface for the app. Replace the starter copy or leave it empty while you wire in your own UI.
       body: ''
       minHeight: 260px
+  - discriminant: notebook
+    value:
+      title: Latest analysis
+      notebook: running-code-tour
   - discriminant: results-list
     value:
       title: Launch notes

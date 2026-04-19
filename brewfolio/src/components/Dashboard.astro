@@ -29,40 +29,6 @@ const { title = 'Home' } = Astro.props
 		document.title = nextTitle || window.__brewfolioHomeTitle || title
 	}
 
-	function notchSectionForPath(normalized) {
-		if (!normalized || normalized === '/') return null
-		var sectionNames = {
-			'/writing': 'Writing',
-			'/analysis': 'Analysis',
-			'/about': 'About',
-		}
-		if (sectionNames[normalized]) return sectionNames[normalized]
-		var parts = normalized.split('/').filter(Boolean)
-		if (parts.length >= 1) {
-			var parent = '/' + parts[0]
-			if (sectionNames[parent]) return sectionNames[parent]
-		}
-		return null
-	}
-
-	function updateNotchForPath(normalized) {
-		var notch = document.getElementById('notch')
-		if (!notch) return
-		var sep = notch.querySelector('.notch-sep')
-		var pageEl = notch.querySelector('.notch-page')
-		if (!sep || !pageEl) return
-		var section = notchSectionForPath(normalized)
-		if (section) {
-			pageEl.textContent = section
-			sep.hidden = false
-			pageEl.hidden = false
-			return
-		}
-		sep.hidden = true
-		pageEl.hidden = true
-		pageEl.textContent = ''
-	}
-
 	function updateNavActive(path) {
 		var normalized = normalizePath(path || window.location.pathname)
 		document.querySelectorAll('.nav-pill[data-route]').forEach(function (pill) {
@@ -70,7 +36,6 @@ const { title = 'Home' } = Astro.props
 			var active = normalized !== '/' && (normalized === route || normalized.indexOf(route + '/') === 0)
 			pill.classList.toggle('active', active)
 		})
-		updateNotchForPath(normalized)
 	}
 
 	function clearHighlights() {

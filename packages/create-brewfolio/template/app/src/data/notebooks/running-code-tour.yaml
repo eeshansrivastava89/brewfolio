@@ -1,0 +1,18 @@
+title: Running code notebook tour
+contextLabel: Signals Lab
+github_url: https://github.com/jupyter/notebook/blob/main/docs/source/examples/Notebook/Running%20Code.ipynb
+description: A starter notebook route that demonstrates the shared summary card, rendered notebook body, and modal archive flow.
+date: 2026-04-18
+summary_status: significant
+summary_decision: The app scaffold can ship notebook-backed analysis without adopting the full portfolio project model.
+summary_methodology: Reuse the shared GitHub notebook fetcher, renderer, summary card, and TOC flow from the portfolio scaffold.
+summary_warnings:
+  - Large notebooks can still be slow if the GitHub source is oversized.
+  - External GitHub links still need to stay public and stable.
+summary_metrics:
+  - label: notebook rendering
+    value: Shared with portfolio
+    context: Same renderer and modal detail flow
+  - label: app config surface
+    value: Local notebooks collection
+    context: No project dependency required
