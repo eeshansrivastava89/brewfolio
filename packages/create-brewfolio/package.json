@@ -1,6 +1,6 @@
 {
 	"name": "create-brewfolio",
-	"version": "0.1.24",
+	"version": "0.1.25",
 	"description": "Interactive scaffolder for a new Astro + Keystatic site powered by brewfolio — pick portfolio or app and you're in.",
 	"type": "module",
 	"license": "MIT",
