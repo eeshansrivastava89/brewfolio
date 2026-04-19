@@ -28,7 +28,7 @@ Brewfolio is the system behind my Astro portfolio work. I spent a lot of time
 building my own design language, modal workflow, notebook rendering, and
 Keystatic editing flow for [eeshans.com](https://eeshans.com). This repo turns
 that into something I can reuse across my own apps and publish for other people
-to start from.
+to start from. This is relevant to data science and builder archetypes. 
 
 It currently supports two site types:
 
@@ -37,7 +37,7 @@ It currently supports two site types:
 
 ## Try it
 
-The fastest way to use Brewfolio is the real user path:
+The fastest way to use Brewfolio is through npx to scaffold your portfolio or web app:
 
 ```bash
 npx create-brewfolio
