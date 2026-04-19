@@ -1,120 +1,107 @@
+<div align="center">
+
 # brewfolio
 
-`brewfolio` is a monorepo with two published packages: the shared Astro design
-system, and the scaffolder that generates new sites from it. The supported
-site types are `portfolio` and `app`.
+**Astro + Keystatic starter system for portfolios and apps, extracted from a
+real production portfolio.**
 
-## Quick start
+[![npm brewfolio](https://img.shields.io/npm/v/brewfolio)](https://www.npmjs.com/package/brewfolio)
+[![npm create-brewfolio](https://img.shields.io/npm/v/create-brewfolio)](https://www.npmjs.com/package/create-brewfolio)
+[![license](https://img.shields.io/github/license/eeshansrivastava89/brewfolio)](LICENSE)
+[![astro](https://img.shields.io/badge/astro-5.x-ff5d01)](https://astro.build)
+[![cms](https://img.shields.io/badge/CMS-Keystatic-6e56cf)](https://keystatic.com)
+[![site](https://img.shields.io/badge/example-eeshans.com-cb9f6a)](https://eeshans.com)
 
-Use the scaffolder when you want the full user path.
+[Portfolio package](./brewfolio) •
+[Scaffolder package](./packages/create-brewfolio) •
+[Live portfolio](https://eeshans.com)
 
 ```bash
 npx create-brewfolio
 ```
 
-Pick a type (`portfolio` or `app`), answer the prompts, and you get an Astro
-site with Keystatic wired up to the matching layout.
+</div>
+
+## What this is
+
+Brewfolio is the system behind my Astro portfolio work. I spent a lot of time
+building my own design language, modal workflow, notebook rendering, and
+Keystatic editing flow for [eeshans.com](https://eeshans.com). This repo turns
+that into something I can reuse across my own apps and publish for other people
+to start from.
+
+It currently supports two site types:
+
+- `portfolio` for the full dashboard-style personal site
+- `app` for tools, dashboards, and landing pages with built-in analysis routes
+
+## Try it
+
+The fastest way to use Brewfolio is the real user path:
+
+```bash
+npx create-brewfolio
+```
+
+Then:
+
+```bash
+cd my-site
+npm run dev
+```
+
+Open:
+
+- `http://localhost:4321` for the site
+- `http://localhost:4321/keystatic` for the CMS
+
+## What you get
+
+| Type | Layout | What it gives you |
+|------|--------|-------------------|
+| `portfolio` | `DashboardLayout` | Concepts, projects, writing, notebooks, GitHub pane, modal navigation, project drawer |
+| `app` | `AppLayout` | CMS-driven homepage sections plus notebook-backed `/analysis` routes |
+
+Both types ship with:
+
+- Astro + Keystatic wired up
+- shared header and footer
+- sample content in `src/data`
+- a starter editing flow that matches the page surface
+
+## How content works
+
+Normal editing happens in Keystatic. The starter content is only there so the
+first render is populated.
+
+- replace content in Keystatic for the normal workflow
+- delete the generated `src/data/*` starter files if you want a blank start
 
 ## Packages
 
-The repo ships one runtime package and one CLI package.
+This monorepo ships one runtime package and one CLI package.
 
-| Package | What it is | Published |
-|---------|-----------|-----------|
-| [`brewfolio/`](./brewfolio) | The runtime library: layouts, components, tokens, Keystatic schema | [`brewfolio` on npm](https://www.npmjs.com/package/brewfolio) |
-| [`packages/create-brewfolio/`](./packages/create-brewfolio) | The interactive scaffolder (the thing `npx` runs) | [`create-brewfolio` on npm](https://www.npmjs.com/package/create-brewfolio) |
-
-## Two layouts
-
-Each scaffold owns a layout-specific editing surface.
-
-| Layout | For |
-|--------|-----|
-| `DashboardLayout` | Personal portfolio sites — 5-pane grid (concepts, projects, writing, analysis, GitHub) |
-| `AppLayout` | Tools, dashboards, and landing pages — section sequence driven by the `sections` singleton, with built-in analysis routes |
-
-## Content model
-
-The shared package exports reusable schema primitives, but the scaffold narrows
-them per template so the editor matches the page surface.
-
-- `portfolio`: `config`, `github`, `writingSettings`, `concepts`, `about`,
-  `timeline`, `impact`, `secrets`, plus the `projects`, `writing`, and
-  `notebooks` collections
-- `app`: `config`, `sections`, `secrets`, and the `notebooks` collection
-
-Sample content never lives in the shared components. The scaffold writes it to
-template-local `src/data` files so you can delete or replace it without
-rewriting the layout code.
-
-## Removing sample content
-
-Every generated site ships with example content so the layout is populated on
-first boot. If you want a blank start, remove or clear the matching files in
-your generated project.
-
-- Portfolio: clear `src/data/projects/*`, `src/data/writing/*`,
-  `src/data/notebooks/*`, and the singleton files
-  `src/data/site-config.yaml`, `src/data/concepts.yaml`,
-  `src/data/about.yaml`, `src/data/timeline.yaml`,
-  `src/data/impact.yaml`, `src/data/github.yaml`,
-  `src/data/writing-config.yaml`, and `src/data/secrets.yaml`.
-- App: clear `src/data/site-config.yaml`, `src/data/sections.yaml`,
-  `src/data/notebooks/*`, and `src/data/secrets.yaml`.
+| Package | Purpose |
+|---------|---------|
+| [`brewfolio/`](./brewfolio) | Shared runtime package: layouts, components, tokens, notebook helpers, schema primitives |
+| [`packages/create-brewfolio/`](./packages/create-brewfolio) | Interactive scaffolder that creates a new site from the runtime package |
 
 ## Testing
 
-The repo includes a simple root-level test harness.
+The repo includes a simple root-level test harness:
 
-- `npm test` runs unit tests with coverage
-- `npm run test:e2e` runs Playwright end-to-end tests
-- `npm run test:e2e:report` opens the Playwright HTML report
-- `npm run test:full` runs both
+- `npm test` for unit tests with coverage
+- `npm run test:e2e` for Playwright
+- `npm run test:e2e:report` for the Playwright HTML report
+- `npm run test:full` for both
 
-## Design philosophy
+## Design principles
 
-The project follows a small set of implementation rules.
-
-- **Layout is code. Content is CMS.** Astro handles structure and routing, and
-  Keystatic owns the page-level content.
-- **Scaffolds stay template-specific.** Each generated site gets the smallest
-  Keystatic surface that matches its layout.
-- **Tailwind-first.** Utility classes handle most styling; scoped CSS stays for
-  things Tailwind cannot express cleanly.
-- **Open source, no SaaS.** Everything runs from local files.
-
-## Repo layout
-
-The repo is split between the shared package and the scaffolder.
-
-```
-brewfolio/                            ← the npm package "brewfolio"
-├── src/
-│   ├── layouts/                      ← 2 layouts
-│   ├── components/                   ← shared Astro UI primitives
-│   ├── lib/                          ← types + helpers
-│   ├── styles/tokens.css             ← design tokens (CSS vars)
-│   ├── keystatic.config.ts           ← full schema
-│   └── index.ts                      ← package entry
-└── package.json
-
-packages/create-brewfolio/            ← the npm package "create-brewfolio"
-├── src/                              ← CLI (clack wizard)
-├── template/
-│   ├── common/                       ← files copied into every scaffold
-│   ├── portfolio/                    ← DashboardLayout starter pages
-│   └── app/                          ← AppLayout starter pages
-└── package.json
-
-tests/                                ← root Vitest + Playwright suites
-```
-
-## Contributing
-
-The canonical reference implementation is
-[`datascienceapps`](https://github.com/eeshansrivastava89). Patterns extracted
-from that site get moved into `brewfolio/` and released on npm.
+- **Layout is code. Content is CMS.**
+- **No hardcoded sample copy in shared components.**
+- **Scaffolds stay narrow and page-matched.**
+- **Dead surfaces get removed instead of preserved.**
 
 ## License
 
-MIT — see [LICENSE](./LICENSE)
+[MIT](./LICENSE)
